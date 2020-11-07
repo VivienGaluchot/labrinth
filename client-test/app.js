@@ -402,6 +402,10 @@ let tourBtn = document.getElementById("tour-btn");
 tourBtn.onclick = async () => {
     turnNb++;
 
+    for (let btn of document.getElementsByClassName("action")) {
+        btn.disabled = true;
+    }
+
     let runOp = (op, pion) => {
         switch (op) {
             case "left":
@@ -457,13 +461,17 @@ tourBtn.onclick = async () => {
         slot.reset();
     }
     playersFifo["fifo-b"] = [];
-    tourBtn.disabled = true;
+
+    updateTourBtn();
 }
 
 function updateTourBtn() {
     if (playersFifo["fifo-a"].length == opCount && playersFifo["fifo-b"].length == opCount) {
         tourBtn.disabled = false;
     } else {
+        for (let btn of document.getElementsByClassName("action")) {
+            btn.disabled = false;
+        }
         tourBtn.disabled = true;
     }
 }

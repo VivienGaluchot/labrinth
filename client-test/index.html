@@ -25,7 +25,7 @@
 
     <content>
         <div>
-            <canvas id="main-canvas" height="300px" width="600px"></canvas>
+            <canvas id="main-canvas" height="700px" width="500px"></canvas>
         </div>
         <div class="flex">
             <div class="actions">
@@ -41,18 +41,24 @@
                     <div class="line">
                         <button class="action pure-material-button-contained" data-op="left" data-target="fifo-a"><i
                                 class="fas fa-arrow-left"></i></button>
+                        <button class="action pure-material-button-contained" data-op="right" data-target="fifo-a"><i
+                                class="fas fa-arrow-right"></i></button>
                         <button class="action pure-material-button-contained" data-op="up" data-target="fifo-a"><i
                                 class="fas fa-arrow-up"></i></button>
                         <button class="action pure-material-button-contained" data-op="down" data-target="fifo-a"><i
                                 class="fas fa-arrow-down"></i></button>
-                        <button class="action pure-material-button-contained" data-op="right" data-target="fifo-a"><i
-                                class="fas fa-arrow-right"></i></button>
                     </div>
                     <div class="line">
                         <button class="action pure-material-button-contained" data-op="shift-left"
                             data-target="fifo-a"><i class="fas fa-angle-double-left"></i></button>
                         <button class="action pure-material-button-contained" data-op="shift-right"
                             data-target="fifo-a"><i class="fas fa-angle-double-right"></i></button>
+                        <button class="action pure-material-button-contained" data-op="rotate-clock"
+                            data-target="fifo-a"><i class="fas fa-undo mirror"></i></button>
+                        <button class="action pure-material-button-contained" data-op="rotate-anti_clock"
+                            data-target="fifo-a"><i class="fas fa-undo"></i></button>
+                    </div>
+                    <div class="line">
                         <button class="action pure-material-button-contained grey" data-op="reset"
                             data-target="fifo-a"><i class="far fa-trash-alt"></i></button>
                     </div>
@@ -72,18 +78,24 @@
                     <div class="line">
                         <button class="action pure-material-button-contained" data-op="left" data-target="fifo-b"><i
                                 class="fas fa-arrow-left"></i></button>
+                        <button class="action pure-material-button-contained" data-op="right" data-target="fifo-b"><i
+                                class="fas fa-arrow-right"></i></button>
                         <button class="action pure-material-button-contained" data-op="up" data-target="fifo-b"><i
                                 class="fas fa-arrow-up"></i></button>
                         <button class="action pure-material-button-contained" data-op="down" data-target="fifo-b"><i
                                 class="fas fa-arrow-down"></i></button>
-                        <button class="action pure-material-button-contained" data-op="right" data-target="fifo-b"><i
-                                class="fas fa-arrow-right"></i></button>
                     </div>
                     <div class="line">
                         <button class="action pure-material-button-contained" data-op="shift-left"
                             data-target="fifo-b"><i class="fas fa-angle-double-left"></i></button>
                         <button class="action pure-material-button-contained" data-op="shift-right"
                             data-target="fifo-b"><i class="fas fa-angle-double-right"></i></button>
+                        <button class="action pure-material-button-contained" data-op="rotate-clock"
+                            data-target="fifo-b"><i class="fas fa-undo mirror"></i></button>
+                        <button class="action pure-material-button-contained" data-op="rotate-anti_clock"
+                            data-target="fifo-b"><i class="fas fa-undo"></i></button>
+                    </div>
+                    <div class="line">
                         <button class="action pure-material-button-contained grey" data-op="reset"
                             data-target="fifo-b"><i class="far fa-trash-alt"></i></button>
                     </div>

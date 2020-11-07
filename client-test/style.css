@@ -131,21 +131,37 @@ h1>* {
     margin: .2rem 0 .2rem 0;
 }
 
+.actions .slot, .actions .action {
+    width: 44px;
+    height: 44px;
+}
+
 .actions .slot {
-    border-radius: 4px;
-    padding: 0 16px;
-    height: 36px;
-    min-width: 44px;
+    display: inline-block;
     vertical-align: middle;
+    line-height: 44px;
     text-align: center;
+    padding: 0;
+    margin: .05rem;
+    border-radius: 4px;
     font-size: 14px;
     font-weight: 500;
-    line-height: 36px;
     background-color: rgb(33, 150, 243);
-    display: inline-block;
     color: white;
 }
 
 .actions .slot.empty {
     background-color: rgb(65, 79, 90);
+}
+
+.actions .slot.active {
+    box-shadow: 0 0 0 2px white;
+}
+
+.actions .slot.used {
+    background-color: rgb(65, 79, 90);
+}
+
+.fas.mirror {
+    transform: scaleX(-1);
 }

@@ -569,7 +569,7 @@ function registerAction(btn) {
             for (let slot of playersFifo.get(target)) {
                 slot.reset();
             }
-            playersFifo.get(target, []);
+            playersFifo.set(target, []);
         }
         updateTourBtn();
     };

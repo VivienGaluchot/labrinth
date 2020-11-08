@@ -11,6 +11,7 @@
 
 * [ ] game
   * [ ] choose start position
+  * [ ] move rotate any row
   * [ ] better tile gen
   * [ ] more gameplay
     * [ ] modes coop / versus

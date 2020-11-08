@@ -166,21 +166,28 @@ class Pion {
         this.startCol = startCol;
     }
 
-    draw(ctx, x, y, w, h) {
+    draw(ctx, x, y, w, h, id, count) {
         ctx.save();
         ctx.strokeStyle = `#${this.color}FF`;
-        ctx.fillStyle = `#${this.color}44`;
+        ctx.fillStyle = `#${this.color}88`;
         ctx.lineWidth = 4;
 
-        ctx.beginPath();
         let r = Math.min(h / 2, w / 2) / 4;
-        ctx.arc(x + w / 2, y + h / 2, r, 0, 2 * Math.PI);
-        ctx.stroke();
+
+        let cx = x + w / 2 + (id * r * 1.2 * 2) - ((count - 1) * r * 1.2);
+        let cy = y + h / 2;
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+        ctx.fillStyle = `#FFFFFFAA`;
         ctx.fill();
+        ctx.fillStyle = `#${this.color}44`;
+        ctx.fill();
+        ctx.stroke();
 
         ctx.fillStyle = `#${this.color}`;
         ctx.font = `${Math.round(r)}px arial`;
-        ctx.fillText(this.name, x + w / 2 - r / 3, y + h / 2 + r / 3);
+        ctx.fillText(this.name, cx - r / 3, cy + r / 3);
         ctx.restore();
     }
 }
@@ -270,9 +277,17 @@ class Grid {
             for (let j in this.rows[i]) {
                 let px = paddingW + x + j * (sPiece + spacing);
                 this.getPiece(i, j).draw(ctx, px, py, sPiece, sPiece);
+                let pionCount = 0;
                 for (const [pion, pos] of this.pions) {
                     if (i == pos.row && j == pos.col) {
-                        pion.draw(ctx, px, py, sPiece, sPiece);
+                        pionCount++;
+                    }
+                }
+                let id = 0;
+                for (const [pion, pos] of this.pions) {
+                    if (i == pos.row && j == pos.col) {
+                        pion.draw(ctx, px, py, sPiece, sPiece, id, pionCount);
+                        id++;
                     }
                 }
             }
@@ -337,10 +352,12 @@ class Grid {
 
 let grid = new Grid(7, 5);
 let pionA = new Pion("A", "AA00AA", 1);
-let pionB = new Pion("B", "00AAAA", 3);
+let pionB = new Pion("B", "00AAAA", 2);
+let pionC = new Pion("C", "0000AA", 3);
 
 grid.addPion(pionA);
 grid.addPion(pionB);
+grid.addPion(pionC);
 
 
 // canvas
@@ -373,14 +390,19 @@ draw(canvas);
 
 // actions
 
-const opCount = 4;
+const opCount = 3;
 
 let turnNb = 0;
 
-const playersFifo = {
-    "fifo-a": [],
-    "fifo-b": [],
-};
+const playersFifo = new Map();
+playersFifo.set("fifo-a", []);
+playersFifo.set("fifo-b", []);
+playersFifo.set("fifo-c", []);
+
+const playerPions = new Map();
+playerPions.set("fifo-a", pionA);
+playerPions.set("fifo-b", pionB);
+playerPions.set("fifo-c", pionC);
 
 const opIcons = {
     "left": "fas fa-arrow-left",
@@ -393,6 +415,12 @@ const opIcons = {
     "rotate-anti_clock": "fas fa-undo",
     "reset": "far fa-trash-alt"
 };
+
+const gridOp = new Set();
+gridOp.add("shift-left");
+gridOp.add("shift-right");
+gridOp.add("rotate-clock");
+gridOp.add("rotate-anti_clock");
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -437,36 +465,67 @@ tourBtn.onclick = async () => {
     };
 
     for (let i = 0; i < opCount; i++) {
-        let entryA = playersFifo["fifo-a"][i];
-        let entryB = playersFifo["fifo-b"][i];
-
-        entryA.setActive(true);
+        for (const [key, entry] of playersFifo) {
+            if (gridOp.has(entry[i].op)) {
+                entry[i].setActive(true);
+            }
+        }
         await sleep(200);
-        runOp(entryA.op, pionA);
-        await sleep(1000);
-        entryA.setActive(false);
-
-        entryB.setActive(true);
+        for (const [key, entry] of playersFifo) {
+            if (gridOp.has(entry[i].op)) {
+                runOp(entry[i].op, playerPions.get(key));
+                await sleep(300);
+            }
+        }
+        await sleep(800);
+        for (const [key, entry] of playersFifo) {
+            if (gridOp.has(entry[i].op)) {
+                entry[i].setActive(false);
+            }
+        }
         await sleep(200);
-        runOp(entryB.op, pionB);
-        await sleep(1000);
-        entryB.setActive(false);
+
+        for (const [key, entry] of playersFifo) {
+            if (!gridOp.has(entry[i].op)) {
+                entry[i].setActive(true);
+            }
+        }
+        await sleep(200);
+        for (const [key, entry] of playersFifo) {
+            if (!gridOp.has(entry[i].op)) {
+                runOp(entry[i].op, playerPions.get(key));
+                await sleep(300);
+            }
+        }
+        await sleep(800);
+        for (const [key, entry] of playersFifo) {
+            if (!gridOp.has(entry[i].op)) {
+                entry[i].setActive(false);
+            }
+        }
+        await sleep(200);
     }
 
-    for (let slot of playersFifo["fifo-a"]) {
+    for (let slot of playersFifo.get("fifo-a")) {
         slot.reset();
     }
-    playersFifo["fifo-a"] = [];
-    for (let slot of playersFifo["fifo-b"]) {
+    playersFifo.set("fifo-a", []);
+    for (let slot of playersFifo.get("fifo-b")) {
         slot.reset();
     }
-    playersFifo["fifo-b"] = [];
+    playersFifo.set("fifo-b", []);
+    for (let slot of playersFifo.get("fifo-c")) {
+        slot.reset();
+    }
+    playersFifo.set("fifo-c", []);
 
     updateTourBtn();
 }
 
 function updateTourBtn() {
-    if (playersFifo["fifo-a"].length == opCount && playersFifo["fifo-b"].length == opCount) {
+    if (playersFifo.get("fifo-a").length == opCount &&
+        playersFifo.get("fifo-b").length == opCount &&
+        playersFifo.get("fifo-c").length == opCount) {
         tourBtn.disabled = false;
     } else {
         for (let btn of document.getElementsByClassName("action")) {
@@ -486,7 +545,7 @@ function registerAction(btn) {
                 if (slot.classList.contains("empty")) {
                     slot.classList.remove("empty");
                     slot.innerHTML = `<i class="${opIcons[op]}"></i>`;
-                    playersFifo[target].push({
+                    playersFifo.get(target).push({
                         "op": op,
                         "setActive": (isActive) => {
                             if (isActive) {
@@ -507,10 +566,10 @@ function registerAction(btn) {
                 }
             }
         } else {
-            for (let slot of playersFifo[target]) {
+            for (let slot of playersFifo.get(target)) {
                 slot.reset();
             }
-            playersFifo[target] = [];
+            playersFifo.get(target, []);
         }
         updateTourBtn();
     };

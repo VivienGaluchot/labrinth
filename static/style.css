@@ -1,0 +1,166 @@
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-family: 'Roboto', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 2.5rem 0 1rem;
+}
+
+ul li, ol li {
+    margin-top: 0.5rem;
+}
+
+img {
+    max-width: 100%;
+}
+
+pre {
+    font-family: 'Roboto Mono', monospace;
+    border: 1px solid lightgrey;
+    overflow: auto;
+}
+
+code {
+    font-family: 'Roboto Mono', monospace;
+    color: orangered;
+    font-weight: 500;
+    display: inline-block;
+    background-color: rgba(255, 68, 0, 0.1);
+    padding: 0 .2rem;
+}
+
+pre code {
+    padding: 1rem;
+}
+
+blockquote {
+    border-left: 5px solid lightgrey;
+    font-size: 120%;
+    font-style: italic;
+    margin: 2rem 0;
+    padding: 1rem;
+}
+
+table {
+    border-collapse: collapse;
+    margin: .5rem 0;
+    text-align: left;
+    width: 100%;
+}
+
+tbody>tr {
+    border-top: 1px solid lightgrey;
+}
+
+th, td {
+    padding: 0.5rem;
+}
+
+hr {
+    background: lightgrey;
+    border: 0;
+    height: 1px;
+    margin: 2rem 0;
+}
+
+/* specific page design */
+
+html {
+    height: 100%;
+}
+
+body {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin: 0;
+    min-height: 100%;
+    background-color: rgb(22, 22, 22);
+}
+
+header, content, footer {
+    text-align: initial;
+    padding: 1rem;
+    box-sizing: border-box;
+    text-align: center;
+    color: rgb(182, 177, 177);
+}
+
+header, footer {
+    flex-grow: 0;
+    background-color: #00000022;
+}
+
+footer a {
+    color: rgb(116, 116, 116);
+}
+
+content {
+    flex-grow: 1;
+}
+
+h1 {
+    margin: 0;
+}
+
+h1>* {
+    vertical-align: middle;
+}
+
+.flex {
+    display: flex;
+    justify-content: center;
+}
+
+.actions {
+    text-align: left;
+    padding: 1rem;
+    margin: 1rem;
+}
+
+.actions h2, .actions h3 {
+    margin: .5rem 0 .5rem 0;
+}
+
+.actions .line {
+    display: flex;
+}
+
+.actions .line>* {
+    margin: .1rem;
+    padding: 0;
+    width: 44px;
+    height: 44px;
+}
+
+.actions .slot {
+    line-height: 44px;
+    vertical-align: middle;
+    text-align: center;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    background-color: rgb(33, 150, 243);
+    color: white;
+}
+
+.actions .slot.empty {
+    background-color: rgb(65, 79, 90);
+}
+
+.actions .slot.active {
+    box-shadow: 0 0 0 2px white;
+}
+
+.actions .slot.used {
+    background-color: rgb(65, 79, 90);
+}
+
+.fas.mirror {
+    transform: scaleX(-1);
+}

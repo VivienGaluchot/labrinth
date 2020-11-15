@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Labrinth</title>
+    <link rel="icon" href="icon.svg">
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css"
+        integrity="sha256-h20CPZ0QyXlBuAw7A+KluUYx/3pK+c7lYEpqLTlxjYQ=" crossorigin="anonymous" async />
+
+    <link rel="stylesheet" href="material.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <h1>
+            Labrinth
+        </h1>
+    </header>
+
+    <content>
+        <div>
+            <canvas id="main-canvas" height="700px" width="500px"></canvas>
+        </div>
+        <div class="flex">
+            <div class="actions">
+                <h2>Game</h2>
+                <div>
+                    <button id="tour-btn" class="pure-material-button-contained" disabled>Play turn</button>
+                </div>
+            </div>
+            <div class="actions">
+                <h2>Player <b>A</b></h2>
+                <div>
+                    <h3>Actions</h3>
+                    <div class="line">
+                        <button class="action pure-material-button-contained" data-op="left" data-target="fifo-a"><i
+                                class="fas fa-arrow-left"></i></button>
+                        <button class="action pure-material-button-contained" data-op="right" data-target="fifo-a"><i
+                                class="fas fa-arrow-right"></i></button>
+                        <button class="action pure-material-button-contained" data-op="up" data-target="fifo-a"><i
+                                class="fas fa-arrow-up"></i></button>
+                        <button class="action pure-material-button-contained" data-op="down" data-target="fifo-a"><i
+                                class="fas fa-arrow-down"></i></button>
+                    </div>
+                    <div class="line">
+                        <button class="action pure-material-button-contained" data-op="shift-left"
+                            data-target="fifo-a"><i class="fas fa-angle-double-left"></i></button>
+                        <button class="action pure-material-button-contained" data-op="shift-right"
+                            data-target="fifo-a"><i class="fas fa-angle-double-right"></i></button>
+                        <button class="action pure-material-button-contained" data-op="rotate-clock"
+                            data-target="fifo-a"><i class="fas fa-undo mirror"></i></button>
+                        <button class="action pure-material-button-contained" data-op="rotate-anti_clock"
+                            data-target="fifo-a"><i class="fas fa-undo"></i></button>
+                    </div>
+                    <div class="line">
+                        <button class="action pure-material-button-contained grey" data-op="reset"
+                            data-target="fifo-a"><i class="far fa-trash-alt"></i></button>
+                    </div>
+                </div>
+                <div id="fifo-a">
+                    <h3>Selected</h3>
+                    <div class="line">
+                        <span class="slot empty"></span>
+                        <span class="slot empty"></span>
+                        <span class="slot empty"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="actions">
+                <h2>Player <b>B</b></h2>
+                <div>
+                    <h3>Actions</h3>
+                    <div class="line">
+                        <button class="action pure-material-button-contained" data-op="left" data-target="fifo-b"><i
+                                class="fas fa-arrow-left"></i></button>
+                        <button class="action pure-material-button-contained" data-op="right" data-target="fifo-b"><i
+                                class="fas fa-arrow-right"></i></button>
+                        <button class="action pure-material-button-contained" data-op="up" data-target="fifo-b"><i
+                                class="fas fa-arrow-up"></i></button>
+                        <button class="action pure-material-button-contained" data-op="down" data-target="fifo-b"><i
+                                class="fas fa-arrow-down"></i></button>
+                    </div>
+                    <div class="line">
+                        <button class="action pure-material-button-contained" data-op="shift-left"
+                            data-target="fifo-b"><i class="fas fa-angle-double-left"></i></button>
+                        <button class="action pure-material-button-contained" data-op="shift-right"
+                            data-target="fifo-b"><i class="fas fa-angle-double-right"></i></button>
+                        <button class="action pure-material-button-contained" data-op="rotate-clock"
+                            data-target="fifo-b"><i class="fas fa-undo mirror"></i></button>
+                        <button class="action pure-material-button-contained" data-op="rotate-anti_clock"
+                            data-target="fifo-b"><i class="fas fa-undo"></i></button>
+                    </div>
+                    <div class="line">
+                        <button class="action pure-material-button-contained grey" data-op="reset"
+                            data-target="fifo-b"><i class="far fa-trash-alt"></i></button>
+                    </div>
+                </div>
+                <div id="fifo-b">
+                    <h3>Selected</h3>
+                    <div class="line">
+                        <span class="slot empty"></span>
+                        <span class="slot empty"></span>
+                        <span class="slot empty"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="actions">
+                <h2>Player <b>C</b></h2>
+                <div>
+                    <h3>Actions</h3>
+                    <div class="line">
+                        <button class="action pure-material-button-contained" data-op="left" data-target="fifo-c"><i
+                                class="fas fa-arrow-left"></i></button>
+                        <button class="action pure-material-button-contained" data-op="right" data-target="fifo-c"><i
+                                class="fas fa-arrow-right"></i></button>
+                        <button class="action pure-material-button-contained" data-op="up" data-target="fifo-c"><i
+                                class="fas fa-arrow-up"></i></button>
+                        <button class="action pure-material-button-contained" data-op="down" data-target="fifo-c"><i
+                                class="fas fa-arrow-down"></i></button>
+                    </div>
+                    <div class="line">
+                        <button class="action pure-material-button-contained" data-op="shift-left"
+                            data-target="fifo-c"><i class="fas fa-angle-double-left"></i></button>
+                        <button class="action pure-material-button-contained" data-op="shift-right"
+                            data-target="fifo-c"><i class="fas fa-angle-double-right"></i></button>
+                        <button class="action pure-material-button-contained" data-op="rotate-clock"
+                            data-target="fifo-c"><i class="fas fa-undo mirror"></i></button>
+                        <button class="action pure-material-button-contained" data-op="rotate-anti_clock"
+                            data-target="fifo-c"><i class="fas fa-undo"></i></button>
+                    </div>
+                    <div class="line">
+                        <button class="action pure-material-button-contained grey" data-op="reset"
+                            data-target="fifo-c"><i class="far fa-trash-alt"></i></button>
+                    </div>
+                </div>
+                <div id="fifo-c">
+                    <h3>Selected</h3>
+                    <div class="line">
+                        <span class="slot empty"></span>
+                        <span class="slot empty"></span>
+                        <span class="slot empty"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </content>
+
+    <footer>
+        <div>
+            <a href="https://github.com/VivienGaluchot/labrinth">Open-source</a>
+        </div>
+    </footer>
+
+    <script type="text/javascript" src="app.js"></script>
+</body>
+
+</html>

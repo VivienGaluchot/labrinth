@@ -1,0 +1,27 @@
+{
+  "name": "labrinth",
+  "version": "0.0.1",
+  "private": true,
+  "description": "web-app multiplayer game",
+  "author": "vgaluchot",
+  "license": "ISC",
+  "dependencies": {
+    "websocket": "^1.0.31"
+  },
+  "engines": {
+    "node": "10.x.x"
+  },
+  "main": "server/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VivienGaluchot/labrinth.git"
+  },
+  "bugs": {
+    "url": "https://github.com/VivienGaluchot/labrinth/issues"
+  },
+  "homepage": "https://github.com/VivienGaluchot/labrinth#readme"
+}

@@ -80,87 +80,96 @@ body {
     width: 100%;
     margin: 0;
     min-height: 100%;
-    background-color: rgb(22, 22, 22);
+    background-color: #222222;
+    color: #b6b1b1;
 }
 
-header, content, footer {
-    text-align: initial;
-    padding: 1rem;
-    box-sizing: border-box;
-    text-align: center;
-    color: rgb(182, 177, 177);
+a {
+    color: #4a8fa8;
 }
 
-header, footer {
+a:hover {
+    color: #58a6c2;
+}
+
+/* footer */
+
+footer {
     flex-grow: 0;
+    background-color: #00000044;
+    padding: 1rem;
+    text-align: center;
+}
+
+/* flex-layout */
+
+.flex-layout {
+    flex-grow: 1;
+    display: flex;
+}
+
+.flex-layout>.main, .flex-layout>.sidebar {
+    min-width: 20rem;
+    text-align: left;
+}
+
+/* sidebar */
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    padding: .5rem;
+}
+
+.sidebar>header {
+    flex-grow: 0;
+    padding: .5rem;
+}
+
+.sidebar>content {
+    flex-grow: 1;
+    padding: .5rem;
+}
+
+.sidebar>footer {
+    flex-grow: 0;
+    margin: -.5rem;
+    padding: 1rem;
+}
+
+.sidebar>header, .sidebar>content {
+    padding: .5rem;
+}
+
+.sidebar.left {
+    border-right: 1px solid #00000044;
     background-color: #00000022;
 }
 
-footer a {
-    color: rgb(116, 116, 116);
-}
-
-content {
-    flex-grow: 1;
-}
-
-h1 {
+.sidebar h1 {
     margin: 0;
+    font-weight: lighter;
 }
 
-h1>* {
-    vertical-align: middle;
-}
+/* main */
 
-.flex {
+.main {
+    flex-grow: 1;
     display: flex;
+    flex-direction: column;
     justify-content: center;
-}
-
-.actions {
-    text-align: left;
+    align-items: center;
     padding: 1rem;
-    margin: 1rem;
 }
 
-.actions h2, .actions h3 {
-    margin: .5rem 0 .5rem 0;
+.main .placeholder {
+    color: #00000033;
+    font-size: xx-large;
+    font-weight: bolder;
+    user-select: none;
 }
 
-.actions .line {
-    display: flex;
-}
-
-.actions .line>* {
-    margin: .1rem;
-    padding: 0;
-    width: 44px;
-    height: 44px;
-}
-
-.actions .slot {
-    line-height: 44px;
-    vertical-align: middle;
-    text-align: center;
-    border-radius: 4px;
-    font-size: 14px;
-    font-weight: 500;
-    background-color: rgb(33, 150, 243);
-    color: white;
-}
-
-.actions .slot.empty {
-    background-color: rgb(65, 79, 90);
-}
-
-.actions .slot.active {
-    box-shadow: 0 0 0 2px white;
-}
-
-.actions .slot.used {
-    background-color: rgb(65, 79, 90);
-}
-
-.fas.mirror {
-    transform: scaleX(-1);
+.main .placeholder .url {
+    font-size: large;
+    font-weight: normal;
 }

@@ -69,6 +69,8 @@ const server = http.createServer(function (request, response) {
     // serve static files
     if (pathname == "/" || pathname == "/index.html") {
         sendFile("static/index.html", response);
+    } else if (pathname == "/peers" || pathname == "/peers.html") {
+        sendFile("static/index.html", response);
     } else {
         sendFile("./static/" + pathname, response);
     }

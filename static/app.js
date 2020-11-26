@@ -1,38 +1,59 @@
 'use strict';
 
 // basic pages
-const home = { "title": "Labrinth | Home" };
-const peers = { "title": "Labrinth | Peers" };
-const notFound = { "title": "Labrinth | Not found" };
+const pageHome = {
+    "title": "Labrinth | Home"
+};
+const pagePeers = {
+    "title": "Labrinth | Peers"
+};
+const pageDev = {
+    "title": "Labrinth | Dev"
+};
+const pageNotFound = {
+    "title": "Labrinth | Not found"
+};
 
-const pageRouter = new Map();
-pageRouter.set("/", home);
-pageRouter.set("/index.html", home);
-pageRouter.set("/peers", peers);
-pageRouter.set("/peers.html", peers);
+const router = new Map();
+router.set("/", pageHome);
+router.set("/index.html", pageHome);
+router.set("/peers", pagePeers);
+router.set("/peers.html", pagePeers);
+router.set("/dev", pageDev);
+
+function getPage(url) {
+    return router.get(url.pathname);
+}
 
 // render the page into the DOM
-function renderPage(url, ctx) {
-    let pathname = new URL(url).pathname;
-    let page = pageRouter.get(pathname);
+function renderPage(href, ctx) {
+    let url = new URL(href);
+    let page = getPage(url);
     if (!page) {
-        console.warn("page not found", { pathname });
-        page = notFound;
+        console.warn("page not found", { url });
+        page = pageNotFound;
     }
     document.title = page.title;
-    document.getElementById("js-page-url").innerText = pathname;
+    document.getElementById("js-page-url").innerText = url.pathname;
+    for (const link of document.getElementsByClassName("js-local-link")) {
+        if (getPage(new URL(link.href)) == page) {
+            link.classList.add("active");
+        } else {
+            link.classList.remove("active");
+        }
+    }
 }
 
 // render the page and push it onto history
-function pushPage(url, ctx) {
-    renderPage(url);
-    window.history.pushState({ "url": url, "ctx": ctx }, "", url);
+function pushPage(href, ctx) {
+    renderPage(href);
+    window.history.pushState({ "href": href, "ctx": ctx }, "", href);
 }
 
 // react to user going to back page
 window.onpopstate = function (e) {
     if (e.state) {
-        renderPage(e.state.url, e.state.ctx);
+        renderPage(e.state.href, e.state.ctx);
     }
 };
 

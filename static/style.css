@@ -80,16 +80,31 @@ body {
     width: 100%;
     margin: 0;
     min-height: 100%;
-    background-color: #222222;
+    background-color: #252525;
     color: #b6b1b1;
 }
 
 a {
-    color: #4a8fa8;
+    color: #e0dbdb;
 }
 
-a:hover {
-    color: #58a6c2;
+a:hover, a:focus {
+    color: #b6b1b1;
+}
+
+a:active {
+    color: #9c9494;
+}
+
+nav a {
+    padding: .2rem;
+    border-radius: .2rem;
+    text-decoration: none;
+    font-size: large;
+}
+
+nav a.active {
+    background-color: #FFFFFF11;
 }
 
 /* footer */

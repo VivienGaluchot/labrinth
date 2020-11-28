@@ -38,6 +38,7 @@ if (!port) {
 
 let mimeMap = new Map();
 mimeMap.set(".js", "application/javascript");
+mimeMap.set(".mjs", "text/javascript");
 mimeMap.set(".json", "application/json");
 mimeMap.set(".css", "text/css");
 mimeMap.set(".jpeg", "image/jpeg");

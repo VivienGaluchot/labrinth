@@ -1,5 +1,10 @@
 'use strict';
 
+
+import * as P2p from './lib/p2p.mjs';
+
+const localEndpoint = P2p.LocalEndpoint.generate();
+
 // basic pages
 const pageHome = {
     "title": "Labrinth | Home"

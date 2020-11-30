@@ -20,21 +20,26 @@
         <div class="sidebar left">
             <header>
                 <h1>Labrinth</h1>
+                <button class="sidebar-toggle">🍔</button>
             </header>
-            <content>
-                <nav>
-                    <a class="js-local-link" href="/">Home</a> |
-                    <a class="js-local-link" href="/peers">Peers</a> |
-                    <a class="js-local-link" href="/dev">Dev</a>
-                </nav>
-            </content>
+            <div class="sidebar-content">
+                <div class="sidebar-group">
+                    <nav>
+                        <a class="js-local-link" href="/">Home</a> |
+                        <a class="js-local-link" href="/peers">Peers</a> |
+                        <a class="js-local-link" href="/dev">Dev</a>
+                    </nav>
+                </div>
+                <div class="sidebar-spacer"></div>
+                <div class="sidebar-group">Id</div>
+            </div>
             <footer>
                 <a href="https://github.com/VivienGaluchot/labrinth">Open-source</a> app.
             </footer>
         </div>
 
         <div class="main">
-            <content>
+            <content id="js-main">
                 <div class="placeholder">
                     <span id="js-page-url" class="url"></span>
                     <br>

@@ -59,7 +59,7 @@ function sendFile(pathname, response) {
         if (mime)
             response.setHeader("Content-Type", mimeMap.get(ext));
 
-        response.setHeader("Cache-Control", "public,max-age=3600");
+        response.setHeader("Cache-Control", "public,max-age=0");
         response.writeHead(200);
         response.end(data);
     });

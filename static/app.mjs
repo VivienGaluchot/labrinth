@@ -1,9 +1,11 @@
 'use strict';
 
-
+// p2p
 import * as P2p from './lib/p2p.mjs';
-
 const localEndpoint = P2p.LocalEndpoint.generate();
+
+// components
+import * as Components from './lib/components.mjs';
 
 // basic pages
 const pageHome = {
@@ -13,7 +15,8 @@ const pagePeers = {
     "title": "Labrinth | Peers"
 };
 const pageDev = {
-    "title": "Labrinth | Dev"
+    "title": "Labrinth | Dev",
+    "component": new Components.Component("./components/dev-panel"),
 };
 const pageNotFound = {
     "title": "Labrinth | Not found"
@@ -30,6 +33,42 @@ function getPage(url) {
     return router.get(url.pathname);
 }
 
+// generic render
+const genericRender = (page) => {
+    // cleanup content
+    for (let el of document.getElementById("js-main").children) {
+        if (!el.classList.contains("placeholder")) {
+            el.remove();
+        }
+    }
+    // links
+    for (const link of document.getElementsByClassName("js-local-link")) {
+        if (getPage(new URL(link.href)) == page) {
+            link.classList.add("active");
+        } else {
+            link.classList.remove("active");
+        }
+    }
+    // sidebar
+    for (const el of document.getElementsByClassName("sidebar")) {
+        el.classList.remove("active");
+    }
+    for (const btn of document.getElementsByClassName("sidebar-toggle")) {
+        btn.onclick = () => {
+            for (const el of document.getElementsByClassName("sidebar")) {
+                el.classList.toggle("active");
+            }
+        };
+    }
+    // component
+    if (page.component) {
+        page.component.render()
+            .then((element) => {
+                document.getElementById("js-main").appendChild(element);
+            });
+    }
+}
+
 // render the page into the DOM
 function renderPage(href, ctx) {
     let url = new URL(href);
@@ -40,13 +79,7 @@ function renderPage(href, ctx) {
     }
     document.title = page.title;
     document.getElementById("js-page-url").innerText = url.pathname;
-    for (const link of document.getElementsByClassName("js-local-link")) {
-        if (getPage(new URL(link.href)) == page) {
-            link.classList.add("active");
-        } else {
-            link.classList.remove("active");
-        }
-    }
+    genericRender(page);
 }
 
 // render the page and push it onto history

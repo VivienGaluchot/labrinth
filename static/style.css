@@ -103,8 +103,12 @@ nav a {
     font-size: large;
 }
 
-nav a.active {
+nav a:hover {
     background-color: #FFFFFF11;
+}
+
+nav a.active {
+    background-color: #FFFFFF08;
 }
 
 /* footer */
@@ -128,6 +132,13 @@ footer {
     text-align: left;
 }
 
+@media (max-width: 50rem) {
+    .flex-layout {
+        display: inline;
+        min-width: none;
+    }
+}
+
 /* sidebar */
 
 .sidebar {
@@ -136,14 +147,17 @@ footer {
     padding: .5rem;
 }
 
-.sidebar>header {
-    flex-grow: 0;
+.sidebar>* {
+    flex-grow: 1;
     padding: .5rem;
 }
 
-.sidebar>content {
-    flex-grow: 1;
+.sidebar>header {
+    flex-grow: 0;
     padding: .5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .sidebar>footer {
@@ -152,18 +166,62 @@ footer {
     padding: 1rem;
 }
 
-.sidebar>header, .sidebar>content {
-    padding: .5rem;
-}
-
 .sidebar.left {
     border-right: 1px solid #00000044;
-    background-color: #00000022;
+    background-color: #202020;
 }
 
 .sidebar h1 {
+    display: inline-block;
     margin: 0;
     font-weight: lighter;
+}
+
+.sidebar-content>.sidebar-spacer {
+    margin: 1.5rem 0;
+    border-top: 1px solid #00000044;
+}
+
+.sidebar-content>.sidebar-group {
+    margin: 1rem 0;
+}
+
+@media (max-width: 50rem) {
+    .sidebar:not(.active)>*:not(header) {
+        display: none;
+    }
+    .sidebar.active {
+        min-height: 100%;
+        min-width: 100%;
+        position: absolute;
+    }
+}
+
+.sidebar-toggle {
+    background-color: transparent;
+    border: none;
+    color: white;
+    font-size: large;
+    padding: .5rem;
+    border-radius: .5rem;
+}
+
+.sidebar-toggle:hover {
+    background-color: #FFFFFF11;
+}
+
+.sidebar-toggle:active {
+    background-color: #FFFFFF22;
+}
+
+.sidebar-toggle {
+    display: none;
+}
+
+@media (max-width: 50rem) {
+    .sidebar-toggle {
+        display: initial;
+    }
 }
 
 /* main */
@@ -187,4 +245,15 @@ footer {
 .main .placeholder .url {
     font-size: large;
     font-weight: normal;
+}
+
+/* js */
+
+.js-hidden {
+    display: none;
+}
+
+.test {
+    padding: 2rem;
+    font-size: small;
 }

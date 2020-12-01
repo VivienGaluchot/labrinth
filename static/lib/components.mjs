@@ -9,50 +9,65 @@ class Component {
         this.path = path;
         this.template = null;
         this.run = null;
-        this.style = null;
+        this.styleElement = null;
+        this.loadPromise = null;
     }
 
     load() {
-        let promises = [];
-        if (this.template == null) {
+        if (!this.loadPromise) {
+            console.debug(`fetch component ${this.path}`);
+            let promises = [];
+
             promises.push(fetch(`${this.path}/template.html`)
                 .then((response) => {
                     return response.text();
                 })
                 .then((response) => {
-                    this.template = response;
+                    // var parser = new DOMParser();
+                    // this.template = parser.parseFromString(response, 'text/html');
+                    var range = document.createRange();
+                    range.selectNode(document.body);
+                    this.template = range.createContextualFragment(response);
                 }));
-        }
-        if (this.style == null) {
+
             promises.push(fetch(`${this.path}/style.css`)
                 .then((response) => {
                     return response.text();
-                }).then((response) => {
-                    this.style = response;
+                })
+                .then((response) => {
+                    const head = document.getElementsByTagName("head")[0];
+                    let style = document.createElement("style");
+                    style.innerHTML = `/* component ${this.path} */\n` + response;
+                    head.appendChild(style);
+                    this.styleElement = style;
                 }));
+
+            promises.push(import(`/${this.path}/run.mjs`)
+                .then((module) => {
+                    this.run = module;
+                }));
+
+            this.loadPromise =
+                Promise.all(promises)
+                    .then(() => {
+                        if (this.run.onLoad)
+                            this.run.onLoad();
+                    })
+                    .catch((err) => {
+                        console.error(`compoment ${this.path} load failed`, err);
+                    });
         }
-        if (this.run == null) {
-            // TODO
-        }
-        return Promise.all(promises).catch((err) => {
-            console.error(`compoment ${this.path} load failed`, err);
-        });
+        return this.loadPromise;
     }
 
     render() {
-        return this.load().then(() => {
-            let root = document.createElement("div");
-
-            let style = document.createElement("style");
-            style.innerHTML = this.style;
-            root.appendChild(style);
-
-            let template = document.createElement("div");
-            template.innerHTML = this.template;
-            root.appendChild(template);
-
-            return root;
-        });
+        return this.load()
+            .then(() => {
+                let template = this.template.firstChild.cloneNode(true);
+                if (this.run.onRender)
+                    this.run.onRender(template);
+                return template;
+            });
     }
 }
 

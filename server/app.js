@@ -9,7 +9,6 @@ const fs = require('fs');
 const url = require("url");
 const path = require('path');
 
-
 // logging
 
 function formatLog(level, msg) {
@@ -24,8 +23,19 @@ function logInfo(msg) {
     console.log(formatLog(`INFO `, msg));
 }
 
+function logWarning(msg) {
+    console.warn(formatLog(`WARN `, msg));
+}
+
 function logError(msg) {
     console.error(formatLog(`ERROR`, msg));
+}
+
+// configuration
+
+const isDev = process.argv.length > 2 && process.argv[2] == "dev";
+if (isDev) {
+    logWarning(`dev environnement enabled`);
 }
 
 // http
@@ -58,25 +68,31 @@ function sendFile(pathname, response) {
         let mime = mimeMap.get(ext);
         if (mime)
             response.setHeader("Content-Type", mimeMap.get(ext));
-
-        response.setHeader("Cache-Control", "public,max-age=0");
+        if (!isDev)
+            response.setHeader("Cache-Control", "public,max-age=3600");
         response.writeHead(200);
         response.end(data);
     });
 }
 
+const sendIndex = (response) => { sendFile("static/index.html", response) };
+
+const route = new Map();
+route.set("/", sendIndex);
+route.set("/index", sendIndex);
+route.set("/index.html", sendIndex);
+route.set("/peers", sendIndex);
+route.set("/peers.html", sendIndex);
+route.set("/dev", sendIndex);
+route.set("/dev.html", sendIndex);
+
 const server = http.createServer(function (request, response) {
     var pathname = url.parse(request.url).pathname;
-    // serve static files
-    if (pathname == "/" || pathname == "/index.html") {
-        sendFile("static/index.html", response);
-    } else if (pathname == "/peers" || pathname == "/peers.html") {
-        sendFile("static/index.html", response);
-    } else if (pathname == "/dev" || pathname == "/dev.html") {
-        sendFile("static/index.html", response);
-    } else {
+    let handler = route.get(pathname);
+    if (handler)
+        handler(response);
+    else
         sendFile("./static/" + pathname, response);
-    }
     logInfo(`${response.statusCode} ${request.url}`);
 });
 server.listen(port, function () {

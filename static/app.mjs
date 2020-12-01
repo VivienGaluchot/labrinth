@@ -24,6 +24,7 @@ const pageNotFound = {
 
 const router = new Map();
 router.set("/", pageHome);
+router.set("/index", pageHome);
 router.set("/index.html", pageHome);
 router.set("/peers", pagePeers);
 router.set("/peers.html", pagePeers);
@@ -36,10 +37,14 @@ function getPage(url) {
 // generic render
 const genericRender = (page) => {
     // cleanup content
+    let toRemove = [];
     for (let el of document.getElementById("js-main").children) {
         if (!el.classList.contains("placeholder")) {
-            el.remove();
+            toRemove.push(el);
         }
+    }
+    for (let el of toRemove) {
+        el.remove();
     }
     // links
     for (const link of document.getElementsByClassName("js-local-link")) {

@@ -1,11 +1,11 @@
 "use strict";
 
 function onLoad() {
-    console.log("onLoad");
+    console.log("component loaded");
 }
 
 function onRender(element) {
-    console.log("onRender");
+    console.log("component rendered", element);
 }
 
 export { onLoad, onRender }

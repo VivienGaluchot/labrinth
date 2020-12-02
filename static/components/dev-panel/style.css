@@ -1,4 +1,15 @@
-.test {
-    padding: 2rem;
-    font-size: large;
+.dev-panel {
+    min-width: 100%;
+    flex-grow: 1;
+    padding: 1rem;
 }
+
+.dev-panel .top-bar {
+    border-bottom: 1px solid #FFFFFF44;
+    font-size: small;
+    color: #FFFFFF44;
+    display: flex;
+    justify-content: space-between;
+}
+
+.dev-panel h2 {}

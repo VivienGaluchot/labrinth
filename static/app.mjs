@@ -1,11 +1,11 @@
 'use strict';
 
 // p2p
-import * as P2p from './lib/p2p.mjs';
+import * as P2p from '/lib/p2p.mjs';
 const localEndpoint = P2p.LocalEndpoint.generate();
 
 // components
-import * as Components from './lib/components.mjs';
+import * as Components from '/lib/components.mjs';
 
 // basic pages
 const pageHome = {
@@ -16,7 +16,7 @@ const pagePeers = {
 };
 const pageDev = {
     "title": "Labrinth | Dev",
-    "component": new Components.Component("./components/dev-panel"),
+    "component": Components.storage.get("/components/dev-panel"),
 };
 const pageNotFound = {
     "title": "Labrinth | Not found"
@@ -41,6 +41,8 @@ const genericRender = (page) => {
     for (let el of document.getElementById("js-main").children) {
         if (!el.classList.contains("placeholder")) {
             toRemove.push(el);
+        } else {
+            el.classList.remove("js-hidden");
         }
     }
     for (let el of toRemove) {
@@ -67,8 +69,13 @@ const genericRender = (page) => {
     }
     // component
     if (page.component) {
-        page.component.render()
+        page.component.render(null)
             .then((element) => {
+                for (let el of document.getElementById("js-main").children) {
+                    if (el.classList.contains("placeholder")) {
+                        el.classList.add("js-hidden");
+                    }
+                }
                 document.getElementById("js-main").appendChild(element);
             });
     }

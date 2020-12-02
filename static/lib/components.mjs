@@ -4,11 +4,40 @@
 
 "use strict";
 
+class Storage {
+    constructor() {
+        this.components = new Map();
+    }
+
+    get(path) {
+        if (!this.components.get(path)) {
+            this.components.set(path, new Component(path));
+        }
+        return this.components.get(path);
+    }
+}
+
+const storage = new Storage();
+
+function bootstrap(element, src) {
+    for (let sub of element.querySelectorAll("component")) {
+        let path = sub.dataset["path"];
+        if (path) {
+            storage.get(path).render(null)
+                .then((element) => {
+                    sub.replaceWith(element);
+                });
+        } else {
+            console.warn("data-path attribute missing in component imported from", src);
+        }
+    }
+}
+
 class Component {
     constructor(path) {
         this.path = path;
         this.template = null;
-        this.run = null;
+        this.module = null;
         this.styleElement = null;
         this.loadPromise = null;
     }
@@ -23,11 +52,10 @@ class Component {
                     return response.text();
                 })
                 .then((response) => {
-                    // var parser = new DOMParser();
-                    // this.template = parser.parseFromString(response, 'text/html');
                     var range = document.createRange();
                     range.selectNode(document.body);
                     this.template = range.createContextualFragment(response);
+                    this.template = this.template.querySelector("component").firstElementChild;
                 }));
 
             promises.push(fetch(`${this.path}/style.css`)
@@ -42,16 +70,16 @@ class Component {
                     this.styleElement = style;
                 }));
 
-            promises.push(import(`/${this.path}/run.mjs`)
+            promises.push(import(`${this.path}/main.mjs`)
                 .then((module) => {
-                    this.run = module;
+                    this.module = module;
                 }));
 
             this.loadPromise =
                 Promise.all(promises)
                     .then(() => {
-                        if (this.run.onLoad)
-                            this.run.onLoad();
+                        if (this.module.onLoad)
+                            this.module.onLoad();
                     })
                     .catch((err) => {
                         console.error(`compoment ${this.path} load failed`, err);
@@ -60,15 +88,16 @@ class Component {
         return this.loadPromise;
     }
 
-    render() {
+    render(ctx) {
         return this.load()
             .then(() => {
-                let template = this.template.firstChild.cloneNode(true);
-                if (this.run.onRender)
-                    this.run.onRender(template);
-                return template;
+                let element = this.template.cloneNode(true);
+                if (this.module.onRender)
+                    this.module.onRender(element, ctx);
+                bootstrap(element, this.path);
+                return element;
             });
     }
 }
 
-export { Component }
+export { storage }

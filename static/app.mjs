@@ -1,9 +1,5 @@
 'use strict';
 
-// p2p
-import * as P2p from '/lib/p2p.mjs';
-const localEndpoint = P2p.LocalEndpoint.generate();
-
 // components
 import * as Components from '/lib/components.mjs';
 
@@ -51,20 +47,21 @@ const genericRender = (page) => {
     // links
     for (const link of document.getElementsByClassName("js-local-link")) {
         if (getPage(new URL(link.href)) == page) {
-            link.classList.add("active");
+            link.classList.add("is-active");
         } else {
-            link.classList.remove("active");
+            link.classList.remove("is-active");
         }
     }
     // sidebar
     for (const el of document.getElementsByClassName("sidebar")) {
-        el.classList.remove("active");
+        el.classList.remove("is-active");
     }
     for (const btn of document.getElementsByClassName("sidebar-toggle")) {
         btn.onclick = () => {
             for (const el of document.getElementsByClassName("sidebar")) {
-                el.classList.toggle("active");
+                el.classList.toggle("is-active");
             }
+            btn.classList.toggle("is-active");
         };
     }
     // component
@@ -124,3 +121,17 @@ for (const link of document.getElementsByClassName("js-local-link")) {
 
 // render the current page
 renderPage(window.location.href);
+
+// service worker
+navigator.serviceWorker.register('/sw.js', { scope: '/' })
+    .then((reg) => {
+        if (reg.installing) {
+            console.log('service worker installing');
+        } else if (reg.waiting) {
+            console.log('service worker installed');
+        } else if (reg.active) {
+            console.log('service worker active');
+        }
+    }).catch((error) => {
+        console.warn('service worker registration failed', error);
+    });

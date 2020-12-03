@@ -1,5 +1,5 @@
 .dev-panel {
-    min-width: 100%;
+    width: 100%;
     flex-grow: 1;
     padding: 1rem;
 }
@@ -11,5 +11,3 @@
     display: flex;
     justify-content: space-between;
 }
-
-.dev-panel h2 {}

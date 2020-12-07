@@ -303,7 +303,7 @@ footer {
 .main .placeholder.loading {
     color: #00000040;
     text-align: center;
-    animation: showPlaceholder 100ms ease-in-out forwards;
+    animation: showPlaceholder 1000ms ease-in-out forwards;
 }
 
 /* js */

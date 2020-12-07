@@ -30,20 +30,46 @@ function getPage(url) {
     return router.get(url.pathname);
 }
 
-// generic render
-const genericRender = (page) => {
-    // cleanup content
+// index page management
+
+function showPlaceholder(activeClass) {
+    for (let el of document.getElementById("js-main").children) {
+        if (el.classList.contains("placeholder")) {
+            if (el.classList.contains(activeClass)) {
+                el.classList.remove("js-hidden");
+            } else {
+                el.classList.add("js-hidden");
+            }
+        }
+    }
+}
+
+function resetContent() {
     let toRemove = [];
     for (let el of document.getElementById("js-main").children) {
         if (!el.classList.contains("placeholder")) {
             toRemove.push(el);
-        } else {
-            el.classList.remove("js-hidden");
         }
     }
     for (let el of toRemove) {
         el.remove();
     }
+    showPlaceholder("empty");
+}
+
+function setContent(element) {
+    resetContent();
+    for (let el of document.getElementById("js-main").children) {
+        if (el.classList.contains("placeholder")) {
+            el.classList.add("js-hidden");
+        }
+    }
+    document.getElementById("js-main").appendChild(element);
+}
+
+// generic render
+function genericRender(page) {
+    resetContent();
     // links
     for (const link of document.getElementsByClassName("js-local-link")) {
         if (getPage(new URL(link.href)) == page) {
@@ -66,15 +92,8 @@ const genericRender = (page) => {
     }
     // component
     if (page.component) {
-        page.component.render(null)
-            .then((element) => {
-                for (let el of document.getElementById("js-main").children) {
-                    if (el.classList.contains("placeholder")) {
-                        el.classList.add("js-hidden");
-                    }
-                }
-                document.getElementById("js-main").appendChild(element);
-            });
+        showPlaceholder("loading");
+        page.component.render(null).then(setContent);
     }
 }
 
@@ -87,7 +106,9 @@ function renderPage(href, ctx) {
         page = pageNotFound;
     }
     document.title = page.title;
-    document.getElementById("js-page-url").innerText = url.pathname;
+    for (let el of document.getElementsByClassName("js-page-url")) {
+        el.innerText = url.pathname;
+    }
     genericRender(page);
 }
 

@@ -177,6 +177,7 @@ footer {
     display: flex;
     flex-direction: column;
     padding: .5rem;
+    z-index: 100;
 }
 
 .sidebar>* {
@@ -269,24 +270,78 @@ footer {
 }
 
 .main .placeholder {
-    color: #00000033;
+    color: #00000035;
     font-size: xx-large;
     font-weight: bolder;
     user-select: none;
 }
 
 .main .placeholder .url {
-    font-size: large;
     font-weight: normal;
+}
+
+.main .placeholder.empty .url {
+    font-size: large;
+}
+
+.main .placeholder.loading>div {
+    margin: 2rem;
+}
+
+@keyframes showPlaceholder {
+    0% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.main .placeholder.loading {
+    color: #00000040;
+    text-align: center;
+    animation: showPlaceholder 100ms ease-in-out forwards;
 }
 
 /* js */
 
 .js-hidden {
-    display: none;
+    display: none !important;
 }
 
 .test {
     padding: 2rem;
     font-size: small;
+}
+
+/* loading */
+
+.lds-dual-ring {
+    display: inline-block;
+    width: 80px;
+    height: 80px;
+}
+
+.lds-dual-ring:after {
+    content: " ";
+    display: block;
+    width: 64px;
+    height: 64px;
+    margin: 8px;
+    border-radius: 50%;
+    border: 6px solid #00000040;
+    border-color: #00000040 transparent #00000040 transparent;
+    animation: lds-dual-ring 1.2s linear infinite;
+}
+
+@keyframes lds-dual-ring {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }

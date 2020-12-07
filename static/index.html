@@ -39,10 +39,18 @@
         </div>
 
         <content id="js-main" class="main">
-            <div class="placeholder">
-                <span id="js-page-url" class="url"></span>
+            <div class="placeholder empty">
+                <span class="url js-page-url"></span>
                 <br>
                 Nothing here ...
+            </div>
+            <div class="placeholder loading">
+                <div>
+                    Loading <span class="url js-page-url"></span> ...
+                </div>
+                <div>
+                    <div class="lds-dual-ring"></div>
+                </div>
             </div>
         </content>
     </div>

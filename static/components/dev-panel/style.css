@@ -1,7 +1,7 @@
 .dev-panel {
     width: 100%;
     flex-grow: 1;
-    padding: 1rem;
+    padding: 2rem;
 }
 
 .dev-panel .top-bar {

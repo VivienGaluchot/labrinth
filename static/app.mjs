@@ -93,7 +93,11 @@ function genericRender(page) {
     // component
     if (page.component) {
         showPlaceholder("loading");
-        page.component.render(null).then(setContent);
+        page.component.render(null)
+            .then(setContent)
+            .catch((err) => {
+                showPlaceholder("empty");
+            });
     }
 }
 
@@ -144,15 +148,17 @@ for (const link of document.getElementsByClassName("js-local-link")) {
 renderPage(window.location.href);
 
 // service worker
-navigator.serviceWorker.register('/sw.js', { scope: '/' })
-    .then((reg) => {
-        if (reg.installing) {
-            console.log('service worker installing');
-        } else if (reg.waiting) {
-            console.log('service worker installed');
-        } else if (reg.active) {
-            console.log('service worker active');
-        }
-    }).catch((error) => {
-        console.warn('service worker registration failed', error);
-    });
+if (navigator.serviceWorker) {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' })
+        .then((reg) => {
+            if (reg.installing) {
+                console.log('service worker installing');
+            } else if (reg.waiting) {
+                console.log('service worker installed');
+            } else if (reg.active) {
+                console.log('service worker active');
+            }
+        }).catch((error) => {
+            console.warn('service worker registration failed', error);
+        });
+}

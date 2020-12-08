@@ -5,6 +5,7 @@
             <component data-path="/components/clock"></component>
             <span>dev-panel</span>
         </div>
+
         <h2>P2P identification</h2>
         <table>
             <thead>
@@ -26,12 +27,38 @@
                 </tr>
             </tbody>
         </table>
-        <h2>Data</h2>
+
+        <h2>Local storage</h2>
         <p>
-            Delete all the stored data.
+            Private data stored on your device.
         </p>
         <div>
+            <button class="btn-refresh">Refresh</button>
             <button class="btn-clear">Clear</button>
         </div>
+        <table>
+            <thead>
+                <th>Module</th>
+                <th>Key</th>
+                <th>Value</th>
+            </thead>
+            <tbody class="local-storage-tbody">
+            </tbody>
+        </table>
+
+        <h2>Server</h2>
+        <p>
+            Server connection status.
+        </p>
+
+        <h2>Service worker</h2>
+        <p>
+            WIP
+        </p>
+
+        <h2>Components</h2>
+        <p>
+            WIP
+        </p>
     </div>
 </component>

@@ -96,6 +96,8 @@ class Component {
                     this.module.onRender(element, ctx);
                 bootstrap(element, this.path);
                 return element;
+            }).catch((err) => {
+                console.error(`compoment ${this.path} render failed`, err);
             });
     }
 }

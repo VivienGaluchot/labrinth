@@ -30,6 +30,22 @@ function clear() {
     localStorage.clear();
 }
 
+function* all() {
+    for (let key of Object.keys(localStorage)) {
+        let keyObject;
+        try {
+            keyObject = JSON.parse(key);
+        } catch (error) {
+            keyObject = null;
+        }
+        if (keyObject?.module && keyObject?.key) {
+            yield [keyObject.module, keyObject.key, localStorage.getItem(key)];
+        } else {
+            yield [null, key, localStorage.getItem(key)];
+        }
+    }
+}
+
 class ModularStorage {
     constructor(module) {
         this.module = module;
@@ -48,4 +64,4 @@ class ModularStorage {
     }
 }
 
-export { set, get, remove, clear, ModularStorage }
+export { set, get, remove, clear, ModularStorage, all }

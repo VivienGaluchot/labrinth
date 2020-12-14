@@ -35,7 +35,12 @@ class WebSocketChannel extends Channel {
     }
 
     connect(handler) {
-        this.close();
+        // TODO improve in order to fire onclose on handler
+        // and avoid reconnecting loop
+        if (this.socket != null) {
+            this.socket.onclose = null;
+            this.socket.close();
+        }
         let socket = new WebSocket(this.url, this.protocols);
         socket.onopen = () => {
             this.hasOpened = true;
@@ -45,12 +50,11 @@ class WebSocketChannel extends Channel {
             handler.onmessage(event.data);
         };
         socket.onclose = (event) => {
-            socket.onclose = null;
             if (this.hasOpened) {
                 handler.onclose(event);
             }
             this.hasOpened = false;
-            if (this.reconnect) {
+            if (event.code != 1000 && this.reconnect) {
                 console.debug("websocket reconnecting");
                 this.connect(handler);
             }
@@ -59,13 +63,6 @@ class WebSocketChannel extends Channel {
             socket.send(data)
         };
         this.socket = socket;
-    }
-
-    close() {
-        if (this.socket != null) {
-            this.socket.onclose = null;
-            this.socket.close();
-        }
     }
 }
 

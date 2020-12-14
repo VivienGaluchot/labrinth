@@ -147,7 +147,7 @@ function originIsAllowed(origin) {
         return true;
     if (origin == "http://localhost:8080")
         return true;
-    if (origin == "http://vga-labrinth.herokuapp.com:8080")
+    if (origin == "https://vga-labrinth.herokuapp.com")
         return true;
     return false;
 }

@@ -4,8 +4,22 @@ import * as P2p from '/lib/p2p.mjs';
 import * as Storage from '/lib/storage.mjs';
 import { FNode } from '/lib/fdom.mjs';
 
+import * as Channel from '/lib/channel.mjs';
 
-function onLoad() { }
+
+let wsUrl = new URL(window.location.href);
+if (wsUrl.protocol == "http:") {
+    wsUrl.protocol = "ws:";
+} else {
+    wsUrl.protocol = "wss:";
+}
+wsUrl.pathname = "/peer-discovery";
+let ws = new Channel.WebSocketChannel(wsUrl.href, "peer-discovery", true);
+
+
+function onLoad() {
+
+}
 
 function populateLocalStorageTbody(element) {
     while (element.firstChild) {
@@ -25,6 +39,17 @@ function populateLocalStorageTbody(element) {
 
 function onRender(element, ctx) {
     // Server
+    let serverStatus = element.querySelector(".server-con-status");
+    serverStatus.innerText = "closed";
+
+    let handler = new Channel.Handler();
+    handler.onopen = () => {
+        serverStatus.innerText = "opened";
+    };
+    handler.onclose = () => {
+        serverStatus.innerText = "closed";
+    };
+    ws.connect(handler);
 
     // P2P identification
     let user = element.querySelector(".p2p-local-user");

@@ -135,18 +135,19 @@ let set = new PeerSet();
 
 // web socket
 
-/*
 const wsServer = new WebSocketServer({
     httpServer: server,
     autoAcceptConnections: false,
-    path: "/ws",
+    path: "/peer-discovery",
 });
 
 function originIsAllowed(origin) {
-    logInfo("connection origin " + origin);
+    logDebug("connection origin " + origin);
     if (origin == "http://127.0.0.1:8080")
         return true;
     if (origin == "http://localhost:8080")
+        return true;
+    if (origin == "http://vga-labrinth.herokuapp.com:8080")
         return true;
     return false;
 }
@@ -160,8 +161,7 @@ wsServer.on('request', function (request) {
     }
 
     try {
-        let connection = request.accept('tileak-signaling', request.origin);
-        connection.id = null;
+        let connection = request.accept('peer-discovery', request.origin);
         connection.on('message', message => {
             if (message.type === 'binary') {
                 logError(`received binary message of ${message.binaryData.length} bytes`);
@@ -171,40 +171,19 @@ wsServer.on('request', function (request) {
                 logError(`received non utf8 message of type ${message.type}`);
             }
 
-            let data = JSON.parse(message.utf8Data);
-            if (data.id != undefined) {
-                if (connection.id != null) {
-                    logError(`connection with id '${connection.id}' already registered`);
-                    return;
-                }
-                set.register(data.id, connection);
+            logDebug("websocket utf8 data received : " + message.utf8Data);
+            // connection.sendUTF(message.utf8Data);
+            // let data = JSON.parse(message.utf8Data);
+            // if (data.id != undefined) {
 
-            } else if (data.to != undefined && data.data != undefined) {
-                let src = connection;
-                let dst = set.getConnection(data.to);
-                let payload = data.data;
-                if (!dst) {
-                    logError(`cant forward to '${data.to}', dst not known`);
-                    return;
-                }
-                if (src.id == null) {
-                    logError(`prevent forward to '${data.to}', src not identified`);
-                    return;
-                }
-                logDebug(`forward from '${src.id}'to '${dst.id}' '${JSON.stringify(payload)}'`);
-
-                dst.sendUTF(JSON.stringify({ from: src.id, data: payload }));
-            } else {
-                logError(`unexpected data received ${JSON.stringify(data)}`);
-            }
+            // } else {
+            //     logError(`unexpected data received ${JSON.stringify(data)}`);
+            // }
         });
         connection.on('close', (reasonCode, description) => {
-            if (connection.id) {
-                set.unregister(connection.id);
-            }
+            logDebug("websocket connection closed, " + reasonCode + ": " + description);
         });
     } catch (error) {
         logError(error);
     }
 });
-*/

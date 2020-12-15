@@ -1,7 +1,5 @@
 "use strict";
 
-function onLoad() { }
-
 function onRender(element, ctx) {
     let update = () => {
         element.innerText = new Date().toLocaleTimeString();
@@ -10,4 +8,4 @@ function onRender(element, ctx) {
     update();
 }
 
-export { onLoad, onRender }
+export { onRender }

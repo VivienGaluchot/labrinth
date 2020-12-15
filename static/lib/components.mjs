@@ -78,8 +78,7 @@ class Component {
             this.loadPromise =
                 Promise.all(promises)
                     .then(() => {
-                        if (this.module.onLoad)
-                            this.module.onLoad();
+                        console.log(`compoment ${this.path} loaded`);
                     })
                     .catch((err) => {
                         console.error(`compoment ${this.path} load failed`, err);

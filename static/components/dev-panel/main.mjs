@@ -14,12 +14,10 @@ if (wsUrl.protocol == "http:") {
     wsUrl.protocol = "wss:";
 }
 wsUrl.pathname = "/peer-discovery";
+
 let ws = new Channel.WebSocketChannel(wsUrl.href, "peer-discovery", true);
+ws.connect();
 
-
-function onLoad() {
-
-}
 
 function populateLocalStorageTbody(element) {
     while (element.firstChild) {
@@ -40,16 +38,24 @@ function populateLocalStorageTbody(element) {
 function onRender(element, ctx) {
     // Server
     let serverStatus = element.querySelector(".server-con-status");
-    serverStatus.innerText = "closed";
+    let showState = (state) => {
+        serverStatus.classList.remove(...serverStatus.classList);
+        if (state == Channel.State.CLOSED) {
+            serverStatus.classList.add("failure");
+        } else if (state == Channel.State.CONNECTING) {
+            serverStatus.classList.add("warning");
+        } else if (state == Channel.State.CONNECTED) {
+            serverStatus.classList.add("success");
+        }
+        serverStatus.innerText = state;
+    };
+    ws.onStateUpdate = (state) => {
+        showState(state);
+    };
+    showState(ws.state);
 
-    let handler = new Channel.Handler();
-    handler.onopen = () => {
-        serverStatus.innerText = "opened";
-    };
-    handler.onclose = () => {
-        serverStatus.innerText = "closed";
-    };
-    ws.connect(handler);
+    element.querySelector(".btn-connect").onclick = () => { ws.connect(); };
+    element.querySelector(".btn-close").onclick = () => { ws.close(); };
 
     // P2P identification
     let user = element.querySelector(".p2p-local-user");
@@ -77,4 +83,4 @@ function onRender(element, ctx) {
     };
 }
 
-export { onLoad, onRender }
+export { onRender }

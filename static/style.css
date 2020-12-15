@@ -357,3 +357,30 @@ footer {
         transform: rotate(360deg);
     }
 }
+
+/* flavours */
+
+code.error, code.failure {
+    color: hsl(345, 77%, 76%);
+    background-color: hsla(345, 77%, 76%, 0.1);
+}
+
+code.warning {
+    color: hsl(64, 77%, 76%);
+    background-color: hsla(64, 77%, 76%, 0.1);
+}
+
+code.debug {
+    color: hsl(251, 77%, 76%);
+    background-color: hsla(251, 77%, 76%, 0.1);
+}
+
+code.info {
+    color: hsl(207, 77%, 76%);
+    background-color: hsla(207, 77%, 76%, 0.1);
+}
+
+code.verbose, code.success {
+    color: hsl(145, 77%, 76%);
+    background-color: hsla(145, 77%, 76%, 0.1);
+}

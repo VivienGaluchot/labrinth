@@ -4,66 +4,92 @@
 
 "use strict";
 
+
+const State = {
+    CLOSED: 'closed',
+    CONNECTING: 'connecting',
+    CONNECTED: 'connected'
+}
+
+
 /**
  * A channel is reliable when frame can't be lost and are received in order
  * via a retransmission mechanism.
  */
 class Channel {
-    constructor(isReliable) {
+    constructor(name, isReliable) {
+        this.name = name;
         this.isReliable = isReliable;
-    }
-}
+        this.state = State.CLOSED;
 
-class Handler {
-    constructor() {
-        this.onopen = () => { console.debug("default onopen"); };
-        this.onmessage = (data) => { console.debug("default onmessage", data); };
-        this.send = (data) => { console.debug("default send", data) };
-        this.onclose = (event) => { console.debug("default onclose", event); };
+        // API services
+        this.onStateUpdate = (state) => { console.debug(`${this.name} unset onStateUpdate`); };
+        this.onopen = () => { console.debug(`${this.name} unset onopen`); };
+        this.onmessage = (data) => { console.debug(`${this.name} unset onmessage`); };
+        this.send = (data) => { console.warning(`${this.name} unset send`) };
+        this.onclose = (event) => { console.debug(`${this.name} unset onclose`); };
+    }
+
+    // internal
+
+    setState(state) {
+        if (state != this.state) {
+            this.state = state;
+            this.onStateUpdate(state);
+        }
     }
 }
 
 class WebSocketChannel extends Channel {
     constructor(url, protocols, reconnect) {
-        super(true);
+        super(`${url}`, true);
         this.url = url;
         this.protocols = protocols;
         this.reconnect = reconnect;
-
+        this.isReconnectFused = false;
         this.socket = null;
-        this.hasOpened = false;
     }
 
-    connect(handler) {
-        // TODO improve in order to fire onclose on handler
-        // and avoid reconnecting loop
+    connect() {
         if (this.socket != null) {
-            this.socket.onclose = null;
-            this.socket.close();
+            console.warn(`channel ${this.name} already connected`);
+            return;
         }
-        let socket = new WebSocket(this.url, this.protocols);
-        socket.onopen = () => {
-            this.hasOpened = true;
-            handler.onopen();
+        this.socket = new WebSocket(this.url, this.protocols);
+        this.socket.onopen = () => {
+            this.send = (data) => {
+                this.socket.send(data)
+            };
+            this.setState(State.CONNECTED);
+            this.onopen();
         };
-        socket.onmessage = (event) => {
-            handler.onmessage(event.data);
+        this.socket.onmessage = (event) => {
+            this.onmessage(event.data);
         };
-        socket.onclose = (event) => {
-            if (this.hasOpened) {
-                handler.onclose(event);
+        this.socket.onclose = (event) => {
+            if (this.state == State.CONNECTED) {
+                this.onclose(event);
             }
-            this.hasOpened = false;
-            if (event.code != 1000 && this.reconnect) {
+            this.setState(State.CLOSED);
+            this.socket = null;
+            this.send = null;
+            if (!this.isReconnectFused && this.reconnect) {
                 console.debug("websocket reconnecting");
-                this.connect(handler);
+                this.close();
+                this.connect();
             }
         };
-        handler.send = (data) => {
-            socket.send(data)
-        };
-        this.socket = socket;
+        this.isReconnectFused = false;
+        this.setState(State.CONNECTING);
+    }
+
+    close() {
+        if (this.socket) {
+            this.isReconnectFused = true;
+            this.socket.close();
+            this.socket = null;
+        }
     }
 }
 
-export { WebSocketChannel, Handler }
+export { WebSocketChannel, State }

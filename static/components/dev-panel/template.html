@@ -8,7 +8,7 @@
 
         <h2>Server</h2>
         <p>
-            Websocket channel state <code class="server-con-status">unset</code>
+            Websocket channel is <code class="server-con-status">-</code>.
         </p>
         <div>
             <button class="btn-connect">Connect</button>
@@ -24,15 +24,15 @@
             <tbody>
                 <tr>
                     <td>Local user</td>
-                    <td><code class="p2p-local-user">unset</code></td>
+                    <td><code class="p2p-local-user">-</code></td>
                 </tr>
                 <tr>
                     <td>Local device</td>
-                    <td><code class="p2p-local-device">unset</code>
+                    <td><code class="p2p-local-device">-</code>
                 </tr>
                 <tr>
                     <td>Local session</td>
-                    <td><code class="p2p-local-session">unset</code></td>
+                    <td><code class="p2p-local-session">-</code></td>
                 </tr>
             </tbody>
         </table>
@@ -54,6 +54,17 @@
             <tbody class="local-storage-tbody">
             </tbody>
         </table>
+
+        <h2>WebRTC</h2>
+        <p>
+            Try to generate a local offer
+        </p>
+        <p>
+            <code class="webrtc-offer">-</code>
+        </p>
+        <div>
+            <button class="btn-gen-offer">Generate</button>
+        </div>
 
         <h2>Service worker</h2>
         <p>

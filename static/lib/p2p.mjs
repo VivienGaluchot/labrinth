@@ -10,6 +10,20 @@ import * as Storage from './storage.mjs';
 
 const storage = new Storage.ModularStorage("p2p");
 
+
+const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+
+function offer() {
+    return new Promise((resolve, reject) => {
+        let pc = new RTCPeerConnection(config);
+        pc.onicecandidate = (event) => {
+            resolve(pc);
+        };
+        pc.setLocalDescription();
+    });
+};
+
+
 class Endpoint {
     constructor(user, device, session) {
         // identify a user
@@ -58,4 +72,4 @@ class RemoteEndpoint extends Endpoint {
 
 const localEndpoint = LocalEndpoint.generate();
 
-export { localEndpoint }
+export { localEndpoint, offer }

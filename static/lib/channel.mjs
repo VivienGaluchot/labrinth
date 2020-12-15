@@ -23,11 +23,11 @@ class Channel {
         this.state = State.CLOSED;
 
         // API services
-        this.onStateUpdate = (state) => { console.debug(`${this.name} unset onStateUpdate`); };
-        this.onopen = () => { console.debug(`${this.name} unset onopen`); };
-        this.onmessage = (data) => { console.debug(`${this.name} unset onmessage`); };
+        this.onStateUpdate = (state) => { };
+        this.onopen = () => { };
+        this.onmessage = (data) => { console.warning(`${this.name} unset onmessage`); };
         this.send = (data) => { console.warning(`${this.name} unset send`) };
-        this.onclose = (event) => { console.debug(`${this.name} unset onclose`); };
+        this.onclose = (event) => { };
     }
 
     // internal
@@ -35,7 +35,7 @@ class Channel {
     setState(state) {
         if (state != this.state) {
             this.state = state;
-            this.onStateUpdate(state);
+            this.onStateUpdate?.(state);
         }
     }
 }
@@ -61,20 +61,19 @@ class WebSocketChannel extends Channel {
                 this.socket.send(data)
             };
             this.setState(State.CONNECTED);
-            this.onopen();
+            this.onopen?.();
         };
         this.socket.onmessage = (event) => {
-            this.onmessage(event.data);
+            this.onmessage?.(event.data);
         };
         this.socket.onclose = (event) => {
             if (this.state == State.CONNECTED) {
-                this.onclose(event);
+                this.onclose?.(event);
             }
             this.setState(State.CLOSED);
             this.socket = null;
             this.send = null;
             if (!this.isReconnectFused && this.reconnect) {
-                console.debug("websocket reconnecting");
                 this.close();
                 this.connect();
             }

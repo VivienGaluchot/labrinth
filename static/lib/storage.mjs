@@ -9,7 +9,6 @@ function getModularKey(module, key) {
 }
 
 function get(module, key, initialize) {
-    console.debug(module, key, initialize);
     let value = localStorage.getItem(getModularKey(module, key));
     if (value == null && initialize != null) {
         value = initialize();

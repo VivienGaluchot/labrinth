@@ -40,9 +40,7 @@ function onRender(element, ctx) {
     let serverStatus = element.querySelector(".server-con-status");
     let showState = (state) => {
         serverStatus.classList.remove(...serverStatus.classList);
-        if (state == Channel.State.CLOSED) {
-            serverStatus.classList.add("failure");
-        } else if (state == Channel.State.CONNECTING) {
+        if (state == Channel.State.CONNECTING) {
             serverStatus.classList.add("warning");
         } else if (state == Channel.State.CONNECTED) {
             serverStatus.classList.add("success");
@@ -80,6 +78,22 @@ function onRender(element, ctx) {
     let btnRefresh = element.querySelector(".btn-refresh");
     btnRefresh.onclick = () => {
         populateLocalStorageTbody(localStorageTbody);
+    };
+
+    // WebRTC
+    let offerEl = element.querySelector(".webrtc-offer");
+    element.querySelector(".btn-gen-offer").onclick = () => {
+        offerEl.classList.remove(...offerEl.classList);
+        offerEl.innerText = "Offer generation pending";
+        P2p.offer()
+            .then((connection) => {
+                offerEl.innerText = connection.localDescription.sdp;
+                connection.close();
+            }).catch((reason) => {
+                console.error(reason);
+                offerEl.classList.add("failure");
+                offerEl.innerText = "failed";
+            });
     };
 }
 

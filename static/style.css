@@ -240,6 +240,9 @@ footer {
         min-height: 100%;
         position: absolute;
     }
+    .sidebar.is-active+.main {
+        display: none;
+    }
 }
 
 .sidebar-toggle {

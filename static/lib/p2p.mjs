@@ -10,14 +10,28 @@ import * as Storage from './storage.mjs';
 
 const storage = new Storage.ModularStorage("p2p");
 
-
-const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+const config = {
+    iceServers: [{
+        urls: [
+            "stun:stun.l.google.com:19302",
+            "stun:stun1.l.google.com:19302"
+        ]
+    }]
+};
 
 function offer() {
     return new Promise((resolve, reject) => {
         let pc = new RTCPeerConnection(config);
         pc.onicecandidate = (event) => {
-            resolve(pc);
+            if (event.candidate != null && event.candidate.candidate != "") {
+                console.log("ice candidate", event);
+            } else {
+                resolve(pc);
+            }
+        };
+        pc.onicecandidateerror = (error) => {
+            console.warn(error);
+            reject(error);
         };
         pc.setLocalDescription();
     });

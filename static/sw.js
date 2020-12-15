@@ -9,5 +9,5 @@ self.addEventListener('install', (event) => {
 });
 
 this.addEventListener('fetch', (event) => {
-    event.respondWith(fetch(request));
+    event.respondWith(fetch(event.request));
 });

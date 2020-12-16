@@ -16,24 +16,51 @@ const config = {
             "stun:stun.l.google.com:19302",
             "stun:stun1.l.google.com:19302"
         ]
-    }]
+    }],
+    iceTransportPolicy: "all",
+    iceCandidatePoolSize: "0"
 };
 
 function offer() {
     return new Promise((resolve, reject) => {
         let pc = new RTCPeerConnection(config);
         pc.onicecandidate = (event) => {
-            if (event.candidate != null && event.candidate.candidate != "") {
-                console.log("ice candidate", event);
-            } else {
+            if (event.candidate) {
+                if (event.candidate.candidate === '') {
+                    return;
+                }
+                const { candidate } = event;
+                console.info("ice candidate",
+                    candidate.component,
+                    candidate.type,
+                    candidate.foundation,
+                    candidate.protocol,
+                    candidate.address,
+                    candidate.port,
+                    candidate.priority);
+            }
+        };
+        pc.onicegatheringstatechange = (event) => {
+            console.log("onicegatheringstatechange", pc.iceGatheringState);
+            if (pc.iceGatheringState == "complete") {
                 resolve(pc);
             }
         };
-        pc.onicecandidateerror = (error) => {
-            console.warn(error);
-            reject(error);
-        };
-        pc.setLocalDescription();
+
+        const offerOptions = { iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: false };
+        pc.createOffer(offerOptions)
+            .then((desc) => {
+                pc.setLocalDescription(desc)
+                    .then(() => {
+                        console.log("setLocalDescription terminated");
+                    }).catch((error) => {
+                        console.error("setLocalDescription error", error);
+                        reject(error);
+                    });
+            }).catch((error) => {
+                console.error("createOffer offer", error);
+                reject(error);
+            });
     });
 };
 

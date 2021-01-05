@@ -2,6 +2,7 @@
 
 // components
 import * as Components from '/lib/components.mjs';
+customElements.define('lazy-comp', Components.Element);
 
 // basic pages
 const pageHome = {
@@ -12,7 +13,7 @@ const pagePeers = {
 };
 const pageDev = {
     "title": "Labrinth | Dev",
-    "component": Components.storage.get("/components/dev-panel"),
+    "component": "/components/dev-panel",
 };
 const pageNotFound = {
     "title": "Labrinth | Not found"
@@ -57,16 +58,6 @@ function resetContent() {
     showPlaceholder("empty");
 }
 
-function setContent(element) {
-    resetContent();
-    for (let el of document.getElementById("js-main").children) {
-        if (el.classList.contains("placeholder")) {
-            el.classList.add("js-hidden");
-        }
-    }
-    document.getElementById("js-main").appendChild(element);
-}
-
 // generic render
 function genericRender(page) {
     resetContent();
@@ -92,12 +83,17 @@ function genericRender(page) {
     }
     // component
     if (page.component) {
-        showPlaceholder("loading");
-        page.component.render(null)
-            .then(setContent)
-            .catch((err) => {
-                showPlaceholder("empty");
-            });
+        // TODO show loading animation
+        // showPlaceholder("loading");
+        // resetContent();
+
+        for (let el of document.getElementById("js-main").children) {
+            if (el.classList.contains("placeholder")) {
+                el.classList.add("js-hidden");
+            }
+        }
+        document.getElementById("js-main").innerHTML +=
+            `<lazy-comp data-path=\"${page.component}\"></lazy-comp>`;
     }
 }
 

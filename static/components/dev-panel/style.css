@@ -1,10 +1,17 @@
-.dev-panel {
+@import url('/style.css');
+:host {
     width: 100%;
     flex-grow: 1;
     padding: 2rem;
 }
 
-.dev-panel .top-bar {
+@media (max-width: 50rem) {
+    :host {
+        padding: 1rem;
+    }
+}
+
+.top-bar {
     border-bottom: 1px solid #FFFFFF44;
     font-size: small;
     color: #FFFFFF44;

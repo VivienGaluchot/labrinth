@@ -1,8 +1,9 @@
 "use strict";
 
 function onRender(element, ctx) {
+    let clockElement = element.querySelector("#clock");
     let update = () => {
-        element.innerText = new Date().toLocaleTimeString();
+        clockElement.innerText = new Date().toLocaleTimeString();
     };
     setInterval(update, 1000);
     update();

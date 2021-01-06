@@ -22,9 +22,6 @@ const storage = new Storage();
 class Component {
     constructor(path) {
         this.path = path;
-        this.template = null;
-        this.module = null;
-        this.style = null;
         this.loadPromise = null;
     }
 
@@ -40,29 +37,25 @@ class Component {
                 .then((response) => {
                     let range = document.createRange();
                     range.selectNode(document.body);
-                    this.template = range.createContextualFragment(response).firstElementChild;
-                    if (this.template.tagName != "TEMPLATE") {
+                    let template = range.createContextualFragment(response).firstElementChild;
+                    if (template.tagName != "TEMPLATE") {
                         throw new Error("unsupported template node");
                     }
+                    return template;
                 }));
 
             promises.push(fetch(`${this.path}/style.css`)
                 .then((response) => {
                     return response.text();
-                })
-                .then((response) => {
-                    this.style = response;
                 }));
 
-            promises.push(import(`${this.path}/main.mjs`)
-                .then((module) => {
-                    this.module = module;
-                }));
+            promises.push(import(`${this.path}/main.mjs`));
 
             this.loadPromise =
                 Promise.all(promises)
-                    .then(() => {
+                    .then(([template, style, module]) => {
                         console.log(`compoment ${this.path} loaded`);
+                        return [template, style, module];
                     })
                     .catch((err) => {
                         console.error(`compoment ${this.path} load failed`, err);
@@ -70,32 +63,70 @@ class Component {
         }
         return this.loadPromise;
     }
-
-    render(root, ctx) {
-        return this.load()
-            .then(() => {
-                let clone = this.template.content.cloneNode(true);
-                if (this.module.onRender)
-                    this.module.onRender(clone, ctx);
-                let style = document.createElement('style');
-                style.innerHTML = this.style;
-                root.appendChild(style);
-                root.appendChild(clone);
-            }).catch((err) => {
-                console.error(`compoment ${this.path} render failed`, err);
-            });
-    }
 }
 
 class Element extends HTMLElement {
+    static get observedAttributes() {
+        return ["data-path"];
+    }
+
     constructor() {
         super();
-        const shadow = this.attachShadow({ mode: 'open' });
+        this.shadow = this.attachShadow({ mode: "open" });
+        this.moduleComponent = null;
+        this.path = null;
+    }
+
+    // custom component added to page
+    connectedCallback() {
+        this.render();
+    }
+
+    // custom component removed from page
+    disconnectedCallback() {
+        if (this.moduleComponent)
+            this.moduleComponent.onRemove();
+    }
+
+    // custom component moved to new page
+    adoptedCallback() {
+    }
+
+    // custom component attributes changed
+    attributeChangedCallback(name, oldValue, newValue) {
+        if (name == "data-path")
+            this.render();
+    }
+
+    render() {
         let path = this.dataset["path"];
         if (path) {
-            storage.get(path).render(shadow, null);
+            if (this.path != path) {
+                this.path = path;
+                storage.get(path).load().then(([template, style, module]) => {
+                    let clone = template.content.cloneNode(true);
+                    let styleNode = document.createElement('style');
+                    styleNode.textContent = style;
+
+                    while (this.shadow.firstChild != null) {
+                        this.shadow.firstChild.remove();
+                    }
+                    this.shadow.appendChild(styleNode);
+                    this.shadow.appendChild(clone);
+
+                    if (module.Component) {
+                        if (this.moduleComponent)
+                            this.moduleComponent.onRemove();
+                        this.moduleComponent = new module.Component(this.shadow);
+                        this.moduleComponent.onRender();
+                    }
+                });
+            }
         } else {
             console.warn("data-path attribute missing", this);
+            while (this.shadow.firstChild != null) {
+                this.shadow.firstChild.remove();
+            }
         }
     }
 }

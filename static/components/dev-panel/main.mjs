@@ -35,7 +35,7 @@ function populateLocalStorageTbody(element) {
     }
 }
 
-function onRender(element, ctx) {
+function onRender(element) {
     // Server
     let serverStatus = element.querySelector(".server-con-status");
     let showState = (state) => {
@@ -97,4 +97,19 @@ function onRender(element, ctx) {
     };
 }
 
-export { onRender }
+class Component {
+    constructor(element) {
+        this.element = element;
+    }
+
+    onRender() {
+        // TODO move onRender in component to be able to free resources when removed
+        onRender(this.element);
+    }
+
+    onRemove() {
+
+    }
+}
+
+export { Component }

@@ -1,12 +1,24 @@
 "use strict";
 
-function onRender(element, ctx) {
-    let clockElement = element.querySelector("#clock");
-    let update = () => {
-        clockElement.innerText = new Date().toLocaleTimeString();
-    };
-    setInterval(update, 1000);
-    update();
+class Component {
+    constructor(element) {
+        this.clockElement = element.querySelector("#clock");
+        this.interval = null;
+    }
+
+    onRender() {
+        let update = () => {
+            this.clockElement.innerText = new Date().toLocaleTimeString();
+        };
+        this.interval = setInterval(update, 1000);
+        update();
+    }
+
+    onRemove() {
+        if (this.interval) {
+            clearInterval(this.interval);
+        }
+    }
 }
 
-export { onRender }
+export { Component }

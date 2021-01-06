@@ -92,8 +92,9 @@ function genericRender(page) {
                 el.classList.add("js-hidden");
             }
         }
-        document.getElementById("js-main").innerHTML +=
-            `<lazy-comp data-path=\"${page.component}\"></lazy-comp>`;
+        let el = document.createElement("lazy-comp");
+        el.dataset["path"] = page.component;
+        document.getElementById("js-main").appendChild(el);
     }
 }
 

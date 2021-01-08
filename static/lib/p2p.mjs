@@ -29,15 +29,7 @@ function offer() {
                 if (event.candidate.candidate === '') {
                     return;
                 }
-                const { candidate } = event;
-                console.info("ice candidate",
-                    candidate.component,
-                    candidate.type,
-                    candidate.foundation,
-                    candidate.protocol,
-                    candidate.address,
-                    candidate.port,
-                    candidate.priority);
+                console.info("ice candidate", event.candidate.candidate);
             }
         };
         pc.onicegatheringstatechange = (event) => {

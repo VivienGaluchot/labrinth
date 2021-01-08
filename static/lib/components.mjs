@@ -27,7 +27,7 @@ class Component {
 
     load() {
         if (!this.loadPromise) {
-            console.debug(`fetch component ${this.path}`);
+            console.debug(`load component ${this.path}`);
             let promises = [];
 
             promises.push(fetch(`${this.path}/template.html`)
@@ -54,7 +54,7 @@ class Component {
             this.loadPromise =
                 Promise.all(promises)
                     .then(([template, style, module]) => {
-                        console.log(`compoment ${this.path} loaded`);
+                        console.debug(`compoment ${this.path} loaded`);
                         return [template, style, module];
                     })
                     .catch((err) => {

@@ -97,6 +97,50 @@ class Component {
                     offerEl.innerText = "failed";
                 });
         };
+
+        let iceCandidatesEl = this.element.querySelector(".webrtc-ice-candidates-tbody");
+        this.element.querySelector(".btn-gen-ice-candidates").onclick = () => {
+            while (iceCandidatesEl.firstChild) {
+                iceCandidatesEl.firstChild.remove()
+            }
+
+            P2p.getIceCandidates((candidate) => {
+                console.log("candidate", candidate);
+                if (candidate) {
+                    let tr = new FNode("tr")
+                        // Component
+                        .child(new FNode("td")
+                            .child(new FNode("code").text(candidate)));
+
+                    // let tr = new FNode("tr")
+                    //     // Component
+                    //     .child(new FNode("td")
+                    //         .child(new FNode("code").text(candidate)))
+                    //     // Type
+                    //     .child(new FNode("td")
+                    //         .child(new FNode("code").text("")))
+                    //     // Foundation
+                    //     .child(new FNode("td")
+                    //         .child(new FNode("code").text("")))
+                    //     // Protocol
+                    //     .child(new FNode("td")
+                    //         .child(new FNode("code").text("")))
+                    //     // Address
+                    //     .child(new FNode("td")
+                    //         .child(new FNode("code").text("")))
+                    //     // Port
+                    //     .child(new FNode("td")
+                    //         .child(new FNode("code").text("")))
+                    //     // Priority
+                    //     .child(new FNode("td")
+                    //         .child(new FNode("code").text("")));
+
+                    iceCandidatesEl.appendChild(tr.element);
+                } else {
+                    // TODO, add feedback on candidate gathering terminated
+                }
+            });
+        };
     }
 
     onRemove() {

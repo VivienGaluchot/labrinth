@@ -57,15 +57,34 @@
     </table>
 
     <h2>WebRTC</h2>
+    <h3>ICE candidates</h3>
+    <div>
+        <button class="btn-gen-ice-candidates">Gather candidates</button>
+    </div>
+    <table>
+        <thead>
+            <th>Candidate</th>
+            <!-- <th>Component</th>
+            <th>Type</th>
+            <th>Foundation</th>
+            <th>Protocol</th>
+            <th>Address</th>
+            <th>Port</th>
+            <th>Priority</th> -->
+        </thead>
+        <tbody class="webrtc-ice-candidates-tbody">
+        </tbody>
+    </table>
+    <h3>Local offer</h3>
     <p>
-        Try to generate a local offer
-    </p>
-    <p>
-        <code class="webrtc-offer">-</code>
+        Generate a dummy local offer
     </p>
     <div>
         <button class="btn-gen-offer">Generate</button>
     </div>
+    <p>
+        <code class="webrtc-offer">-</code>
+    </p>
 
     <h2>Service worker</h2>
     <p>

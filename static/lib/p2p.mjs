@@ -21,6 +21,34 @@ const config = {
     iceCandidatePoolSize: "0"
 };
 
+function getIceCandidates(onicecandidate) {
+    let pc = new RTCPeerConnection(config);
+    pc.onicecandidate = (event) => {
+        if (event.candidate) {
+            if (event.candidate.candidate === '') {
+                onicecandidate(null);
+            } else {
+                console.info("ice candidate", event.candidate.candidate);
+                // TODO parse event.candidate.candidate fields
+                onicecandidate(event.candidate.candidate);
+            }
+        }
+    };
+
+    const offerOptions = { iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: false };
+    pc.createOffer(offerOptions)
+        .then((desc) => {
+            pc.setLocalDescription(desc)
+                .then(() => {
+                    console.log("setLocalDescription terminated");
+                }).catch((error) => {
+                    console.error("setLocalDescription error", error);
+                });
+        }).catch((error) => {
+            console.error("createOffer error", error);
+        });
+};
+
 function offer() {
     return new Promise((resolve, reject) => {
         let pc = new RTCPeerConnection(config);
@@ -50,12 +78,11 @@ function offer() {
                         reject(error);
                     });
             }).catch((error) => {
-                console.error("createOffer offer", error);
+                console.error("createOffer error", error);
                 reject(error);
             });
     });
 };
-
 
 class Endpoint {
     constructor(user, device, session) {
@@ -105,4 +132,4 @@ class RemoteEndpoint extends Endpoint {
 
 const localEndpoint = LocalEndpoint.generate();
 
-export { localEndpoint, offer }
+export { localEndpoint, offer, getIceCandidates }

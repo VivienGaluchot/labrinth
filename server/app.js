@@ -6,7 +6,7 @@
 const WebSocketServer = require('websocket').server;
 const http = require('http');
 const fs = require('fs');
-const url = require("url");
+const { URL } = require("url");
 const path = require('path');
 
 // logging
@@ -16,19 +16,19 @@ function formatLog(level, msg) {
 }
 
 function logDebug(msg) {
-    console.debug(formatLog(`DEBUG`, msg));
+    console.debug(formatLog(`DEB`, msg));
 }
 
 function logInfo(msg) {
-    console.log(formatLog(`INFO `, msg));
+    console.log(formatLog(`INF`, msg));
 }
 
 function logWarning(msg) {
-    console.warn(formatLog(`WARN `, msg));
+    console.warn(formatLog(`WAR`, msg));
 }
 
 function logError(msg) {
-    console.error(formatLog(`ERROR`, msg));
+    console.error(formatLog(`ERR`, msg));
 }
 
 // configuration
@@ -60,18 +60,18 @@ function sendFile(pathname, response) {
     fs.readFile(pathname, (err, data) => {
         if (err) {
             response.writeHead(404);
-            response.end();
-            logError("can't read file, " + err);
-            return;
+            response.end(`404 - not found`);
+            logError(`can't read ${pathname}, ` + err);
+        } else {
+            let ext = path.extname(pathname);
+            let mime = mimeMap.get(ext);
+            if (mime)
+                response.setHeader("Content-Type", mimeMap.get(ext));
+            if (!isDev)
+                response.setHeader("Cache-Control", "public,max-age=3600");
+            response.writeHead(200);
+            response.end(data);
         }
-        let ext = path.extname(pathname);
-        let mime = mimeMap.get(ext);
-        if (mime)
-            response.setHeader("Content-Type", mimeMap.get(ext));
-        if (!isDev)
-            response.setHeader("Cache-Control", "public,max-age=3600");
-        response.writeHead(200);
-        response.end(data);
     });
 }
 
@@ -87,12 +87,17 @@ route.set("/dev", sendIndex);
 route.set("/dev.html", sendIndex);
 
 const server = http.createServer(function (request, response) {
-    var pathname = url.parse(request.url).pathname;
-    let handler = route.get(pathname);
-    if (handler)
-        handler(response);
-    else
-        sendFile("./static/" + pathname, response);
+    if (!isDev && request.headers['x-forwarded-proto'] != "https") {
+        response.writeHead(301, { "Location": `https://${request.headers['host']}${request.url}` });
+        response.end();
+    } else {
+        let reqUrl = new URL(request.url, `http://${request.headers['host']}`);
+        let handler = route.get(reqUrl.pathname);
+        if (handler)
+            handler(response);
+        else
+            sendFile("./static/" + reqUrl.pathname, response);
+    }
     logInfo(`${response.statusCode} ${request.url}`);
 });
 server.listen(port, function () {
@@ -154,7 +159,6 @@ function originIsAllowed(origin) {
 
 wsServer.on('request', function (request) {
     if (!originIsAllowed(request.origin)) {
-        // Make sure we only accept requests from an allowed origin
         request.reject();
         logError(`connection from origin '${request.origin}' rejected.`);
         return;
@@ -177,7 +181,7 @@ wsServer.on('request', function (request) {
             // if (data.id != undefined) {
 
             // } else {
-            //     logError(`unexpected data received ${JSON.stringify(data)}`);
+            //     logError(`unexpected data received ${ JSON.stringify(data) }`);
             // }
         });
         connection.on('close', (reasonCode, description) => {

@@ -25,8 +25,8 @@ class Channel {
         // API services
         this.onStateUpdate = (state) => { };
         this.onopen = () => { };
-        this.onmessage = (data) => { console.warning(`${this.name} unset onmessage`); };
-        this.send = (data) => { console.warning(`${this.name} unset send`) };
+        this.onmessage = (data) => { console.warn(`${this.name} unset onmessage: ${data}`); };
+        this.send = (data) => { console.warn(`${this.name} unset send: ${data}`) };
         this.onclose = (event) => { };
     }
 

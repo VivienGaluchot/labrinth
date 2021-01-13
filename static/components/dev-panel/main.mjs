@@ -39,6 +39,10 @@ class Component {
 
     onRender() {
         // Server
+        let serverUserCount = this.element.querySelector(".server-user-count");
+        let showCount = (count) => {
+            serverUserCount.innerText = count;
+        };
         let serverStatus = this.element.querySelector(".server-con-status");
         let showState = (state) => {
             serverStatus.classList.remove(...serverStatus.classList);
@@ -48,9 +52,20 @@ class Component {
                 serverStatus.classList.add("success");
             }
             serverStatus.innerText = state;
+            if (state != Channel.State.CONNECTED) {
+                showCount("-");
+            }
         };
         this.ws.onStateUpdate = (state) => {
             showState(state);
+        };
+        this.ws.onmessage = (data) => {
+            let obj = JSON.parse(data);
+            if (obj.user_count) {
+                showCount(obj.user_count);
+            } else {
+                console.warn(obj);
+            }
         };
         showState(this.ws.state);
 

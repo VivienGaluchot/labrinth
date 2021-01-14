@@ -93,7 +93,12 @@ body {
     margin: 0;
     min-height: 100%;
     background-color: #292929;
-    color: #bdbdbd;
+    color: #eeeeee;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #aaaaaa;
+    font-weight: 300;
 }
 
 a {
@@ -233,6 +238,10 @@ footer {
 }
 
 @media (max-width: 50rem) {
+    .sidebar.left {
+        border-right: none;
+        border-bottom: 1px solid #00000048;
+    }
     .sidebar:not(.is-active)>*:not(header) {
         display: none;
     }

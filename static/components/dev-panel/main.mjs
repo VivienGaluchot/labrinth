@@ -154,7 +154,10 @@ class Component {
 
                     iceCandidatesEl.appendChild(tr.element);
                 } else {
-                    // TODO, add feedback on candidate gathering terminated
+                    let tr = new FNode("tr")
+                        // Component
+                        .child(new FNode("td").text("Done"));
+                    iceCandidatesEl.appendChild(tr.element);
                 }
             });
         };

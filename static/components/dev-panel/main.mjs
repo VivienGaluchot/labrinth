@@ -72,6 +72,8 @@ class Component {
         this.element.querySelector(".btn-connect").onclick = () => { this.ws.connect(); };
         this.element.querySelector(".btn-close").onclick = () => { this.ws.close(); };
 
+        this.ws.connect();
+
         // P2P identification
         let user = this.element.querySelector(".p2p-local-user");
         let device = this.element.querySelector(".p2p-local-device");

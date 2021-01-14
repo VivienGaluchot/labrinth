@@ -52,7 +52,7 @@ class WebSocketChannel extends Channel {
 
     connect() {
         if (this.socket != null) {
-            console.warn(`channel ${this.name} already connected`);
+            console.warn(`channel ${this.name} not closed`);
             return;
         }
         this.socket = new WebSocket(this.url, this.protocols);

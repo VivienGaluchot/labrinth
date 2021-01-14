@@ -75,6 +75,10 @@ class Element extends HTMLElement {
         this.shadow = this.attachShadow({ mode: "open" });
         this.moduleComponent = null;
         this.path = null;
+
+        // callback API
+        this.onRender = () => { };
+        this.onRenderError = (error) => { };
     }
 
     // custom component added to page
@@ -103,24 +107,29 @@ class Element extends HTMLElement {
         if (path) {
             if (this.path != path) {
                 this.path = path;
-                storage.get(path).load().then(([template, style, module]) => {
-                    let clone = template.content.cloneNode(true);
-                    let styleNode = document.createElement('style');
-                    styleNode.textContent = style;
+                storage.get(path).load()
+                    .then(([template, style, module]) => {
+                        let clone = template.content.cloneNode(true);
+                        let styleNode = document.createElement('style');
+                        styleNode.textContent = style;
 
-                    while (this.shadow.firstChild != null) {
-                        this.shadow.firstChild.remove();
-                    }
-                    this.shadow.appendChild(styleNode);
-                    this.shadow.appendChild(clone);
+                        while (this.shadow.firstChild != null) {
+                            this.shadow.firstChild.remove();
+                        }
+                        this.shadow.appendChild(styleNode);
+                        this.shadow.appendChild(clone);
 
-                    if (module.Component) {
-                        if (this.moduleComponent)
-                            this.moduleComponent.onRemove();
-                        this.moduleComponent = new module.Component(this.shadow);
-                        this.moduleComponent.onRender();
-                    }
-                });
+                        if (module.Component) {
+                            if (this.moduleComponent)
+                                this.moduleComponent.onRemove();
+                            this.moduleComponent = new module.Component(this.shadow);
+                            this.moduleComponent.onRender();
+                        }
+                        this.onRender();
+                    })
+                    .catch((reason) => {
+                        this.onRenderError(`component load failed: ${reason}`);
+                    });
             }
         } else {
             console.warn("data-path attribute missing", this);

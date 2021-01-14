@@ -32,6 +32,7 @@ code {
     display: inline-block;
     background-color: rgb(149, 200, 241, 0.1);
     padding: 0 .2rem;
+    border-radius: .2rem;
 }
 
 pre code {

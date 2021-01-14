@@ -83,16 +83,19 @@ function genericRender(page) {
     }
     // component
     if (page.component) {
-        // TODO show loading animation
-        // showPlaceholder("loading");
-        // resetContent();
+        resetContent();
+        showPlaceholder("loading");
 
-        for (let el of document.getElementById("js-main").children) {
-            if (el.classList.contains("placeholder")) {
-                el.classList.add("js-hidden");
-            }
-        }
         let el = document.createElement("lazy-comp");
+        el.classList.add("js-hidden");
+        el.onRender = () => {
+            for (let el of document.getElementById("js-main").children) {
+                if (el.classList.contains("placeholder")) {
+                    el.classList.add("js-hidden");
+                }
+            }
+            el.classList.remove("js-hidden");
+        };
         el.dataset["path"] = page.component;
         document.getElementById("js-main").appendChild(el);
     }

@@ -11,6 +11,12 @@
     }
 }
 
+@media (max-width: 30rem) {
+    :host {
+        padding: 0.2rem;
+    }
+}
+
 .top-bar {
     border-bottom: 1px solid #FFFFFF44;
     font-size: small;
@@ -32,8 +38,16 @@
     border: 1px solid #00000044;
     background-color: #FFFFFF05;
     border-radius: .2rem;
-    padding: .8rem;
-    min-width: 20rem
+    padding: 1.5rem;
+}
+
+@media (max-width: 50rem) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+    .block {
+        padding: .8rem;
+    }
 }
 
 .block>h2 {

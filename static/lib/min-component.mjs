@@ -103,10 +103,16 @@ class Element extends HTMLElement {
     }
 
     render() {
+        // TODO get class variable from element tags
+        const errorCssClass = "error";
+        const renderCssClass = "render";
+
+        this.classList.remove(errorCssClass);
+
         let path = this.dataset["path"];
         if (path) {
             if (this.path != path) {
-                this.path = path;
+                this.classList.add(renderCssClass);
                 storage.get(path).load()
                     .then(([template, style, module]) => {
                         let clone = template.content.cloneNode(true);
@@ -126,18 +132,25 @@ class Element extends HTMLElement {
                             this.moduleComponent.onRender();
                         }
                         this.onRender();
+                        this.classList.remove(renderCssClass);
                     })
                     .catch((reason) => {
                         this.onRenderError(`component load failed: ${reason}`);
+                        this.classList.remove(renderCssClass);
+                        this.classList.add(errorCssClass);
                     });
+                this.path = path;
             }
         } else {
             console.warn("data-path attribute missing", this);
             while (this.shadow.firstChild != null) {
                 this.shadow.firstChild.remove();
             }
+            this.classList.add(errorCssClass);
         }
     }
 }
+
+customElements.define('min-component', Element);
 
 export { storage, Element }

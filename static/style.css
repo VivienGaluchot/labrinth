@@ -314,28 +314,6 @@ body>.flex-layout {
     font-size: large;
 }
 
-.main .placeholder.loading>div {
-    margin: 2rem;
-}
-
-@keyframes showPlaceholder {
-    0% {
-        opacity: 0;
-    }
-    50% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 1;
-    }
-}
-
-.main .placeholder.loading {
-    color: #00000040;
-    text-align: center;
-    animation: showPlaceholder 1000ms ease-in-out forwards;
-}
-
 /* js */
 
 .js-hidden {
@@ -345,35 +323,6 @@ body>.flex-layout {
 .test {
     padding: 2rem;
     font-size: small;
-}
-
-/* loading */
-
-.lds-dual-ring {
-    display: inline-block;
-    width: 80px;
-    height: 80px;
-}
-
-.lds-dual-ring:after {
-    content: " ";
-    display: block;
-    width: 64px;
-    height: 64px;
-    margin: 8px;
-    border-radius: 50%;
-    border: 6px solid #00000040;
-    border-color: #00000040 transparent #00000040 transparent;
-    animation: lds-dual-ring 1.2s linear infinite;
-}
-
-@keyframes lds-dual-ring {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
 }
 
 /* flavours */
@@ -401,4 +350,53 @@ code.warning {
 code.error, code.failure {
     color: hsl(345, 77%, 76%);
     background-color: hsla(345, 77%, 76%, 0.1);
+}
+
+/* min-component */
+
+min-component.render:after {
+    content: "";
+    display: block;
+    border-left: .0rem;
+    border-top: .2rem solid #FFFFFF40;
+    border-right: .2rem solid #FFFFFF00;
+    border-radius: 10rem;
+    min-width: 1rem;
+    min-height: 1rem;
+    margin: .1rem;
+    animation: load-rotate 1.5s linear infinite;
+}
+
+min-component.error {
+    display: block;
+    border: 1px solid red;
+    background-color: #FF000040;
+    border-radius: .2rem;
+    min-width: 1rem;
+    min-height: 1rem;
+    margin: .2rem;
+}
+
+min-component:not(.error):not(.render) {
+    animation: showComponent 100ms ease-in-out forwards;
+}
+
+@keyframes load-rotate {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes showComponent {
+    0% {
+        opacity: 0;
+        transform: scale(.98);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
 }

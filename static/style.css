@@ -90,8 +90,8 @@ body {
     display: flex;
     flex-direction: column;
     width: 100%;
+    height: 100%;
     margin: 0;
-    min-height: 100%;
     background-color: #292929;
     color: #eeeeee;
 }
@@ -177,9 +177,14 @@ footer {
     display: flex;
 }
 
+body>.flex-layout {
+    height: 100%;
+}
+
 .flex-layout>.main, .flex-layout>.sidebar {
     min-width: 20rem;
     text-align: left;
+    overflow: auto;
 }
 
 @media (max-width: 50rem) {
@@ -289,7 +294,7 @@ footer {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: safe center;
     align-items: center;
     padding: 1rem;
 }

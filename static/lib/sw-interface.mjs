@@ -15,16 +15,41 @@ navigator.serviceWorker.register('/sw.js', { scope: '/' })
     });
 
 
-// store handler per type
+/**
+ * Simple request protocol to exchange information asynchronously with the service worker
+ * - request   object { type, id, data }
+ *     type is the type of request, to redirect to the right handler
+ *     id a unique identifier for the request
+ *     data is the request payload
+ * 
+ * - reply     object { type:"reply", id, data }
+ *     type set to "reply"
+ *     id is the id of the request answered
+ *     data is the answer payload
+ * 
+ * 
+ * The request might be emitted from the worker or from the main thread, depending on the service
+ * available.
+ */
+
+let requestId = 0;
+
+// store handler per id
 const requestHandler = new Map();
 
 // setup channel
 const channel = new MessageChannel();
+
 channel.port1.onmessage = (event) => {
     if (event.data && event.data.type) {
         const type = event.data.type;
-        if (requestHandler.has(type)) {
-            requestHandler.get(type)(event.data.data);
+        if (type == "reply") {
+            if (event.data.id && requestHandler.has(event.data.id)) {
+                requestHandler.get(event.data.id)(event.data.data);
+                requestHandler.delete(event.data.id);
+            } else {
+                console.warn(`no handler registered with id '${event.data.id}'`);
+            }
         } else {
             console.warn(`no handler registered for the type '${type}'`);
         }
@@ -32,6 +57,7 @@ channel.port1.onmessage = (event) => {
         console.warn(`malformed message`, event);
     }
 };
+
 channel.port1.start();
 let post = (message, transfer) => {
     navigator.serviceWorker.controller.postMessage(message, transfer);
@@ -40,15 +66,11 @@ post({ type: 'open' }, [channel.port2]);
 
 function swRequest(type, data) {
     return new Promise((resolve, reject) => {
-        if (!requestHandler.has(type)) {
-            requestHandler.set(type, (replyData) => {
-                requestHandler.delete(type);
-                resolve(replyData);
-            });
-            post({ type: type, data: data });
-        } else {
-            reject(`request already pending for the given type '${type}'`);
-        }
+        requestId += 1;
+        requestHandler.set(requestId, (replyData) => {
+            resolve(replyData);
+        });
+        post({ type: type, id: requestId, data: data });
     });
 }
 

@@ -19,8 +19,8 @@ messageMapHandler.set('open', event => {
     backPort = event.ports[0];
 });
 
-messageMapHandler.set('get_version', () => {
-    sendBack({ type: 'get_version', data: VERSION });
+messageMapHandler.set('get_version', (event) => {
+    sendBack({ type: 'reply', id: event.data.id, data: VERSION });
 });
 
 self.addEventListener('message', event => {

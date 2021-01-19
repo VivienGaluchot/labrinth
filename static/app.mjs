@@ -1,11 +1,14 @@
 'use strict';
 
+import '/lib/sw-interface.mjs';
+
 // web component lib, register custom element "min-component"
 import '/lib/min-component.mjs';
 
 // basic pages
 const pageHome = {
-    "title": "Labrinth | Home"
+    "title": "Labrinth | Home",
+    "component": "/components/main-panel",
 };
 const pagePeers = {
     "title": "Labrinth | Peers"
@@ -90,10 +93,6 @@ function genericRender(page) {
         }
 
         let el = document.createElement("min-component");
-        // el.classList.add("js-hidden");
-        el.onRender = () => {
-            // el.classList.remove("js-hidden");
-        };
         el.dataset["path"] = page.component;
         document.getElementById("js-main").appendChild(el);
     }
@@ -144,19 +143,3 @@ for (const link of document.getElementsByClassName("js-local-link")) {
 
 // render the current page
 renderPage(window.location.href);
-
-// service worker
-if (navigator.serviceWorker) {
-    navigator.serviceWorker.register('/sw.js', { scope: '/' })
-        .then((reg) => {
-            if (reg.installing) {
-                console.log('service worker installing');
-            } else if (reg.waiting) {
-                console.log('service worker installed');
-            } else if (reg.active) {
-                console.log('service worker active');
-            }
-        }).catch((error) => {
-            console.warn('service worker registration failed', error);
-        });
-}

@@ -3,8 +3,8 @@
 import * as P2p from '/lib/p2p.mjs';
 import * as Storage from '/lib/storage.mjs';
 import { FNode } from '/lib/fdom.mjs';
-
 import * as Channel from '/lib/channel.mjs';
+import * as Sw from '/lib/sw-interface.mjs';
 
 
 function populateLocalStorageTbody(element) {
@@ -161,6 +161,11 @@ class Component {
                 }
             });
         };
+
+        // Service worker
+        Sw.getVersion().then((version) => {
+            this.element.querySelector(".sw-version").innerText = version;
+        });
     }
 
     onRemove() {

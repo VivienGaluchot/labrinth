@@ -1,13 +1,51 @@
 'use strict';
 
-self.addEventListener('activate', (event) => {
-    console.debug('dummy service worker activated', event);
+const VERSION = "0.0.0";
+
+// Message from other workers
+
+let backPort = null;
+
+let sendBack = (msg) => {
+    if (backPort) {
+        backPort.postMessage(msg);
+    } else {
+        console.warn(`message dropped`, msg);
+    }
+};
+
+let messageMapHandler = new Map();
+messageMapHandler.set('open', event => {
+    backPort = event.ports[0];
 });
 
-self.addEventListener('install', (event) => {
-    console.debug('dummy service worker installed', event);
+messageMapHandler.set('get_version', () => {
+    sendBack({ type: 'get_version', data: VERSION });
 });
 
-this.addEventListener('fetch', (event) => {
+self.addEventListener('message', event => {
+    if (event.data && event.data.type) {
+        let handler = messageMapHandler.get(event.data.type);
+        if (handler) {
+            handler(event);
+        } else {
+            console.warn(`message dropped`, event.data);
+        }
+    } else {
+        console.warn(`message dropped`, event.data);
+    }
+});
+
+// Service worker
+
+self.addEventListener('activate', () => {
+    console.debug(`dummy service worker activated in version ${VERSION}`);
+});
+
+self.addEventListener('install', () => {
+    console.debug(`dummy service worker installed in version ${VERSION}`);
+});
+
+self.addEventListener('fetch', (event) => {
     event.respondWith(fetch(event.request));
 });

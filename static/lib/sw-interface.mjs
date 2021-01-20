@@ -45,8 +45,9 @@ channel.port1.onmessage = (event) => {
         const type = event.data.type;
         if (type == "reply") {
             if (event.data.id && requestHandler.has(event.data.id)) {
-                requestHandler.get(event.data.id)(event.data.data);
+                let handler = requestHandler.get(event.data.id);
                 requestHandler.delete(event.data.id);
+                handler(event.data.data);
             } else {
                 console.warn(`no handler registered with id '${event.data.id}'`);
             }
@@ -59,10 +60,10 @@ channel.port1.onmessage = (event) => {
 };
 
 channel.port1.start();
-let post = (message, transfer) => {
-    navigator.serviceWorker.controller.postMessage(message, transfer);
+navigator.serviceWorker.controller.postMessage({ type: 'open' }, [channel.port2])
+let post = (message) => {
+    navigator.serviceWorker.controller.postMessage(message);
 };
-post({ type: 'open' }, [channel.port2]);
 
 function swRequest(type, data) {
     return new Promise((resolve, reject) => {

@@ -6,7 +6,7 @@ const VERSION = "0.0.0";
 
 let backPort = null;
 
-let sendBack = (msg) => {
+let post = (msg) => {
     if (backPort) {
         backPort.postMessage(msg);
     } else {
@@ -20,7 +20,7 @@ messageMapHandler.set('open', event => {
 });
 
 messageMapHandler.set('get_version', (event) => {
-    sendBack({ type: 'reply', id: event.data.id, data: VERSION });
+    post({ type: 'reply', id: event.data.id, data: VERSION });
 });
 
 self.addEventListener('message', event => {

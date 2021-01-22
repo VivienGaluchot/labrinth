@@ -5,6 +5,10 @@ import '/lib/sw-interface.mjs';
 // web component lib, register custom element "min-component"
 import '/lib/min-component.mjs';
 
+
+import '/lib/channel.mjs';
+
+
 // basic pages
 const pageHome = {
     "title": "Labrinth | Home",

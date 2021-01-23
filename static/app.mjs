@@ -5,7 +5,6 @@ import '/lib/sw-interface.mjs';
 // web component lib, register custom element "min-component"
 import '/lib/min-component.mjs';
 
-
 import '/lib/channel.mjs';
 
 
@@ -76,15 +75,10 @@ function genericRender(page) {
         }
     }
     // sidebar
-    for (const el of document.getElementsByClassName("sidebar")) {
-        el.classList.remove("is-active");
-    }
+    document.body.classList.remove("sidebar-active");
     for (const btn of document.getElementsByClassName("sidebar-toggle")) {
         btn.onclick = () => {
-            for (const el of document.getElementsByClassName("sidebar")) {
-                el.classList.toggle("is-active");
-            }
-            btn.classList.toggle("is-active");
+            document.body.classList.toggle("sidebar-active");
         };
     }
     // component

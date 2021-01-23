@@ -38,12 +38,16 @@ self.addEventListener('message', event => {
 
 // Service worker
 
-self.addEventListener('activate', () => {
-    console.debug(`dummy service worker activated in version ${VERSION}`);
+self.addEventListener('install', (event) => {
+    console.debug(`dummy service worker installed in version ${VERSION}`);
+    // Activate worker immediately
+    event.waitUntil(self.skipWaiting());
 });
 
-self.addEventListener('install', () => {
-    console.debug(`dummy service worker installed in version ${VERSION}`);
+self.addEventListener('activate', (event) => {
+    console.debug(`dummy service worker activated in version ${VERSION}`);
+    // Become available to all pages
+    event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener('fetch', (event) => {

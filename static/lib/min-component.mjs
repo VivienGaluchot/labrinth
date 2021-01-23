@@ -133,6 +133,7 @@ class Element extends HTMLElement {
                         this.classList.remove(renderCssClass);
                     })
                     .catch((reason) => {
+                        console.error(`component load failed`, reason);
                         this.onRenderError(`component load failed: ${reason}`);
                         this.classList.remove(renderCssClass);
                         this.classList.add(errorCssClass);

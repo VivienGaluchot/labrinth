@@ -1,43 +1,23 @@
 @import url('/style.css');
 :host {
     width: 100%;
-    flex-grow: 1;
+    height: 100%;
     padding: 2rem;
-    display: flex;
-    flex-direction: column;
+    display: grid;
 }
 
 @media (max-width: 50rem) {
     :host {
-        padding: 1rem;
+        padding: 1.5rem;
     }
 }
 
 @media (max-width: 30rem) {
     :host {
-        padding: 0.2rem;
+        padding: 1rem;
     }
 }
 
-.layout {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: safe center;
-    justify-content: start;
-}
-
-.block {
-    overflow: hidden;
-    padding: 1.5rem;
-}
-
-@media (max-width: 50rem) {
-    .block {
-        padding: .8rem;
-    }
-}
-
-.block>h2 {
+h2 {
     margin-top: 0;
 }

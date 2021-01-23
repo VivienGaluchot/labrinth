@@ -163,9 +163,18 @@ class Component {
         };
 
         // Service worker
-        Sw.getVersion().then((version) => {
-            this.element.querySelector(".sw-version").innerText = version;
-        });
+        let showSwVersion = () => {
+            Sw.getVersion()
+                .then((version) => {
+                    this.element.querySelector(".sw-version").innerText = version;
+                    this.element.querySelector(".sw-error").innerText = "";
+                }).catch((error) => {
+                    this.element.querySelector(".sw-version").innerText = "-";
+                    this.element.querySelector(".sw-error").innerText = `error: ${error}`;
+                });
+        };
+        this.element.querySelector(".btn-sw-refresh").onclick = showSwVersion;
+        showSwVersion();
     }
 
     onRemove() {

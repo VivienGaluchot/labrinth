@@ -1,19 +1,5 @@
 'use strict';
 
-// install service worker
-navigator.serviceWorker.register('/sw.js', { scope: '/' })
-    .then((reg) => {
-        if (reg.installing) {
-            console.log('service worker installing');
-        } else if (reg.waiting) {
-            console.log('service worker installed');
-        } else if (reg.active) {
-            console.log('service worker active');
-        }
-    }).catch((error) => {
-        console.warn('service worker registration failed', error);
-    });
-
 
 /**
  * Simple request protocol to exchange information asynchronously with the service worker
@@ -32,48 +18,100 @@ navigator.serviceWorker.register('/sw.js', { scope: '/' })
  * available.
  */
 
-let requestId = 0;
-
-// store handler per id
-const requestHandler = new Map();
-
-// setup channel
-const channel = new MessageChannel();
-
-channel.port1.onmessage = (event) => {
-    if (event.data && event.data.type) {
-        const type = event.data.type;
-        if (type == "reply") {
-            if (event.data.id && requestHandler.has(event.data.id)) {
-                let handler = requestHandler.get(event.data.id);
-                requestHandler.delete(event.data.id);
-                handler(event.data.data);
-            } else {
-                console.warn(`no handler registered with id '${event.data.id}'`);
-            }
-        } else {
-            console.warn(`no handler registered for the type '${type}'`);
-        }
-    } else {
-        console.warn(`malformed message`, event);
-    }
-};
-
-channel.port1.start();
-navigator.serviceWorker.controller.postMessage({ type: 'open' }, [channel.port2])
-let post = (message) => {
-    navigator.serviceWorker.controller.postMessage(message);
-};
-
-function swRequest(type, data) {
+let swRequest = () => {
     return new Promise((resolve, reject) => {
-        requestId += 1;
-        requestHandler.set(requestId, (replyData) => {
-            resolve(replyData);
-        });
-        post({ type: type, id: requestId, data: data });
+        reject("the page is not controlled by a service worker");
     });
 }
+
+function connect(controller) {
+    let requestId = 0;
+
+    // store handler per id
+    const requestHandler = new Map();
+
+    // setup channel
+    const channel = new MessageChannel();
+
+    channel.port1.onmessage = (event) => {
+        if (event.data && event.data.type) {
+            const type = event.data.type;
+            if (type == "reply") {
+                if (event.data.id && requestHandler.has(event.data.id)) {
+                    let handler = requestHandler.get(event.data.id);
+                    requestHandler.delete(event.data.id);
+                    handler(event.data.data);
+                } else {
+                    console.warn(`no handler registered with id '${event.data.id}'`);
+                }
+            } else {
+                console.warn(`no handler registered for the type '${type}'`);
+            }
+        } else {
+            console.warn(`malformed message`, event);
+        }
+    };
+
+    channel.port1.start();
+    controller.postMessage({ type: 'open' }, [channel.port2])
+    let post = (message) => {
+        controller.postMessage(message);
+    };
+
+    swRequest = (type, data) => {
+        return new Promise((resolve, reject) => {
+            requestId += 1;
+            requestHandler.set(requestId, (replyData) => {
+                resolve(replyData);
+            });
+            post({ type: type, id: requestId, data: data });
+        });
+    }
+}
+
+
+// service worker registration
+
+function handleRegistration(reg) {
+    let sw = null;
+    if (reg.installing) {
+        console.log('service worker installing');
+        sw = reg.installing;
+    } else if (reg.waiting) {
+        console.log('service worker waiting');
+        sw = reg.waiting;
+    } else if (reg.active) {
+        console.log('service worker active');
+        sw = reg.active;
+        connect(sw);
+        getVersion().then((version) => {
+            console.log(`new service worker registered: ${version}`);
+        });
+    } else {
+        console.warn("unexpected service worker registration", req);
+    }
+    if (sw) {
+        sw.onstatechange = (event) => {
+            handleRegistration(reg);
+        };
+    }
+}
+
+if (navigator.serviceWorker.controller) {
+    connect(navigator.serviceWorker.controller);
+    getVersion().then((version) => {
+        console.log(`service worker already running: ${version}`);
+    });
+}
+
+navigator.serviceWorker.register("/sw.js", { scope: '/' })
+    .then((reg) => {
+        handleRegistration(reg);
+    })
+    .catch((error) => {
+        console.warn('service worker registration failed', error);
+    });
+
 
 // public services
 

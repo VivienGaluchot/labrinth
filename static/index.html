@@ -17,36 +17,35 @@
 </head>
 
 <body>
-    <div class="flex-layout">
-        <div class="sidebar left">
-            <header>
-                <h1>Labrinth</h1>
-                <button class="sidebar-toggle">🚀</button>
-            </header>
-            <div class="sidebar-content">
-                <div class="sidebar-group">
-                    <nav>
-                        <a class="js-local-link" href="/">Home</a> |
-                        <a class="js-local-link" href="/peers">Peers</a> |
-                        <a class="js-local-link" href="/dev">Dev</a>
-                    </nav>
-                </div>
-                <div class="sidebar-spacer"></div>
-                <div class="sidebar-group">Hi</div>
-            </div>
-            <footer>
-                <a href="https://github.com/VivienGaluchot/labrinth">Open-source</a> app.
-            </footer>
-        </div>
+    <header>
+        <h1>Labrinth</h1>
+        <button class="sidebar-toggle">🚀</button>
+    </header>
 
-        <content id="js-main" class="main">
-            <div class="placeholder empty">
-                <span class="url js-page-url"></span>
-                <br>
-                Nothing here ...
-            </div>
-        </content>
+    <div class="sidebar">
+        <div class="sidebar-group">
+            <nav>
+                <a class="js-local-link" href="/">Home</a> |
+                <a class="js-local-link" href="/peers">Peers</a> |
+                <a class="js-local-link" href="/dev">Dev</a>
+            </nav>
+        </div>
+        <div class="sidebar-spacer"></div>
+        <div class="sidebar-group">Hi</div>
     </div>
+
+    <content id="js-main">
+        <div class="placeholder empty">
+            <span class="url js-page-url"></span>
+            <br>
+            Nothing here ...
+        </div>
+    </content>
+
+    <footer>
+        <a href="https://github.com/VivienGaluchot/labrinth">Open-source</a> app.
+    </footer>
+
     <script type="module" src="app.mjs"></script>
 </body>
 

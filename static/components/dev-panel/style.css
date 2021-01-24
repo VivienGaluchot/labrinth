@@ -35,8 +35,8 @@
 
 .block {
     overflow: hidden;
-    border: 1px solid #00000044;
-    background-color: #00000010;
+    border: 1px solid #1D1D1D;
+    background-color: #292929;
     border-radius: .2rem;
     padding: 1.5rem;
 }

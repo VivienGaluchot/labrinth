@@ -59,8 +59,9 @@ if (!port) {
 }
 
 const mimeMap = new Map();
+mimeMap.set(".html", "text/html");
 mimeMap.set(".js", "application/javascript");
-mimeMap.set(".mjs", "text/javascript");
+mimeMap.set(".mjs", "application/javascript");
 mimeMap.set(".json", "application/json");
 mimeMap.set(".css", "text/css");
 mimeMap.set(".jpeg", "image/jpeg");
@@ -76,10 +77,14 @@ function sendFile(pathname, response) {
         } else {
             let ext = path.extname(pathname);
             let mime = mimeMap.get(ext);
-            if (mime)
-                response.setHeader("Content-Type", mimeMap.get(ext));
+            if (mime) {
+                response.setHeader("Content-Type", `${mimeMap.get(ext)}; charset=utf-8`);
+                response.setHeader("X-Content-Type-Options", "nosniff");
+            }
             if (!isDev)
                 response.setHeader("Cache-Control", "public,max-age=3600");
+            else
+                response.setHeader("Cache-Control", "public,max-age=0");
             response.writeHead(200);
             response.end(data);
         }

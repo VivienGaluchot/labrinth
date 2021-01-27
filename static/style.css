@@ -190,7 +190,7 @@ body>.sidebar {
     overflow: auto;
 }
 
-body>content {
+body>.main {
     grid-column: 2;
     grid-row: 1/4;
     overflow: auto;
@@ -216,7 +216,7 @@ body>footer {
         z-index: 2;
         overflow: initial;
     }
-    body>content {
+    body>.main {
         grid-column: 1;
         grid-row: 2/4;
         z-index: 1;
@@ -227,7 +227,7 @@ body>footer {
         grid-row: 3;
         z-index: 2;
     }
-    body.sidebar-active>content, body:not(.sidebar-active)>.sidebar, body:not(.sidebar-active)>footer {
+    body.sidebar-active>.main, body:not(.sidebar-active)>.sidebar, body:not(.sidebar-active)>footer {
         display: none;
     }
 }
@@ -307,13 +307,13 @@ header h1 {
     margin: 1rem;
 }
 
-/* content */
+/* main */
 
-content {
+.main {
     background-color: #303030;
 }
 
-content .placeholder {
+.main .placeholder {
     padding: 2rem;
     color: #202020;
     font-size: xx-large;
@@ -322,11 +322,11 @@ content .placeholder {
     user-select: none;
 }
 
-content .placeholder .url {
+.main .placeholder .url {
     font-weight: normal;
 }
 
-content .placeholder.empty .url {
+.main .placeholder.empty .url {
     font-size: large;
 }
 
@@ -389,7 +389,7 @@ min-component.render {
     animation: load-rotate 1.5s linear infinite;
 }
 
-content>min-component.render {
+.main>min-component.render {
     margin: 2rem;
     width: 2rem;
     height: 2rem;

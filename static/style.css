@@ -256,13 +256,19 @@ header {
     background-color: #202020;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+}
+
+header img {
+    width: 2rem;
+    height: 2rem;
+    padding: .3rem;
 }
 
 header h1 {
     display: inline-block;
     margin: 0;
-    font-weight: lighter;
+    flex-grow: 1;
+    font-weight: 300;
 }
 
 .sidebar-toggle {

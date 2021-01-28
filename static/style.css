@@ -157,12 +157,12 @@ button:hover {
     background-color: hsl(216, 80%, 55%);
 }
 
-button:active {
-    box-shadow: 0 0 0 .5rem hsla(216, 80%, 50%, 30%) !important;
-}
-
 button:focus, button:hover {
     box-shadow: 0 0 0 .3rem hsla(216, 80%, 50%, 25%);
+}
+
+button:active {
+    box-shadow: 0 0 0 .5rem hsla(216, 80%, 50%, 30%);
 }
 
 thead>tr {
@@ -274,20 +274,39 @@ header h1 {
 
 .sidebar-toggle {
     background-color: transparent;
-    border: none;
-    color: white;
-    font-size: 1.5rem;
     padding: .25rem;
     border-radius: .5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    border: 1px solid #aaaaaa40;
 }
 
-.sidebar-toggle:hover {
-    background-color: #FFFFFF10;
+.sidebar-toggle:focus, .sidebar-toggle:hover {
+    border: 1px solid #aaaaaaa0;
+    background-color: transparent;
+    box-shadow: none;
 }
 
 .sidebar-toggle:active {
-    background-color: #FFFFFF22;
-    transform: scale(.95);
+    background-color: transparent;
+    border: 1px solid #aaaaaa;
+    box-shadow: none;
+}
+
+.sidebar-toggle img {
+    width: 1.2rem;
+    height: 1.2rem;
+    margin: .2rem;
+    padding: 0;
+    transition: transform 100ms;
+    image-rendering: crisp-edges;
+}
+
+body.sidebar-active .sidebar-toggle img {
+    transform: rotate(45deg);
+    transition: transform 100ms ease-out;
 }
 
 .sidebar-toggle {

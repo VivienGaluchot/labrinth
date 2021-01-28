@@ -10,18 +10,19 @@ import '/lib/channel.mjs';
 
 // basic pages
 const pageHome = {
-    "title": "Labrinth | Home",
-    "component": "/components/main-panel",
+    "title": "Home | Labrinth",
+    "component": "/components/pages/main",
 };
 const pagePeers = {
-    "title": "Labrinth | Peers"
+    "title": "Peers | Labrinth",
+    "component": "/components/pages/peers",
 };
 const pageDev = {
-    "title": "Labrinth | Dev",
-    "component": "/components/dev-panel",
+    "title": "Dev | Labrinth",
+    "component": "/components/pages/dev",
 };
 const pageNotFound = {
-    "title": "Labrinth | Not found"
+    "title": "Not found | Labrinth"
 };
 
 const router = new Map();
@@ -105,9 +106,6 @@ function renderPage(href, ctx) {
         page = pageNotFound;
     }
     document.title = page.title;
-    for (let el of document.getElementsByClassName("js-page-url")) {
-        el.innerText = url.pathname;
-    }
     genericRender(page);
 }
 

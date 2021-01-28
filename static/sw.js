@@ -4,23 +4,10 @@ const VERSION = "0.0.0";
 
 // Message from other workers
 
-let backPort = null;
-
-let post = (msg) => {
-    if (backPort) {
-        backPort.postMessage(msg);
-    } else {
-        console.warn(`message dropped`, msg);
-    }
-};
-
 let messageMapHandler = new Map();
-messageMapHandler.set('open', event => {
-    backPort = event.ports[0];
-});
 
 messageMapHandler.set('get_version', (event) => {
-    post({ type: 'reply', id: event.data.id, data: VERSION });
+    event.ports[0].postMessage(VERSION);
 });
 
 self.addEventListener('message', event => {

@@ -169,6 +169,7 @@ class Component {
                     this.element.querySelector(".sw-version").innerText = version;
                     this.element.querySelector(".sw-error").innerText = "";
                 }).catch((error) => {
+                    console.error(error);
                     this.element.querySelector(".sw-version").innerText = "-";
                     this.element.querySelector(".sw-error").innerText = `error: ${error}`;
                 });

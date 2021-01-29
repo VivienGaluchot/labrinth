@@ -244,9 +244,6 @@ button.outline:active {
 button.icon {
     padding: .25rem;
     border-radius: .5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     line-height: 0;
 }
 
@@ -363,7 +360,6 @@ header h1 {
 button.icon.sidebar-toggle {
     padding: .25rem;
     border-radius: .5rem;
-    display: flex;
     align-items: center;
     justify-content: center;
 }
@@ -381,7 +377,7 @@ button.icon.sidebar-toggle img {
 }
 
 .sidebar-toggle {
-    display: none !important;
+    display: none;
 }
 
 @media (max-width: 50rem) {

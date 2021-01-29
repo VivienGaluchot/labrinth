@@ -19,35 +19,37 @@
 </head>
 
 <body>
-    <header>
-        <img src="img/logo.svg" alt="logo" width="34px" height="34px">
-        <h1>Labrinth</h1>
-        <button class="sidebar-toggle" aria-label="menu"><img src="img/cross.svg" alt="cross"></button>
-    </header>
+    <div id="root">
+        <header>
+            <img src="img/logo.svg" alt="logo" width="34px" height="34px">
+            <h1>Labrinth</h1>
+            <button class="outline icon sidebar-toggle" aria-label="menu"><img src="img/cross.svg" alt="cross"></button>
+        </header>
 
-    <div class="sidebar">
-        <div class="sidebar-group">
-            <nav>
-                <a class="js-local-link" href="/">Home</a> |
-                <a class="js-local-link" href="/peers">Peers</a> |
-                <a class="js-local-link" href="/dev">Dev</a>
-            </nav>
+        <div class="sidebar">
+            <div class="sidebar-group">
+                <nav>
+                    <a class="js-local-link" href="/">Home</a> |
+                    <a class="js-local-link" href="/peers">Peers</a> |
+                    <a class="js-local-link" href="/dev">Dev</a>
+                </nav>
+            </div>
+            <div class="sidebar-spacer"></div>
+            <div class="sidebar-group">
+                Hi, try out <a class="js-local-link" href="/x">404</a>
+            </div>
         </div>
-        <div class="sidebar-spacer"></div>
-        <div class="sidebar-group">
-            Hi, try out <a class="js-local-link" href="/x">404</a>
+
+        <div id="js-main" class="main">
+            <div class="placeholder empty">
+                Nothing here...
+            </div>
         </div>
+
+        <footer>
+            <a href="https://github.com/VivienGaluchot/labrinth">Open-source</a> app.
+        </footer>
     </div>
-
-    <div id="js-main" class="main">
-        <div class="placeholder empty">
-            Nothing here...
-        </div>
-    </div>
-
-    <footer>
-        <a href="https://github.com/VivienGaluchot/labrinth">Open-source</a> app.
-    </footer>
 
     <script type="module" src="app.mjs"></script>
 </body>

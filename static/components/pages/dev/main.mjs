@@ -176,6 +176,11 @@ class Component {
         };
         this.element.querySelector(".btn-sw-refresh").onclick = showSwVersion;
         showSwVersion();
+
+        // UI
+        this.element.querySelector(".btn-modal").onclick = () => {
+            this.element.querySelector("#modal").internal.show();
+        };
     }
 
     onRemove() {

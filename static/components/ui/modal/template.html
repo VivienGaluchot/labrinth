@@ -1,0 +1,16 @@
+<template>
+    <div id="bg" class="js-hidden">
+        <div id="fg">
+            <div id="header">
+                <div id="title">
+                    <slot name="title"></slot>
+                </div>
+                <button id="close" class="outline icon" aria-label="close"><img src="img/cross.svg" alt="cross">
+            </div>
+            <div id="content">
+                <slot name="content"></slot>
+            </div>
+            <div id="footer"></div>
+        </div>
+    </div>
+</template>

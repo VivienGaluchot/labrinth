@@ -48,7 +48,10 @@ class Component {
                     return response.text();
                 }));
 
-            promises.push(import(`${this.path}/main.mjs`));
+            promises.push(import(`${this.path}/main.mjs`)
+                .catch((err) => {
+                    console.error(`module ${this.path} load failed`, err);
+                }));
 
             this.loadPromise =
                 Promise.all(promises)
@@ -77,6 +80,11 @@ class Element extends HTMLElement {
         // callback API
         this.onRender = () => { };
         this.onRenderError = (error) => { };
+    }
+
+    // TODO remove this layer ? this could be moduleComponent ?
+    get internal() {
+        return this.moduleComponent;
     }
 
     // custom component added to page
@@ -123,7 +131,7 @@ class Element extends HTMLElement {
                         this.shadow.appendChild(styleNode);
                         this.shadow.appendChild(clone);
 
-                        if (module.Component) {
+                        if (module && module.Component) {
                             if (this.moduleComponent)
                                 this.moduleComponent.onRemove();
                             this.moduleComponent = new module.Component(this.shadow);

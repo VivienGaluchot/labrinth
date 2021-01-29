@@ -1,4 +1,3 @@
-<!-- Dev panel component -->
 <template>
     <div class="top-bar">
         <min-component data-path="/components/clock">
@@ -9,13 +8,39 @@
 
     <div class="layout">
         <div class="block">
+            <h2>UI</h2>
+            <p>
+                Try buttons available
+            </p>
+            <button>Default button</button>
+            <button class="blue">.blue</button>
+            <button class="green">.green</button>
+            <p>
+                Try components available
+            </p>
+            <button class="blue btn-modal">Modal</button>
+            <min-component id="modal" data-path="/components/ui/modal">
+                <span slot="title">🎆 Sparking title</span>
+                <span slot="content">
+                    <p>
+                        <b>Yay</b>, test of content, <a href="/dev">dev link</a>.
+                    </p>
+                    <p>
+                        <button class="blue">Do noting ?</button>
+                        <button class="green">Yes.</button>
+                    </p>
+                </span>
+            </min-component>
+        </div>
+
+        <div class="block">
             <h2>Service worker</h2>
             <p>
                 Version executed <code class="sw-version">-</code>.
                 <code class="sw-error error"></code>
             </p>
             <div>
-                <button class="btn-sw-refresh">Refresh</button>
+                <button class="blue btn-sw-refresh">Refresh</button>
             </div>
         </div>
 
@@ -28,8 +53,8 @@
                 <code class="server-user-count">-</code> users connected on the same HUB.
             </p>
             <div>
-                <button class="btn-connect">Connect</button>
-                <button class="btn-close">Close</button>
+                <button class="blue btn-connect">Connect</button>
+                <button class="blue btn-close">Close</button>
             </div>
         </div>
 
@@ -63,8 +88,8 @@
                 Private data stored on your device.
             </p>
             <div>
-                <button class="btn-refresh">Refresh</button>
-                <button class="btn-clear">Clear</button>
+                <button class="blue btn-refresh">Refresh</button>
+                <button class="blue btn-clear">Clear</button>
             </div>
             <table>
                 <thead>
@@ -81,7 +106,7 @@
             <h2>WebRTC</h2>
             <h3>ICE candidates</h3>
             <div>
-                <button class="btn-gen-ice-candidates">Gather candidates</button>
+                <button class="blue btn-gen-ice-candidates">Gather candidates</button>
             </div>
             <table>
                 <thead>
@@ -102,7 +127,7 @@
                 Generate a dummy local offer
             </p>
             <div>
-                <button class="btn-gen-offer">Generate</button>
+                <button class="blue btn-gen-offer">Generate</button>
             </div>
             <p>
                 <code class="webrtc-offer">-</code>

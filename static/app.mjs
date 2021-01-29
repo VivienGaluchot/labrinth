@@ -76,10 +76,10 @@ function genericRender(page) {
         }
     }
     // sidebar
-    document.body.classList.remove("sidebar-active");
+    document.querySelector("#root").classList.remove("sidebar-active");
     for (const btn of document.getElementsByClassName("sidebar-toggle")) {
         btn.onclick = () => {
-            document.body.classList.toggle("sidebar-active");
+            document.querySelector("#root").classList.toggle("sidebar-active");
         };
     }
     // component

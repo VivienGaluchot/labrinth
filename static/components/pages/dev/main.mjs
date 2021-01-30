@@ -89,10 +89,12 @@ class Component {
 
         let btnClear = this.element.querySelector(".btn-clear");
         btnClear.onclick = () => {
-            if (confirm("Do you really want to delete all data stored on your device ?\nThis operation is not reversible.")) {
-                Storage.clear();
-                populateLocalStorageTbody(localStorageTbody);
-            }
+            this.element.querySelector("#clear-confirm-modal").internal.ask().then((choice) => {
+                if (choice == "yes") {
+                    Storage.clear();
+                    populateLocalStorageTbody(localStorageTbody);
+                }
+            });
         };
         let btnRefresh = this.element.querySelector(".btn-refresh");
         btnRefresh.onclick = () => {
@@ -178,8 +180,11 @@ class Component {
         showSwVersion();
 
         // UI
-        this.element.querySelector(".btn-modal").onclick = () => {
+        this.element.querySelector(".btn-modal-show").onclick = () => {
             this.element.querySelector("#modal").internal.show();
+        };
+        this.element.querySelector(".btn-modal-ask").onclick = () => {
+            this.element.querySelector("#modal").internal.ask();
         };
     }
 

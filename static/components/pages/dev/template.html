@@ -36,7 +36,8 @@
                 Components
             </h3>
             <p>
-                <button class="blue btn-modal">Modal</button>
+                <button class="blue btn-modal-show">modal show()</button>
+                <button class="blue btn-modal-ask">modal ask()</button>
             </p>
             <min-component id="modal" data-path="/components/ui/modal">
                 <span slot="title">🎆 Sparking title</span>
@@ -44,11 +45,11 @@
                     <p>
                         <b>Yay</b>, test of content, <a href="/dev">dev link</a>.
                     </p>
-                    <p>
-                        <button class="blue">Do noting ?</button>
-                        <button class="green">Yes.</button>
-                    </p>
                 </span>
+                <div slot="choices">
+                    <button class="blue">Do noting ?</button>
+                    <button class="green">Yes.</button>
+                </div>
             </min-component>
         </div>
 
@@ -119,6 +120,17 @@
                 <tbody class="local-storage-tbody">
                 </tbody>
             </table>
+            <min-component id="clear-confirm-modal" data-path="/components/ui/modal">
+                <span slot="title">Confirmation</span>
+                <p slot="content">
+                    Do you realy wan't to clear the local storage ?<br>
+                    The operation is <b>irreversible</b>.
+                </p>
+                <div slot="choices">
+                    <button class="green" data-choice="yes">Yes</button>
+                    <button class="blue">Cancel</button>
+                </div>
+            </min-component>
         </div>
 
         <div class="block">

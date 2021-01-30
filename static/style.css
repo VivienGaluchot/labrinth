@@ -177,7 +177,6 @@ button:focus, button:hover {
 }
 
 button:active {
-    transition: transform 50ms ease-out;
     transform: scale(.9);
 }
 
@@ -257,7 +256,7 @@ button.outline {
     padding: .3rem;
     border-radius: .5rem;
     --background-color: transparent;
-    border: 1px solid #aaaaaa40;
+    border: 1px solid transparent;
 }
 
 button.outline:focus, button.outline:hover {

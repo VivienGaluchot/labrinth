@@ -9,10 +9,10 @@ class Component {
     // called when the component is rendered
     onRender() {
         this.element.querySelector("#close").onclick = () => {
-            this.element.querySelector("#bg").classList.add("js-hidden");
+            this.close();
         };
         this.element.querySelector("#bg").onclick = () => {
-            this.element.querySelector("#bg").classList.add("js-hidden");
+            this.close();
         };
         this.element.querySelector("#fg").onclick = (event) => {
             event.stopPropagation();
@@ -28,6 +28,10 @@ class Component {
 
     show() {
         this.element.querySelector("#bg").classList.remove("js-hidden");
+    }
+
+    close() {
+        this.element.querySelector("#bg").classList.add("js-hidden");
     }
 }
 

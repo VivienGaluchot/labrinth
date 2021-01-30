@@ -32,8 +32,9 @@ code {
     font-weight: 300;
     display: inline-block;
     background-color: rgb(149, 200, 241, 0.1);
-    padding: 0 .2rem;
+    padding: .2rem 0;
     border-radius: .2rem;
+    line-height: .95rem;
     font-size: .95rem;
 }
 
@@ -158,11 +159,33 @@ tbody>tr {
     border-top: 1px solid #b6b1b120;
 }
 
+button {
+    --border-color: #444444;
+    --background-color: #ececec;
+    font-size: .95rem;
+    padding: .5rem;
+    border-radius: .5rem;
+    user-select: none;
+    color: #444444;
+    border: 2px solid var(--border-color);
+    background-color: var(--background-color);
+}
+
+button:focus, button:hover {
+    --border-color: #aaaaaa;
+    --background-color: #f8f8f8;
+}
+
+button:active {
+    transition: transform 50ms ease-out;
+    transform: scale(.9);
+}
+
 /* flavours */
 
 code.verbose, code.success {
-    color: hsl(145, 77%, 76%);
-    background-color: hsla(145, 77%, 76%, 0.1);
+    color: hsl(133, 77%, 76%);
+    background-color: hsla(133, 77%, 76%, 0.1);
 }
 
 code.debug {
@@ -171,73 +194,79 @@ code.debug {
 }
 
 code.info {
-    color: hsl(207, 77%, 76%);
-    background-color: hsla(207, 77%, 76%, 0.1);
+    color: hsl(216, 77%, 76%);
+    background-color: hsla(216, 77%, 76%, 0.1);
 }
 
 code.warning {
-    color: hsl(64, 77%, 76%);
-    background-color: hsla(64, 77%, 76%, 0.1);
+    color: hsl(56, 77%, 76%);
+    background-color: hsla(56, 77%, 76%, 0.1);
 }
 
 code.error, code.failure {
-    color: hsl(345, 77%, 76%);
-    background-color: hsla(345, 77%, 76%, 0.1);
-}
-
-button.blue, button.green {
-    font-size: .95rem;
-    border-radius: .5rem;
-    color: white;
-    --push-size: 4px;
-    padding: .5rem;
-    border: 1px solid var(--border-color);
-    border-bottom: var(--push-size) solid var(--border-color);
-    margin-bottom: calc(-1 * (var(--push-size) - 1px));
-}
-
-button.blue:active, button.green:active {
-    position: relative;
-    top: calc(var(--push-size) - 1px);
-    margin-bottom: 0;
-    border: 1px solid var(--border-color);
+    color: hsl(350, 77%, 76%);
+    background-color: hsla(350, 77%, 76%, 0.1);
 }
 
 button.blue {
+    color: white;
     --border-color: hsl(216, 80%, 25%);
-    background-color: hsl(216, 80%, 40%);
+    --background-color: hsl(216, 80%, 40%);
 }
 
 button.blue:focus, button.blue:hover {
     --border-color: hsl(216, 80%, 35%);
-    background-color: hsl(216, 80%, 50%);
+    --background-color: hsl(216, 80%, 50%);
 }
 
 button.green {
+    color: white;
     --border-color: hsl(133, 80%, 18%);
-    background-color: hsl(133, 80%, 35%);
+    --background-color: hsl(133, 80%, 35%);
 }
 
 button.green:focus, button.green:hover {
     --border-color: hsl(133, 80%, 20%);
-    background-color: hsl(133, 80%, 40%);
+    --background-color: hsl(133, 80%, 40%);
+}
+
+button.red {
+    color: white;
+    --border-color: hsl(350, 80%, 18%);
+    --background-color: hsl(350, 80%, 35%);
+}
+
+button.red:focus, button.red:hover {
+    --border-color: hsl(350, 80%, 20%);
+    --background-color: hsl(350, 80%, 40%);
+}
+
+button.yellow {
+    color: white;
+    --border-color: hsl(56, 80%, 18%);
+    --background-color: hsl(56, 80%, 35%);
+}
+
+button.yellow:focus, button.yellow:hover {
+    --border-color: hsl(56, 80%, 20%);
+    --background-color: hsl(56, 80%, 40%);
 }
 
 button.outline {
     font-size: .95rem;
     padding: .3rem;
     border-radius: .5rem;
-    background-color: transparent;
+    --background-color: transparent;
     border: 1px solid #aaaaaa40;
 }
 
 button.outline:focus, button.outline:hover {
-    background-color: transparent;
+    --background-color: transparent;
     border: 1px solid #aaaaaaa0;
 }
 
 button.outline:active {
-    background-color: transparent;
+    --background-color: transparent;
     border: 1px solid #aaaaaa;
 }
 

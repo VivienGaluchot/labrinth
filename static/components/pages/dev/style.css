@@ -52,4 +52,10 @@
 
 .block>h2 {
     margin-top: 0;
+    margin-bottom: .2rem;
+}
+
+.block>h3 {
+    margin-top: 1rem;
+    margin-bottom: .2rem;
 }

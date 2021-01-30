@@ -3,14 +3,20 @@
         <div id="fg">
             <div id="header">
                 <div id="title">
-                    <slot name="title"></slot>
+                    <slot name="title">Information</slot>
                 </div>
-                <button id="close" class="outline icon" aria-label="close"><img src="img/cross.svg" alt="cross">
+                <button id="close" class="outline icon" aria-label="close">
+                    <img src="img/cross.svg" alt="cross">
+                </button>
             </div>
             <div id="content">
                 <slot name="content"></slot>
             </div>
-            <div id="footer"></div>
+            <div id="footer">
+                <div id="choices">
+                    <slot name="choices"></slot>
+                </div>
+            </div>
         </div>
     </div>
 </template>

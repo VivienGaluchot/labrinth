@@ -22,12 +22,11 @@
 }
 
 #header {
-    padding: 1rem;
-    border-bottom: 1px solid #151515;
     display: flex;
     font-size: 1.2rem;
     color: #aaaaaa;
-    align-items: baseline;
+    align-items: center;
+    padding: 1rem 1rem 0 1rem;
 }
 
 #title {
@@ -42,4 +41,12 @@
 
 #content {
     padding: 1rem;
+}
+
+#footer {
+    padding: 0 1rem 1rem 1rem;
+}
+
+#choices {
+    text-align: right;
 }

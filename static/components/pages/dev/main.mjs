@@ -74,7 +74,7 @@ class Component {
 
         this.ws.connect();
 
-        // P2P identification
+        // P2P
         let user = this.element.querySelector(".p2p-local-user");
         let device = this.element.querySelector(".p2p-local-device");
         let session = this.element.querySelector(".p2p-local-session");
@@ -82,6 +82,30 @@ class Component {
         user.innerText = P2p.localEndpoint.user;
         device.innerText = P2p.localEndpoint.device;
         session.innerText = P2p.localEndpoint.session;
+
+        this.element.querySelector("#p2p-tests-btn").onclick = () => {
+            let tbody = this.element.querySelector("#p2p-tests-tbody");
+            while (tbody.firstChild) {
+                tbody.firstChild.remove()
+            }
+
+            function addResult(name, res) {
+                let cssClass = "success";
+                if (res.nbKo != 0) {
+                    cssClass = "error";
+                }
+                let tr = new FNode("tr")
+                    .child(new FNode("td")
+                        .child(new FNode("code").text(name)))
+                    .child(new FNode("td")
+                        .child(new FNode("code").class(cssClass)
+                            .text(`${res.nbOk} / ${res.nbKo + res.nbOk}`)));
+                tbody.appendChild(tr.element);
+            }
+
+            addResult("TimestampedHistory", P2p.TimestampedHistory.test());
+            addResult("SharedValue", P2p.SharedValue.test());
+        };
 
         // Local storage
         let localStorageTbody = this.element.querySelector(".local-storage-tbody");

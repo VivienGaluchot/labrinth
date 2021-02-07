@@ -88,7 +88,7 @@ class Component {
             while (tbody.firstChild) {
                 tbody.firstChild.remove()
             }
-
+            let total = { nbKo: 0, nbOk: 0 };
             function addResult(name, res) {
                 let cssClass = "success";
                 if (res.nbKo != 0) {
@@ -96,15 +96,19 @@ class Component {
                 }
                 let tr = new FNode("tr")
                     .child(new FNode("td")
-                        .child(new FNode("code").text(name)))
+                        .child(name))
                     .child(new FNode("td")
                         .child(new FNode("code").class(cssClass)
                             .text(`${res.nbOk} / ${res.nbKo + res.nbOk}`)));
                 tbody.appendChild(tr.element);
+                total.nbKo += res.nbKo;
+                total.nbOk += res.nbOk;
             }
-
-            addResult("TimestampedHistory", P2p.TimestampedHistory.test());
-            addResult("SharedValue", P2p.SharedValue.test());
+            setTimeout(() => {
+                addResult(new FNode("code").text("TimestampedHistory"), P2p.TimestampedHistory.test());
+                addResult(new FNode("code").text("SharedValue"), P2p.SharedValue.test());
+                addResult(new FNode("span").text("Done"), total);
+            }, 100);
         };
 
         // Local storage

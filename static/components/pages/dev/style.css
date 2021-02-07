@@ -59,3 +59,7 @@
     margin-top: 1rem;
     margin-bottom: .2rem;
 }
+
+.p2p-test-table td:nth-child(2), .p2p-test-table th:nth-child(2) {
+    text-align: right;
+}

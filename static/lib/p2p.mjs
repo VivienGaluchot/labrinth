@@ -238,6 +238,10 @@ class SharedValue {
     }
 
     // when a message is received from an other peer
+    // message.id     : String
+    // message.lClock : Number
+    // message.rClock : Number
+    // message.value  : Any
     onmessage(endpoint, message) {
         if (message.id == "set") {
             let lClock = this.local.frontClock();
@@ -370,8 +374,7 @@ class SharedValue {
             let count = 0;
             while (messages.length > 0 && (max == null || count < max)) {
                 MyMath.shuffleArray(messages);
-                messages[0]();
-                messages.shift();
+                messages.shift()();
                 count++;
             }
         }

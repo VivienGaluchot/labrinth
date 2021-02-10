@@ -6,6 +6,8 @@ import { FNode } from '/lib/fdom.mjs';
 import * as Channel from '/lib/channel.mjs';
 import * as Sw from '/lib/sw-interface.mjs';
 
+import * as P2pTest from '/lib/p2p-test.mjs';
+
 
 function populateLocalStorageTbody(element) {
     while (element.firstChild) {
@@ -104,11 +106,9 @@ class Component {
                 total.nbKo += res.nbKo;
                 total.nbOk += res.nbOk;
             }
-            setTimeout(() => {
-                addResult(new FNode("code").text("TimestampedHistory"), P2p.TimestampedHistory.test());
-                addResult(new FNode("code").text("SharedValue"), P2p.SharedValue.test());
-                addResult(new FNode("span").text("Done"), total);
-            }, 100);
+            addResult(new FNode("code").text("TimestampedHistory"), P2pTest.TimestampedHistory());
+            addResult(new FNode("code").text("SharedValue"), P2pTest.SharedValue());
+            addResult(new FNode("span").text("Done"), total);
         };
 
         // Local storage

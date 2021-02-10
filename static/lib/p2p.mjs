@@ -84,6 +84,11 @@ function offer() {
     });
 };
 
+
+// ---------------------------------
+// Endpoints
+// ---------------------------------
+
 class Endpoint {
     constructor(user, device, session) {
         // identify a user
@@ -132,6 +137,11 @@ class RemoteEndpoint extends Endpoint {
 
 const localEndpoint = LocalEndpoint.generate();
 
+
+// ---------------------------------
+// Concurrent computing
+// ---------------------------------
+
 class Group {
     constructor() {
         this.id = MyMath.bufferToHex(MyMath.getRandomByteArray(32 / 8));
@@ -148,10 +158,11 @@ class Group {
     }
 }
 
-// Value shared amongst multiple peers
-// Each peers have particular access rights (read / read-write) for this value
+
+// Abstract value shared amongst multiple peers
+// Each peers have particular access rights (read / read-write)
 // The local value is not guaranteed to be the global value, but this will eventually
-// be the case (when the sync speed is higher than each local update speed).
+// be the case (when the sync speed is higher than each local update speed)
 //
 // TODO
 // - work with a Group
@@ -159,7 +170,8 @@ class Group {
 // - access rights
 // - reduce network load
 // - event API
-class SharedValue {
+// - global lock
+class SharedMinimal {
     constructor(localEndpoint, remotes) {
         this.localEndpoint = localEndpoint;
 
@@ -171,26 +183,30 @@ class SharedValue {
             this.remotes.set(remote, new TimestampedHistory());
         }
 
+        this.signaledCommit = 0;
+
         // input (called internally)
         this.send = (endpoint, message) => {
             console.warn("send not implemented");
         };
-        this.merge = (left, right) => {
-            if (left > right) {
-                return right
-            } else {
-                return left;
-            }
-        };
+        this.onCommit = (clock, value) => { };
     }
+
+    // local
 
     getLocalClock() {
         return this.local.frontClock();
     }
 
-    getLocal() {
-        return this.local.frontValue();
+    setLocal(value) {
+        if (value == undefined) {
+            throw new Error("undefined value not supported");
+        }
+        this.local.push(new HistoryPointValue(value));
+        this.sendLocalUpdate(this.local.frontClock(), value);
     }
+
+    // global
 
     getGlobalClock() {
         let frontClock = null;
@@ -202,19 +218,8 @@ class SharedValue {
         return frontClock;
     }
 
-    getGlobal() {
-        let frontClock = this.getGlobalClock();
-        let value = null;
-        for (let history of this.histories()) {
-            if (history.get(frontClock) != undefined) {
-                if (value == null) {
-                    value = history.get(frontClock);
-                } else {
-                    value = this.merge(value, history.get(frontClock));
-                }
-            }
-        }
-        return value;
+    * getGlobalHistoryPoints() {
+        return this.historyPoints(this.getGlobalClock());
     }
 
     isGlobal() {
@@ -229,109 +234,104 @@ class SharedValue {
         return true;
     }
 
-    setLocal(value) {
-        if (value == undefined) {
-            throw new Error("undefined value not supported");
-        }
-        this.local.push(value);
-        this.sendLocalUpdate();
-    }
+    // reception
 
     // when a message is received from an other peer
-    // message.id     : String
-    // message.lClock : Number
-    // message.rClock : Number
-    // message.value  : Any
     onmessage(endpoint, message) {
+        let remote = this.remotes.get(endpoint);
         if (message.id == "set") {
             let lClock = this.local.frontClock();
-            let remote = this.remotes.get(endpoint);
-            if (remote.frontClock() < message.lClock) {
-                // register the message in remote history
-                remote.set(message.lClock, message.value);
-                // register local value
-                if (message.rClock == lClock) {
-                    // no conflict, use the received value as local value
-                    if (lClock < message.lClock) {
-                        this.local.set(message.lClock, undefined);
-                        this.sendLocalAck();
-                    }
-                } else if (message.rClock < lClock) {
-                    // conflict
-                    if (lClock < message.lClock) {
-                        this.local.set(message.lClock, this.local.frontValue());
-                        this.sendLocalAckMerge();
-                    }
-                } else if (lClock < message.rClock) {
-                    // invalid case
-                    console.warn("invalid case");
+            // register the message in remote history
+            remote.set(message.lClock, new HistoryPointValue(message.value));
+            // register local value
+            if (message.rClock == lClock) {
+                // no conflict, use the received value as local value
+                if (this.local.get(message.lClock) == undefined) {
+                    this.local.set(message.lClock, HistoryPointNone);
+                    this.sendLocalAck(message.lClock);
                 }
+            } else if (message.rClock < lClock) {
+                // conflict, local value was updated since the message was sent
+                if (this.local.get(message.lClock) == undefined) {
+                    let localValue = this.local.frontValue();
+                    if (localValue == HistoryPointNone) {
+                        this.local.set(message.lClock, HistoryPointNone);
+                        this.sendLocalAck(message.lClock);
+                    } else {
+                        this.local.set(message.lClock, new HistoryPointRef(localValue.value));
+                        this.sendLocalAckMerge(message.lClock, localValue.value);
+                    }
+                }
+            } else {
+                throw new Error("invalid message");
             }
-            this.collapseHistories();
+
         } else if (message.id == "ack") {
-            let remote = this.remotes.get(endpoint);
-            if (remote.frontClock() < message.lClock) {
-                // register the ack in remote history
-                remote.set(message.lClock, undefined);
-            }
-            this.collapseHistories();
+            // register the ack in remote history
+            remote.set(message.lClock, HistoryPointNone);
+
         } else if (message.id == "ackMerge") {
-            let remote = this.remotes.get(endpoint);
-            if (remote.frontClock() < message.lClock) {
-                // register the ack in remote history
-                remote.set(message.lClock, message.value);
-            }
-            this.collapseHistories();
+            // register the ack in remote history
+            remote.set(message.lClock, new HistoryPointRef(message.value));
         }
+        this.collapseHistories();
     }
 
     // internal
 
-    sendLocalUpdate() {
+    sendLocalUpdate(lClock, value) {
         for (let [remote, h] of this.remotes) {
             this.send(remote, {
                 id: "set",
                 // remote clock in the sender point of view
                 rClock: h.frontClock(),
                 // local clock in the sender point of view
-                lClock: this.local.frontClock(),
+                lClock: lClock,
                 // local value in the sender point of view
-                value: this.local.frontValue()
+                value: value
             });
         }
     }
 
-    sendLocalAck() {
+    sendLocalAck(clock) {
+        let msg = {
+            id: "ack",
+            // local clock in the sender point of view
+            lClock: clock
+        };
         for (let [remote, h] of this.remotes) {
-            this.send(remote, {
-                id: "ack",
-                // local clock in the sender point of view
-                lClock: this.local.frontClock()
-            });
+            this.send(remote, msg);
         }
     }
 
-    sendLocalAckMerge() {
+    sendLocalAckMerge(clock, value) {
+        let msg = {
+            id: "ackMerge",
+            // local clock in the sender point of view
+            lClock: clock,
+            // local value in the sender point of view
+            value: value
+        };
         for (let [remote, h] of this.remotes) {
-            this.send(remote, {
-                id: "ackMerge",
-                // local clock in the sender point of view
-                lClock: this.local.frontClock(),
-                // local value in the sender point of view
-                value: this.local.frontValue()
-            });
+            this.send(remote, msg);
         }
     }
 
     collapseHistories() {
-        let frontClock = null;
+        let commitClock = null;
         for (let history of this.histories()) {
-            if (frontClock == null || history.frontClock() < frontClock) {
-                frontClock = history.frontClock();
+            if (commitClock == null || history.commitClock() < commitClock) {
+                commitClock = history.commitClock();
             }
         }
-        for (let history of this.histories()) {
-            history.forget(frontClock - 1);
+        if (this.signaledCommit < commitClock) {
+            for (let clock = this.signaledCommit + 1; clock <= commitClock; clock++) {
+                this.onCommit(clock, this.getValue(clock));
+            }
+            for (let history of this.histories()) {
+                history.forget(commitClock - 1);
+            }
+            this.signaledCommit = commitClock;
         }
     }
 
@@ -342,165 +342,97 @@ class SharedValue {
         }
     }
 
-    static test() {
-        let nbOk = 0;
-        let nbKo = 0;
+    * historyPoints(clock) {
+        for (let history of this.histories()) {
+            if (history.get(clock) != undefined) {
+                yield history.get(clock);
+            }
+        }
+    }
+}
 
-        function check(predicate) {
-            if (!predicate) {
-                console.trace("KO");
-                nbKo++;
+// Simple value shared amongst multiple peers
+// In case of conflict, a merge function is applied
+class SharedValue extends SharedMinimal {
+    constructor(localEndpoint, remotes) {
+        super(localEndpoint, remotes);
+
+        // input (called internally)
+        this.merge = (left, right) => {
+            if (left > right) {
+                return right
             } else {
-                nbOk++;
+                return left;
             }
-        }
-        function checkThrow(callback) {
-            try {
-                callback();
-                check(false);
-            } catch (error) {
-                nbOk++;
-            }
-        }
+        };
+    }
 
-        // setup
-        let alice = "alice";
-        let bob = "bob";
-        let charles = "charles";
-        let group = [alice, bob, charles];
+    // local
 
-        let messages = [];
-        function exchangeShuffle(max) {
-            let count = 0;
-            while (messages.length > 0 && (max == null || count < max)) {
-                MyMath.shuffleArray(messages);
-                messages.shift()();
-                count++;
-            }
-        }
-
-        let shd = new Map();
-        for (let id of group) {
-            let shared = new SharedValue(id, group.filter((value) => { return value != id }));
-            shared.send = (to, message) => {
-                messages.push(() => {
-                    console.debug(id, "->", to, message);
-                    shd.get(to).onmessage(id, message);
-                });
-            };
-            shd.set(id, shared);
-        }
-
-        function logDetail(id, sh) {
-            console.log(`==> vue from ${id}, global ${sh.isGlobal()}`);
-            console.log("local", sh.local.backClock(), sh.local.frontClock(), sh.local.history);
-            for (let [id, hs] of sh.remotes) {
-                console.log("remote", id, hs.backClock(), hs.frontClock(), hs.history);
-            }
-            console.log("global", sh.getGlobal());
-        }
-
-
-        console.log("-- initial condition");
-
-        check(shd.get(alice).getLocal() == undefined);
-        check(shd.get(alice).getGlobal() == undefined);
-
-
-        console.log("-- invalid input");
-
-        checkThrow(() => { shd.get(alice).setLocal(undefined); });
-
-
-        console.log("-- no conflict value exchange");
-
-        shd.get(alice).setLocal("1");
-        check(shd.get(alice).getLocal() == "1");
-        check(shd.get(alice).getLocalClock() == 1);
-        check(shd.get(alice).getGlobal() == undefined);
-        check(shd.get(alice).getGlobalClock() == 0);
-        exchangeShuffle();
-        for (let [id, sh] of shd) {
-            check(sh.getGlobal() == "1");
-        }
-        shd.get(bob).setLocal("2");
-        check(shd.get(bob).getLocal() == "2");
-        check(shd.get(bob).getLocalClock() == 2);
-        check(shd.get(bob).getGlobalClock() == 1);
-        exchangeShuffle();
-        for (let [id, sh] of shd) {
-            check(sh.getGlobal() == "2");
-        }
-        shd.get(alice).setLocal("1");
-        exchangeShuffle();
-        for (let [id, sh] of shd) {
-            check(sh.getGlobal() == "1");
-        }
-
-        for (let [id, sh] of shd) {
-            logDetail(id, sh);
-            check(sh.getGlobalClock() == 3);
-        }
-
-
-        console.log("-- conflict value exchange");
-
-        shd.get(alice).setLocal("2");
-        check(shd.get(alice).getLocal() == "2");
-        shd.get(bob).setLocal("3");
-        check(shd.get(bob).getLocal() == "3");
-        shd.get(bob).setLocal("5");
-        check(shd.get(bob).getLocal() == "5");
-        shd.get(charles).setLocal("4");
-        check(shd.get(charles).getLocal() == "4");
-
-        for (let [id, sh] of shd) {
-            check(shd.get(id).getGlobal() == "1");
-        }
-        exchangeShuffle();
-        for (let [id, sh] of shd) {
-            logDetail(id, sh);
-            check(sh.getGlobal() == "2");
-            check(sh.getGlobalClock() == 5);
-        }
-
-        console.log("-- global consistency");
-
-        for (let i = 0; i < 10; i++) {
-            shd.get(alice).setLocal("6");
-            exchangeShuffle(1);
-            shd.get(bob).setLocal("7");
-            shd.get(charles).setLocal("8");
-            exchangeShuffle(2);
-            shd.get(charles).setLocal("9");
-            shd.get(bob).setLocal("10");
-            exchangeShuffle(4);
-            shd.get(alice).setLocal("11");
-            shd.get(alice).setLocal("12");
-            shd.get(alice).setLocal("13");
-            shd.get(alice).setLocal("14");
-            exchangeShuffle();
-        }
-
-        // all shall have the same global value & clock
-        check(shd.get(alice).getGlobal() != undefined);
-        check(shd.get(alice).getGlobal() == shd.get(bob).getGlobal());
-        check(shd.get(alice).getGlobal() == shd.get(charles).getGlobal());
-        check(shd.get(alice).getGlobalClock() == shd.get(bob).getGlobalClock());
-        check(shd.get(alice).getGlobalClock() == shd.get(charles).getGlobalClock());
-
-        for (let [id, sh] of shd) {
-            logDetail(id, sh);
-        }
-
-
-        console.log("-- result");
-        if (nbKo == 0) {
-            console.log(`SharedValue test: ${nbOk} / ${nbOk + nbKo}`);
+    getLocalValue() {
+        let point = this.local.frontValue();
+        if (point != undefined && point != HistoryPointNone) {
+            return point.value;
         } else {
-            console.error(`SharedValue test: ${nbOk} / ${nbOk + nbKo}`);
+            return undefined;
         }
-        return { nbOk: nbOk, nbKo: nbKo };
+    }
+
+    // global
+
+    getGlobalValue() {
+        return this.getValue(this.getGlobalClock());
+    }
+
+    // internal
+
+    getValue(clock) {
+        let mergedValue = null;
+        for (let value of this.historyValues(clock)) {
+            if (mergedValue == null) {
+                mergedValue = value;
+            } else {
+                mergedValue = this.merge(mergedValue, value);
+            }
+        }
+        return mergedValue;
+    }
+
+    * historyValues(clock) {
+        for (let point of this.historyPoints(clock)) {
+            if (point != HistoryPointNone) {
+                yield point.value;
+            }
+        }
+    }
+}
+
+
+// ---------------------------------
+// History utils
+// ---------------------------------
+
+class HistoryPoint { }
+
+const HistoryPointNone = new HistoryPoint();
+
+class HistoryPointValue extends HistoryPoint {
+    constructor(value) {
+        super();
+        if (value == undefined) {
+            throw new Error("undefined point value");
+        }
+        this.value = value;
+    }
+}
+
+class HistoryPointRef extends HistoryPoint {
+    constructor(value) {
+        super();
+        if (value == undefined) {
+            throw new Error("undefined point value");
+        }
+        this.value = value;
     }
 }
 
@@ -510,10 +442,19 @@ class TimestampedHistory {
         // 0: older (lower clock) -> last: newer (higher clock)
         this.history = [];
         this.clock = 0;
+        this.cachedCommitClock = 0;
     }
 
     frontValue() {
         return this.get(this.frontClock());
+    }
+
+    commitClock() {
+        let clock = this.backClock();
+        while (this.get(clock) != undefined) {
+            clock++;
+        }
+        return clock - 1;
     }
 
     frontClock() {
@@ -521,7 +462,7 @@ class TimestampedHistory {
     }
 
     backClock() {
-        return this.clock - this.history.length + 1;
+        return Math.min(this.clock - this.history.length + 1, this.clock);
     }
 
     get(clock) {
@@ -535,16 +476,26 @@ class TimestampedHistory {
     }
 
     set(clock, value) {
-        if (clock <= this.clock) {
-            throw new Error("can't rewrite history");
+        if (value == undefined) {
+            throw new Error(`can't set undefined value in history`);
+        }
+        let back = this.backClock();
+        if (clock <= back) {
+            throw new Error(`can't rewrite history, ${clock} was forgotten`);
+        } else if (clock <= this.frontClock()) {
+            if (this.history[clock - back] != undefined) {
+                console.log(this);
+                throw new Error(`can't rewrite history, ${clock} already defined`);
+            } else {
+                this.history[clock - back] = value;
+            }
         } else {
-            let frontValue = this.history[this.history.length - 1];
             for (let i = this.clock; i < (clock - 1); i++) {
-                this.history.push(frontValue);
+                this.history.push(undefined);
             }
             this.history.push(value);
+            this.clock = clock;
         }
-        this.clock = clock;
     }
 
     push(value) {
@@ -557,82 +508,6 @@ class TimestampedHistory {
             this.history.shift();
         }
         this.clockShift = clock + 1;
-    }
-
-    static test() {
-        let nbOk = 0;
-        let nbKo = 0;
-
-        function check(predicate) {
-            if (!predicate) {
-                console.trace("KO");
-                nbKo++;
-            } else {
-                nbOk++;
-            }
-        }
-        function checkThrow(callback) {
-            try {
-                callback();
-                check(false);
-            } catch (error) {
-                nbOk++;
-            }
-        }
-
-        // setup
-        let h = new TimestampedHistory();
-        checkThrow(() => { h.set(0, "x") });
-        h.set(1, "1");
-        h.set(2, "2");
-        h.set(5, "5");
-        checkThrow(() => { h.set(5, "x") });
-        h.set(10, "10");
-
-        // ranges
-        check(h.backClock() == 1);
-        check(h.frontClock() == 10);
-
-        // values
-        check(h.get(0) == undefined);
-        check(h.get(1) == "1");
-        check(h.get(2) == "2");
-        check(h.get(3) == "2");
-        check(h.get(4) == "2");
-        check(h.get(5) == "5");
-        check(h.get(9) == "5");
-        check(h.get(10) == "10");
-        check(h.get(11) == undefined);
-
-        // forget
-        h.forget(3);
-        check(h.backClock() == 4);
-        check(h.frontClock() == 10);
-        check(h.get(0) == undefined);
-        check(h.get(1) == undefined);
-        check(h.get(2) == undefined);
-        check(h.get(3) == undefined);
-        check(h.get(4) == "2");
-        check(h.get(5) == "5");
-        check(h.get(9) == "5");
-        check(h.get(10) == "10");
-        check(h.get(11) == undefined);
-
-        h.forget(4);
-        check(h.backClock() == 5);
-        check(h.frontClock() == 10);
-        check(h.get(4) == undefined);
-        check(h.get(5) == "5");
-        check(h.get(9) == "5");
-        check(h.get(10) == "10");
-        check(h.get(11) == undefined);
-
-        if (nbKo == 0) {
-            console.log(`TimestampedHistory test: ${nbOk} / ${nbOk + nbKo}`);
-        } else {
-            console.error(`TimestampedHistory test: ${nbOk} / ${nbOk + nbKo}`);
-        }
-        return { nbOk: nbOk, nbKo: nbKo };
     }
 }
 

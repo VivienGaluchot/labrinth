@@ -31,6 +31,11 @@ function TimestampedHistory() {
 
     // setup
     let h = new P2p.TimestampedHistory();
+
+    check(h.backClock() == 0);
+    check(h.commitClock() == 0);
+    check(h.frontClock() == 0);
+
     checkThrow(() => { h.set(0, "x") });
     h.set(1, "1");
     h.set(2, "2");
@@ -57,7 +62,7 @@ function TimestampedHistory() {
     // forget
     h.forget(3);
     check(h.backClock() == 4);
-    check(h.commitClock() == 3);
+    check(h.commitClock() == 4);
     check(h.frontClock() == 10);
     check(h.get(0) == undefined);
     check(h.get(1) == undefined);
@@ -134,7 +139,7 @@ function SharedValue() {
                 shd.get(to).onmessage(id, message);
             });
         };
-        shared.onCommit = (clock, value) => {
+        shared.onValueCommit = (clock, value) => {
             historyValues.get(id)[clock] = value;
         };
         historyValues.set(id, []);
@@ -155,16 +160,18 @@ function SharedValue() {
 
     check(shd.get(alice).getLocalValue() == undefined);
     check(shd.get(alice).getGlobalValue() == undefined);
+    check(shd.get(alice).getLocalClock() == 0);
+    check(shd.get(alice).getGlobalClock() == 0);
 
 
     console.log("-- invalid input");
 
-    checkThrow(() => { shd.get(alice).setLocal(undefined); });
+    checkThrow(() => { shd.get(alice).setLocalValue(undefined); });
 
 
     console.log("-- no conflict value exchange");
 
-    shd.get(alice).setLocal("1");
+    shd.get(alice).setLocalValue("1");
     check(shd.get(alice).getLocalValue() == "1");
     check(shd.get(alice).getLocalClock() == 1);
     check(shd.get(alice).getGlobalValue() == undefined);
@@ -175,7 +182,7 @@ function SharedValue() {
         check(sh.getGlobalValue() == "1");
         check(sh.isGlobal() == true);
     }
-    shd.get(bob).setLocal("2");
+    shd.get(bob).setLocalValue("2");
     check(shd.get(bob).isGlobal() == false);
     check(shd.get(bob).getLocalValue() == "2");
     check(shd.get(bob).getLocalClock() == 2);
@@ -185,7 +192,7 @@ function SharedValue() {
         check(sh.getGlobalValue() == "2");
         check(sh.isGlobal() == true);
     }
-    shd.get(alice).setLocal("1");
+    shd.get(alice).setLocalValue("1");
     check(shd.get(alice).isGlobal() == false);
     exchangeShuffle();
     for (let [id, sh] of shd) {
@@ -201,13 +208,13 @@ function SharedValue() {
 
     console.log("-- conflict value exchange");
 
-    shd.get(alice).setLocal("2");
+    shd.get(alice).setLocalValue("2");
     check(shd.get(alice).getLocalValue() == "2");
-    shd.get(bob).setLocal("3");
+    shd.get(bob).setLocalValue("3");
     check(shd.get(bob).getLocalValue() == "3");
-    shd.get(bob).setLocal("5");
+    shd.get(bob).setLocalValue("5");
     check(shd.get(bob).getLocalValue() == "5");
-    shd.get(charles).setLocal("4");
+    shd.get(charles).setLocalValue("4");
     check(shd.get(charles).getLocalValue() == "4");
 
     for (let [id, sh] of shd) {
@@ -223,18 +230,18 @@ function SharedValue() {
     console.log("-- global consistency");
 
     for (let i = 0; i < 10; i++) {
-        shd.get(alice).setLocal("6");
+        shd.get(alice).setLocalValue("6");
         exchangeShuffle(1);
-        shd.get(bob).setLocal("7");
-        shd.get(charles).setLocal("8");
+        shd.get(bob).setLocalValue("7");
+        shd.get(charles).setLocalValue("8");
         exchangeShuffle(2);
-        shd.get(charles).setLocal("9");
-        shd.get(bob).setLocal("10");
+        shd.get(charles).setLocalValue("9");
+        shd.get(bob).setLocalValue("10");
         exchangeShuffle(4);
-        shd.get(alice).setLocal("11");
-        shd.get(alice).setLocal("12");
-        shd.get(alice).setLocal("13");
-        shd.get(alice).setLocal("14");
+        shd.get(alice).setLocalValue("11");
+        shd.get(alice).setLocalValue("12");
+        shd.get(alice).setLocalValue("13");
+        shd.get(alice).setLocalValue("14");
         exchangeShuffle();
     }
 
@@ -248,6 +255,10 @@ function SharedValue() {
     for (let [id, sh] of shd) {
         logDetail(id, sh);
     }
+
+    console.log("-- history consistency");
+
+    check(historyValues.get(alice).length > 10);
 
     let historyContinuous = true;
     for (let i = 1; i < historyValues.get(alice).length; i++) {

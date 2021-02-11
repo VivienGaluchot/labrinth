@@ -10,6 +10,12 @@ import * as Storage from './storage.mjs';
 
 const storage = new Storage.ModularStorage("p2p");
 
+
+
+// ---------------------------------
+// WebRTC
+// ---------------------------------
+
 const config = {
     iceServers: [{
         urls: [
@@ -189,8 +195,15 @@ class SharedMinimal {
         this.send = (endpoint, message) => {
             console.warn("send not implemented");
         };
-        this.onCommit = (clock, value) => { };
     }
+
+    // abstract
+
+    onCommit(clock) {
+        throw new Error("abstract function not implemented");
+    }
+
+    // public
 
     // local
 
@@ -198,21 +211,13 @@ class SharedMinimal {
         return this.local.frontClock();
     }
 
-    setLocal(value) {
-        if (value == undefined) {
-            throw new Error("undefined value not supported");
-        }
-        this.local.push(new HistoryPointValue(value));
-        this.sendLocalUpdate(this.local.frontClock(), value);
-    }
-
     // global
 
     getGlobalClock() {
         let frontClock = null;
         for (let history of this.histories()) {
-            if (frontClock == null || history.frontClock() < frontClock) {
-                frontClock = history.frontClock();
+            if (frontClock == null || history.commitClock() < frontClock) {
+                frontClock = history.commitClock();
             }
         }
         return frontClock;
@@ -277,7 +282,15 @@ class SharedMinimal {
         this.collapseHistories();
     }
 
-    // internal
+    // private
+
+    pushLocalPoint(value) {
+        if (value == undefined) {
+            throw new Error("undefined value not supported");
+        }
+        this.local.push(new HistoryPointValue(value));
+        this.sendLocalUpdate(this.local.frontClock(), value);
+    }
 
     sendLocalUpdate(lClock, value) {
         for (let [remote, h] of this.remotes) {
@@ -318,15 +331,10 @@ class SharedMinimal {
     }
 
     collapseHistories() {
-        let commitClock = null;
-        for (let history of this.histories()) {
-            if (commitClock == null || history.commitClock() < commitClock) {
-                commitClock = history.commitClock();
-            }
-        }
+        let commitClock = this.getGlobalClock();
         if (this.signaledCommit < commitClock) {
             for (let clock = this.signaledCommit + 1; clock <= commitClock; clock++) {
-                this.onCommit(clock, this.getValue(clock));
+                this.onCommit(clock);
             }
             for (let history of this.histories()) {
                 history.forget(commitClock - 1);
@@ -365,9 +373,22 @@ class SharedValue extends SharedMinimal {
                 return left;
             }
         };
+        this.onValueCommit = (clock, value) => { };
     }
 
+    // abstract
+
+    onCommit(clock) {
+        this.onValueCommit(clock, this.getValue(clock));
+    }
+
+    // public
+
     // local
+
+    setLocalValue(value) {
+        this.pushLocalPoint(value);
+    }
 
     getLocalValue() {
         let point = this.local.frontValue();
@@ -404,6 +425,42 @@ class SharedValue extends SharedMinimal {
                 yield point.value;
             }
         }
+    }
+}
+
+class SharedSet extends SharedMinimal {
+    constructor(localEndpoint, remotes) {
+        super(localEndpoint, remotes);
+
+        // both sets shall converge to the same value eventually
+        this.globalSet = new Set();
+        this.localSet = new Set();
+    }
+
+    // abstract
+
+    onCommit(clock) {
+        // TODO update global set
+    }
+
+    // local
+
+    addLocal(item) {
+        // TODO push add OP and update localSet
+    }
+
+    deleteLocal(item) {
+        // TODO push delete OP and update localSet
+    }
+
+    getLocalSet() {
+        return this.localSet;
+    }
+
+    // global
+
+    getGlobalSet() {
+        return this.globalSet;
     }
 }
 
@@ -449,16 +506,17 @@ class TimestampedHistory {
         return this.get(this.frontClock());
     }
 
+    frontClock() {
+        return this.clock;
+    }
+
     commitClock() {
-        let clock = this.backClock();
+        let back = this.backClock();
+        let clock = back;
         while (this.get(clock) != undefined) {
             clock++;
         }
-        return clock - 1;
-    }
-
-    frontClock() {
-        return this.clock;
+        return Math.max(clock - 1, back);
     }
 
     backClock() {
@@ -511,4 +569,4 @@ class TimestampedHistory {
     }
 }
 
-export { localEndpoint, offer, getIceCandidates, TimestampedHistory, SharedValue }
+export { localEndpoint, offer, getIceCandidates, TimestampedHistory, SharedValue, SharedSet }

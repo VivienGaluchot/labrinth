@@ -177,6 +177,7 @@ class Group {
 // - reduce network load
 // - event API
 // - global lock
+// - get last updaters
 class SharedMinimal {
     constructor(localEndpoint, remotes) {
         this.localEndpoint = localEndpoint;

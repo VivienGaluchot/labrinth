@@ -433,28 +433,36 @@ class SharedSet extends SharedMinimal {
     constructor(localEndpoint, remotes) {
         super(localEndpoint, remotes);
 
-        // both sets shall converge to the same value eventually
         this.globalSet = new Set();
-        this.localSet = new Set();
+        this.localSet = null;
     }
 
     // abstract
 
     onCommit(clock) {
-        // TODO update global set
+        this.localSet = null;
+        this.updateSet(this.globalSet, clock);
     }
 
     // local
 
     addLocal(item) {
-        // TODO push add OP and update localSet
+        this.localSet = null;
+        this.pushLocalPoint({ op: "add", item: item });
     }
 
     deleteLocal(item) {
-        // TODO push delete OP and update localSet
+        this.localSet = null;
+        this.pushLocalPoint({ op: "del", item: item });
     }
 
     getLocalSet() {
+        if (this.localSet == null) {
+            this.localSet = new Set([...this.globalSet]);
+            for (let clock = this.getGlobalClock() + 1; clock <= this.getLocalClock(); clock++) {
+                this.updateSet(this.localSet, clock);
+            }
+        }
         return this.localSet;
     }
 
@@ -462,6 +470,28 @@ class SharedSet extends SharedMinimal {
 
     getGlobalSet() {
         return this.globalSet;
+    }
+
+    // internal
+
+    updateSet(set, clock) {
+        // add are executed first as simultaneous add x - del x shall result in x deleted
+        for (let point of this.historyPoints(clock)) {
+            // only take values into account, not refs
+            if (point instanceof HistoryPointValue) {
+                if (point.value.op == "add") {
+                    set.add(point.value.item);
+                }
+            }
+        }
+        for (let point of this.historyPoints(clock)) {
+            // only take values into account, not refs
+            if (point instanceof HistoryPointValue) {
+                if (point.value.op == "del") {
+                    set.delete(point.value.item);
+                }
+            }
+        }
     }
 }
 

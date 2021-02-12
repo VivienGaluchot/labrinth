@@ -108,6 +108,7 @@ class Component {
             }
             addResult(new FNode("code").text("TimestampedHistory"), P2pTest.TimestampedHistory());
             addResult(new FNode("code").text("SharedValue"), P2pTest.SharedValue());
+            addResult(new FNode("code").text("SharedSet"), P2pTest.SharedSet());
             addResult(new FNode("span").text("Done"), total);
         };
 

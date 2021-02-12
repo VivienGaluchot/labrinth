@@ -289,5 +289,121 @@ function SharedValue() {
 }
 
 
+function SharedSet() {
+    let nbOk = 0;
+    let nbKo = 0;
 
-export { SharedValue, TimestampedHistory }
+    function check(predicate) {
+        if (!predicate) {
+            console.trace("KO");
+            nbKo++;
+        } else {
+            nbOk++;
+        }
+    }
+    function checkThrow(callback) {
+        try {
+            callback();
+            check(false);
+        } catch (error) {
+            nbOk++;
+        }
+    }
+
+    // setup
+    let alice = "alice";
+    let bob = "bob";
+    let charles = "charles";
+    let group = [alice, bob, charles];
+
+    let messages = [];
+    function exchangeShuffle(max) {
+        let count = 0;
+        while (messages.length > 0 && (max == null || count < max)) {
+            MyMath.shuffleArray(messages);
+            messages.shift()();
+            count++;
+        }
+    }
+
+    let shd = new Map();
+    for (let id of group) {
+        let shared = new P2p.SharedSet(id, group.filter((value) => { return value != id }));
+        shared.send = (to, message) => {
+            messages.push(() => {
+                console.debug(id, "->", to, message);
+                shd.get(to).onmessage(id, message);
+            });
+        };
+        shd.set(id, shared);
+    }
+
+    function logDetail(id, sh) {
+        console.log(`==> vue from ${id}, global ${sh.isGlobal()}`);
+        console.log("local", sh.getLocalSet());
+        console.log("global", sh.getGlobalSet());
+    }
+
+
+    console.log("-- initial condition");
+
+    check(shd.get(alice).getLocalSet().size == 0);
+    check(shd.get(alice).getGlobalSet().size == 0);
+    check(shd.get(alice).getLocalClock() == 0);
+    check(shd.get(alice).getGlobalClock() == 0);
+
+
+    console.log("-- no conflict update");
+
+    shd.get(alice).addLocal("1");
+
+    check(shd.get(alice).getLocalSet().has("1"));
+    check(!shd.get(alice).getGlobalSet().has("1"));
+    check(shd.get(alice).getLocalClock() == 1);
+    check(shd.get(alice).getGlobalClock() == 0);
+
+    exchangeShuffle(null);
+
+    for (let [id, sh] of shd) {
+        check(sh.getLocalSet().has("1"));
+        check(sh.getGlobalSet().has("1"));
+        check(sh.getLocalClock() == 1);
+        check(sh.getGlobalClock() == 1);
+    }
+
+    shd.get(bob).deleteLocal("1");
+    shd.get(bob).addLocal("2");
+    shd.get(bob).addLocal("3");
+
+    check(!shd.get(bob).getLocalSet().has("1"));
+    check(shd.get(bob).getLocalSet().has("2"));
+    check(shd.get(bob).getLocalSet().has("3"));
+    check(shd.get(bob).getLocalClock() == 4);
+    check(shd.get(bob).getGlobalClock() == 1);
+
+    exchangeShuffle(null);
+
+    for (let [id, sh] of shd) {
+        check(!sh.getLocalSet().has("1"));
+        check(sh.getLocalSet().has("2"));
+        check(sh.getLocalSet().has("3"));
+        check(sh.getLocalClock() == 4);
+        check(sh.getGlobalClock() == 4);
+    }
+
+    for (let [id, sh] of shd) {
+        logDetail(id, sh);
+    }
+
+
+    console.log("-- result");
+    if (nbKo == 0) {
+        console.log(`SharedSet test: ${nbOk} / ${nbOk + nbKo}`);
+    } else {
+        console.error(`SharedSet test: ${nbOk} / ${nbOk + nbKo}`);
+    }
+    return { nbOk: nbOk, nbKo: nbKo };
+}
+
+
+export { TimestampedHistory, SharedValue, SharedSet }

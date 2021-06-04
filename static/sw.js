@@ -26,17 +26,28 @@ self.addEventListener('message', event => {
 // Service worker
 
 self.addEventListener('install', (event) => {
-    console.debug(`dummy service worker installed in version ${VERSION}`);
+    console.log(`[SW-${VERSION}] service worker installed`);
     // Activate worker immediately
     event.waitUntil(self.skipWaiting());
 });
 
 self.addEventListener('activate', (event) => {
-    console.debug(`dummy service worker activated in version ${VERSION}`);
+    console.log(`[SW-${VERSION}] service worker activated`);
     // Become available to all pages
     event.waitUntil(self.clients.claim());
 });
 
 self.addEventListener('fetch', (event) => {
-    event.respondWith(fetch(event.request));
+    let handler = fetch(event.request)
+        .then((response) => {
+            if (response.ok) {
+                console.log(`[SW-${VERSION}] fetch ${event.request.url} success`);
+            } else {
+                console.log(`[SW-${VERSION}] fetch ${event.request.url} error: not ok`);
+            }
+            return response;
+        }).catch((error) => {
+            console.log(`[SW-${VERSION}] fetch ${event.request.url} error: ${error}`);
+        });
+    event.respondWith(handler);
 });

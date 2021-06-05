@@ -241,12 +241,6 @@ function getHub(name) {
 
 const websocketLogger = new Logger("websocket");
 
-const wsServer = new WebSocketServer({
-    httpServer: server,
-    autoAcceptConnections: false,
-    path: "/peer-discovery",
-});
-
 function originIsAllowed(origin) {
     if (origin == "http://127.0.0.1:8080")
         return true;
@@ -257,42 +251,118 @@ function originIsAllowed(origin) {
     return false;
 }
 
+// dev page user count
+
+// const wsServer = new WebSocketServer({
+//     httpServer: server,
+//     autoAcceptConnections: false,
+//     path: "/peer-discovery",
+// });
+
+// wsServer.on('request', function (request) {
+//     if (!originIsAllowed(request.origin)) {
+//         request.reject();
+//         websocketLogger.error(`connection from origin '${request.origin}' rejected.`);
+//         return;
+//     }
+
+//     try {
+//         let connection = request.accept('peer-discovery', request.origin);
+//         connection.on('message', message => {
+//             if (message.type === 'binary') {
+//                 websocketLogger.error(`received binary message of ${message.binaryData.length} bytes`);
+//                 return
+//             }
+//             if (message.type !== 'utf8') {
+//                 websocketLogger.error(`received non utf8 message of type ${message.type}`);
+//             }
+
+//             websocketLogger.debug("utf8 data received : " + message.utf8Data);
+//             // connection.sendUTF(message.utf8Data);
+//             // let data = JSON.parse(message.utf8Data);
+//             // if (data.id != undefined) {
+
+//             // } else {
+//             //     logError(`unexpected data received ${ JSON.stringify(data) }`);
+//             // }
+//         });
+//         connection.on('close', (reasonCode, description) => {
+//             websocketLogger.debug("connection closed, " + reasonCode + ": " + description);
+//         });
+
+//         let hub = getHub("default");
+//         hub.onChange = () => {
+//             hub.broadcastUTF(JSON.stringify({ "user_count": hub.size() }));
+//         };
+//         hub.register(connection);
+//     } catch (error) {
+//         websocketLogger.error(error);
+//     }
+// });
+
+
+// peer connector
+
+const peers = new Map();
+
+
+const wsServer = new WebSocketServer({
+    httpServer: server,
+    autoAcceptConnections: false,
+    path: "/peer-connector",
+})
+
 wsServer.on('request', function (request) {
     if (!originIsAllowed(request.origin)) {
         request.reject();
         websocketLogger.error(`connection from origin '${request.origin}' rejected.`);
         return;
     }
-
     try {
-        let connection = request.accept('peer-discovery', request.origin);
+        let connection = request.accept('rtc-on-socket-connector', request.origin);
         connection.on('message', message => {
             if (message.type === 'binary') {
                 websocketLogger.error(`received binary message of ${message.binaryData.length} bytes`);
-                return
+                return;
             }
             if (message.type !== 'utf8') {
                 websocketLogger.error(`received non utf8 message of type ${message.type}`);
+                return;
             }
-
-            websocketLogger.debug("utf8 data received : " + message.utf8Data);
-            // connection.sendUTF(message.utf8Data);
-            // let data = JSON.parse(message.utf8Data);
-            // if (data.id != undefined) {
-
-            // } else {
-            //     logError(`unexpected data received ${ JSON.stringify(data) }`);
-            // }
+            let data = JSON.parse(message.utf8Data);
+            if (data.id == "hi" && data?.src != undefined) {
+                if (peers.has(data.src)) {
+                    websocketLogger.error(`peer already registered ${data.src}`);
+                } else {
+                    peers.set(data.src, connection);
+                    websocketLogger.debug(`peer registered '${data.src}'`);
+                    connection.peerId = data.src;
+                }
+            } else if (data.id == "offer" && data?.src != undefined && data?.dst != undefined) {
+                if (peers.has(data.dst)) {
+                    websocketLogger.debug(`forward offer '${data.src}' from to '${data.dst}'`);
+                    peers.get(data.dst).sendUTF(JSON.stringify({ id: data.id, src: data.src, dst: data.dst, data: data.data }));
+                } else {
+                    websocketLogger.error(`can't forward offer, peer not registered ${data.src}`);
+                }
+            } else if (data.id == "answer" && data?.src != undefined && data?.dst != undefined) {
+                if (peers.has(data.dst)) {
+                    websocketLogger.debug(`forward answer '${data.src}' from to '${data.dst}'`);
+                    peers.get(data.dst).sendUTF(JSON.stringify({ id: data.id, src: data.src, dst: data.dst, data: data.data }));
+                } else {
+                    websocketLogger.error(`can't forward answer, peer not registered ${data.src}`);
+                }
+            } else {
+                websocketLogger.error(`received unexpected message: ${message.utf8Data}`);
+            }
         });
         connection.on('close', (reasonCode, description) => {
             websocketLogger.debug("connection closed, " + reasonCode + ": " + description);
+            if (peers.has(connection.peerId)) {
+                peers.delete(connection.peerId);
+                websocketLogger.debug(`peer unregistered '${connection.peerId}'`);
+            }
         });
-
-        let hub = getHub("default");
-        hub.onChange = () => {
-            hub.broadcastUTF(JSON.stringify({ "user_count": hub.size() }));
-        };
-        hub.register(connection);
     } catch (error) {
         websocketLogger.error(error);
     }

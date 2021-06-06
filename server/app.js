@@ -154,87 +154,10 @@ server.listen(port, function () {
 });
 
 
-// peers
+// peer map
 
-/*
-class PeerSet {
-    constructor() {
-        // store peers connection by id
-        // id -> connection
-        this.peerMap = new Map();
-    }
-
-    getConnection(id) {
-        return this.peerMap.get(id);
-    }
-
-    register(id, connection) {
-        if (this.peerMap.has(id)) {
-            logError(`peer id collision`);
-        } else {
-            this.peerMap.set(id, connection);
-            logDebug(`peer registered '${id}', count '${this.peerMap.size}'`);
-            connection.id = id;
-        }
-    }
-
-    unregister(id) {
-        this.peerMap.delete(id);
-        logDebug(`peer unregistered '${id}', count '${this.peerMap.size}'`);
-    }
-}
-
-let set = new PeerSet();
-*/
-
-// Hub
-
-const hubLogger = new Logger("hub");
-
-class Hub {
-    constructor() {
-        this.connections = new Set();
-        this.onEmpty = () => { };
-        this.onChange = (connections) => { };
-    }
-
-    size() {
-        return this.connections.size;
-    }
-
-    register(connection) {
-        this.connections.add(connection);
-        connection.on('close', () => {
-            this.connections.delete(connection);
-            this.onChange(this.connections);
-            if (this.connections.size == 0) {
-                this.onEmpty();
-            }
-        });
-        this.onChange(this.connections);
-    }
-
-    broadcastUTF(msg) {
-        for (let connection of this.connections) {
-            connection.sendUTF(msg);
-        }
-    }
-}
-
-const hubs = new Map();
-function getHub(name) {
-    if (!hubs.has(name)) {
-        let hub = new Hub();
-        hub.onEmpty = () => {
-            hubs.delete(name);
-            hubLogger.debug(`remove empty hub '${name}'`);
-        };
-
-        hubs.set(name, hub);
-        hubLogger.debug(`add new hub '${name}'`);
-    }
-    return hubs.get(name);
-}
+// id -> connection
+const peers = new Map();
 
 
 // websocket
@@ -251,60 +174,6 @@ function originIsAllowed(origin) {
     return false;
 }
 
-// dev page user count
-
-// const wsServer = new WebSocketServer({
-//     httpServer: server,
-//     autoAcceptConnections: false,
-//     path: "/peer-discovery",
-// });
-
-// wsServer.on('request', function (request) {
-//     if (!originIsAllowed(request.origin)) {
-//         request.reject();
-//         websocketLogger.error(`connection from origin '${request.origin}' rejected.`);
-//         return;
-//     }
-
-//     try {
-//         let connection = request.accept('peer-discovery', request.origin);
-//         connection.on('message', message => {
-//             if (message.type === 'binary') {
-//                 websocketLogger.error(`received binary message of ${message.binaryData.length} bytes`);
-//                 return
-//             }
-//             if (message.type !== 'utf8') {
-//                 websocketLogger.error(`received non utf8 message of type ${message.type}`);
-//             }
-
-//             websocketLogger.debug("utf8 data received : " + message.utf8Data);
-//             // connection.sendUTF(message.utf8Data);
-//             // let data = JSON.parse(message.utf8Data);
-//             // if (data.id != undefined) {
-
-//             // } else {
-//             //     logError(`unexpected data received ${ JSON.stringify(data) }`);
-//             // }
-//         });
-//         connection.on('close', (reasonCode, description) => {
-//             websocketLogger.debug("connection closed, " + reasonCode + ": " + description);
-//         });
-
-//         let hub = getHub("default");
-//         hub.onChange = () => {
-//             hub.broadcastUTF(JSON.stringify({ "user_count": hub.size() }));
-//         };
-//         hub.register(connection);
-//     } catch (error) {
-//         websocketLogger.error(error);
-//     }
-// });
-
-
-// peer connector
-
-const peers = new Map();
-
 
 const wsServer = new WebSocketServer({
     httpServer: server,
@@ -312,7 +181,7 @@ const wsServer = new WebSocketServer({
     path: "/peer-connector",
 });
 
-wsServer.on('request', function (request) {
+wsServer.on('request', (request) => {
     if (!originIsAllowed(request.origin)) {
         request.reject();
         websocketLogger.error(`connection from origin '${request.origin}' rejected.`);
@@ -333,6 +202,7 @@ wsServer.on('request', function (request) {
             if (data.id == "hi" && data?.src != undefined) {
                 if (peers.has(data.src)) {
                     websocketLogger.error(`peer already registered ${data.src}`);
+                    connection.sendUTF(JSON.stringify({ id: "error", data: "peer already registered" }));
                     connection.close();
                 } else {
                     peers.set(data.src, connection);
@@ -346,6 +216,7 @@ wsServer.on('request', function (request) {
                     peers.get(data.dst).sendUTF(JSON.stringify({ id: data.id, src: data.src, dst: data.dst, data: data.data }));
                 } else {
                     websocketLogger.error(`can't forward offer, peer not registered ${data.src}`);
+                    connection.sendUTF(JSON.stringify({ id: "error", data: "peer not registered" }));
                 }
             } else if (data.id == "answer" && data?.src != undefined && data?.dst != undefined) {
                 if (peers.has(data.dst)) {
@@ -353,6 +224,7 @@ wsServer.on('request', function (request) {
                     peers.get(data.dst).sendUTF(JSON.stringify({ id: data.id, src: data.src, dst: data.dst, data: data.data }));
                 } else {
                     websocketLogger.error(`can't forward answer, peer not registered ${data.src}`);
+                    connection.sendUTF(JSON.stringify({ id: "error", data: "peer not registered" }));
                 }
             } else if (data.id == "candidate" && data?.src != undefined && data?.dst != undefined) {
                 if (peers.has(data.dst)) {
@@ -360,6 +232,7 @@ wsServer.on('request', function (request) {
                     peers.get(data.dst).sendUTF(JSON.stringify({ id: data.id, src: data.src, dst: data.dst, data: data.data }));
                 } else {
                     websocketLogger.error(`can't forward candidate, peer not registered ${data.src}`);
+                    connection.sendUTF(JSON.stringify({ id: "error", data: "peer not registered" }));
                 }
             } else {
                 websocketLogger.error(`received unexpected message: ${message.utf8Data}`);

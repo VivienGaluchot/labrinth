@@ -35,16 +35,12 @@ class Component {
         } else {
             wsUrl.protocol = "wss:";
         }
-        wsUrl.pathname = "/peer-discovery";
-        this.ws = new Channel.WebSocketChannel(wsUrl.href, "peer-discovery", true);
+        wsUrl.pathname = "/connector";
+        this.ws = new Channel.WebSocketChannel(wsUrl.href, "rtc-on-socket-connector", true);
     }
 
     onRender() {
-        // Server
-        let serverUserCount = this.element.querySelector(".server-user-count");
-        let showCount = (count) => {
-            serverUserCount.innerText = count;
-        };
+        // Websocket server
         let serverStatus = this.element.querySelector(".server-con-status");
         let showState = (state) => {
             serverStatus.classList.remove(...serverStatus.classList);
@@ -54,20 +50,13 @@ class Component {
                 serverStatus.classList.add("success");
             }
             serverStatus.innerText = state;
-            if (state != Channel.State.CONNECTED) {
-                showCount("-");
-            }
         };
         this.ws.onStateUpdate = (state) => {
             showState(state);
         };
         this.ws.onmessage = (data) => {
             let obj = JSON.parse(data);
-            if (obj.user_count) {
-                showCount(obj.user_count);
-            } else {
-                console.warn(obj);
-            }
+            console.log("ws message", data);
         };
         showState(this.ws.state);
 

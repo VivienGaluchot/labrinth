@@ -165,25 +165,21 @@ class Multiplexer {
     }
 }
 
+class SocketLikeChannel extends Channel {
+    constructor(name, reconnect) {
+        super(name);
 
-// ---------------------------------
-// Websocket
-// ---------------------------------
-
-/**
- *  Websocket channel
- */
-class WebSocketChannel extends Channel {
-    constructor(url, protocols, reconnect) {
-        super(`${url}`);
-        this.url = url;
-        this.protocols = protocols;
         this.reconnect = reconnect;
         this.isReconnectFused = false;
         this.socket = null;
 
-        this.isReliable = () => { return true };
-        this.send = () => { console.warn(`channel ${this.name} not connected, drop message`); };
+        this.unsetSend = () => { throw new Error(`channel ${this.name} socket not connected`); };
+        this.send = this.unsetSend;
+    }
+
+    // to override
+    getSocket() {
+        throw new Error("not implemented");
     }
 
     connect() {
@@ -191,7 +187,7 @@ class WebSocketChannel extends Channel {
             console.warn(`channel ${this.name} not closed`);
             return;
         }
-        this.socket = new WebSocket(this.url, this.protocols);
+        this.socket = this.getSocket();
         this.socket.onopen = () => {
             this.send = (data) => {
                 this.socket.send(JSON.stringify(data))
@@ -208,7 +204,7 @@ class WebSocketChannel extends Channel {
             }
             this.setState(State.CLOSED);
             this.socket = null;
-            this.send = () => { console.warn(`channel ${this.name} not connected, drop message`); };
+            this.send = this.unsetSend;
             if (!this.isReconnectFused && this.reconnect) {
                 this.close();
                 this.connect();
@@ -223,7 +219,29 @@ class WebSocketChannel extends Channel {
             this.isReconnectFused = true;
             this.socket.close();
             this.socket = null;
+            this.send = this.unsetSend;
         }
+    }
+}
+
+
+// ---------------------------------
+// Websocket
+// ---------------------------------
+
+/**
+ *  Websocket channel
+ */
+class WebSocketChannel extends SocketLikeChannel {
+    constructor(url, protocols, reconnect) {
+        super(`${url}`, reconnect);
+        this.url = url;
+        this.protocols = protocols;
+        this.isReliable = () => { return true };
+    }
+
+    getSocket() {
+        return new WebSocket(this.url, this.protocols);
     }
 }
 
@@ -260,11 +278,10 @@ class WebRtcConnector {
         if (this.connections.has(peerId)) {
             throw new Error("peerId already registered");
         }
-        let connection = new WebRtcConnection(peerId);
+        let connection = new WebRtcConnection(this, peerId);
         this.onConnect(connection);
         this.connections.set(peerId, connection);
-        connection.initiate(this);
-        return connection;
+        connection.initiate();
     }
 
     start() {
@@ -283,6 +300,8 @@ class WebRtcConnector {
                     this.onAnswerReceived(data);
                 } else if (data?.id == "candidate") {
                     this.onIceCandidateReceived(data);
+                } else if (data?.id == "error") {
+                    reject(`server error: ${data?.data}`);
                 }
             };
             this.socket.connect();
@@ -293,24 +312,9 @@ class WebRtcConnector {
         this.socket.close();
     }
 
-    sendOfferAndWaitAnswer(peerId, offer) {
+    sendOffer(peerId, offer) {
         console.debug(`[WebRtcConnector] send offer and wait answer: ${peerId}`);
         this.socket.send({ id: "offer", src: this.localId, dst: peerId, data: offer });
-        return new Promise((resolve, reject) => {
-            this.onAnswerReceived = (data) => {
-                if (data?.id != "answer")
-                    throw new Error(`unexpected data.id, received '${data?.id}' expected 'answer'`);
-                if (data?.src != peerId)
-                    throw new Error(`unexpected data.src, received '${data?.src}' expected '${peerId}'`);
-                if (data?.dst != this.localId)
-                    throw new Error(`unexpected data.dst, received '${data?.dst}' expected '${this.localId}'`);
-                if (data?.data == undefined)
-                    throw new Error(`undefined data.data`);
-                console.debug(`[WebRtcConnector] answer received from ${data.src}`);
-                this.onAnswerReceived = () => { };
-                resolve(data.data);
-            };
-        });
     }
 
     sendIceCandidate(peerId, candidate) {
@@ -332,15 +336,31 @@ class WebRtcConnector {
         console.debug(`[WebRtcConnector] offer received from ${data.src}`);
         let offer = data.data;
         let peerId = data.src;
-        if (this.connections.has(peerId)) {
-            throw new Error("peerId already registered");
+        if (!this.connections.has(peerId)) {
+            let con = new WebRtcConnection(this, peerId);
+            this.connections.set(peerId, con);
+            this.onConnect(con);
         }
-        let connection = new WebRtcConnection(peerId);
-        this.onConnect(connection);
-        this.connections.set(peerId, connection);
-        connection.getAnswer(this, offer).then((answer) => {
+        let connection = this.connections.get(peerId);
+        connection.getAnswer(offer).then((answer) => {
             this.socket.send({ id: "answer", src: this.localId, dst: peerId, data: answer });
         });
+    }
+
+    onAnswerReceived(data) {
+        if (data?.id != "answer")
+            throw new Error(`unexpected data.id, received '${data?.id}' expected 'answer'`);
+        if (data?.src != peerId)
+            throw new Error(`unexpected data.src, received '${data?.src}' expected '${peerId}'`);
+        if (data?.dst != this.localId)
+            throw new Error(`unexpected data.dst, received '${data?.dst}' expected '${this.localId}'`);
+        if (data?.data == undefined)
+            throw new Error(`undefined data.data`);
+        console.debug(`[WebRtcConnector] answer received from ${data.src}`);
+        let answer = data.data;
+        let peerId = data.src;
+        let connection = this.connections.get(peerId);
+        connection.setAnswer(answer);
     }
 
     onIceCandidateReceived(data) {
@@ -354,45 +374,54 @@ class WebRtcConnector {
             throw new Error(`undefined data.data`);
         if (!this.connections.has(data?.src))
             throw new Error(`peer from data.src not registered`);
+        console.debug(`[WebRtcConnector] ICE candidate received: ${peerId}`);
         let peerId = data.src;
         let connection = this.connections.get(peerId);
-        console.debug(`[WebRtcConnector] ICE candidate received: ${peerId}`);
         connection.onIceCandidateReceived(data.data);
     }
 }
 
-const RtcPeerConfig = {
-    iceServers: [{
-        urls: [
-            "stun:stun.l.google.com:19302",
-            "stun:stun1.l.google.com:19302"
-        ]
-    }],
-    iceTransportPolicy: "all",
-    iceCandidatePoolSize: "0"
-};
-
-
 class WebRtcConnection {
-    constructor(peerId) {
+    constructor(connector, peerId) {
         this.peerId = peerId;
+        this.connector = connector;
+        this.isInitiator = null;
 
-        this.pc = new RTCPeerConnection(RtcPeerConfig);
-        this.pc.oniceconnectionstatechange = (evt) => {
-            console.debug("ice state change : ", this.pc.iceConnectionState);
-            this.onStateChange?.(this);
+        const config = {
+            iceServers: [{
+                urls: [
+                    "stun:stun.l.google.com:19302",
+                    "stun:stun1.l.google.com:19302"
+                ]
+            }],
+            iceTransportPolicy: "all",
+            iceCandidatePoolSize: "0"
         };
-        this.pc.onsignalingstatechange = (evt) => {
-            console.debug("signaling state change : ", this.pc.signalingState);
-            this.onStateChange?.(this);
+        this.pc = new RTCPeerConnection(config);
+
+        this.pc.onsignalingstatechange = (event) => {
+            console.debug(`[WebRtcConnection to ${this.peerId}] signaling state change: `, this.pc.signalingState);
         };
-        this.pc.addEventListener("negotiationneeded", event => {
-            console.debug("negotiation needed");
-        });
+        this.pc.oniceconnectionstatechange = (event) => {
+            console.debug(`[WebRtcConnection to ${this.peerId}] ice state change: `, this.pc.iceConnectionState);
+            if (this.pc.iceConnectionState === "failed") {
+                this.pc.restartIce();
+            }
+        };
+        this.pc.onnegotiationneeded = (event) => {
+            console.debug(`[WebRtcConnection to ${this.peerId}] negotiationneeded`);
+            this.initiate();
+        };
+        this.pc.onicecandidate = (event) => {
+            if (event.candidate) {
+                // Send the candidate to the remote peer
+                this.connector.sendIceCandidate(this.peerId, event.candidate);
+            }
+        };
 
         this.channel = new WebRtcDataChannel(this.peerId, this.pc, "main", 0);
         this.channel.onStateUpdate = (state) => {
-            console.debug("state of channel", this.channel.peerId, state);
+            console.debug(`[WebRtcConnection to ${this.peerId}] state of channel`, this.channel.peerId, state);
         };
         this.channel.connect();
 
@@ -400,39 +429,32 @@ class WebRtcConnection {
     }
 
     // do not call directly, expected to be called by the connector
-    async initiate(connector) {
-        this.pc.onicecandidate = (event) => {
-            if (event.candidate) {
-                // Send the candidate to the remote peer
-                connector.sendIceCandidate(this.peerId, event.candidate);
-            } else {
-                // All ICE candidates have been sent
-            }
-        };
-
-        const options = { iceRestart: false, offerToReceiveAudio: false, offerToReceiveVideo: false };
-        let offer = await this.pc.createOffer(options);
-        await this.pc.setLocalDescription(offer);
-        let answer = await connector.sendOfferAndWaitAnswer(this.peerId, this.pc.localDescription);
-        await this.pc.setRemoteDescription(answer);
+    async initiate() {
+        try {
+            this.isInitiator = true;
+            await this.pc.setLocalDescription();
+            await this.connector.sendOffer(this.peerId, this.pc.localDescription);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            this.isInitiator = false;
+        }
     }
 
     // do not call directly, expected to be called by the connector
-    async getAnswer(connector, offer) {
-        this.pc.onicecandidate = (event) => {
-            if (event.candidate) {
-                // Send the candidate to the remote peer
-                connector.sendIceCandidate(this.peerId, event.candidate);
-            } else {
-                // All ICE candidates have been sent
-            }
-        };
+    async setAnswer(answer) {
+        if (this.isInitiator) {
+            await this.pc.setRemoteDescription(answer);
+        }
+    }
 
-        const options = { iceRestart: false, offerToReceiveAudio: false, offerToReceiveVideo: false };
-        await this.pc.setRemoteDescription(offer);
-        let answer = await this.pc.createAnswer(options);
-        await this.pc.setLocalDescription(answer);
-        return this.pc.localDescription;
+    // do not call directly, expected to be called by the connector
+    async getAnswer(offer) {
+        if (!this.isInitiator) {
+            await this.pc.setRemoteDescription(offer);
+            await this.pc.setLocalDescription();
+            return this.pc.localDescription;
+        }
     }
 
     // do not call directly, expected to be called by the connector
@@ -448,61 +470,20 @@ class WebRtcConnection {
 /**
  *  WebRTC channel
  */
-class WebRtcDataChannel extends Channel {
+class WebRtcDataChannel extends SocketLikeChannel {
     constructor(peerId, pc, tag, id) {
-        super(`${peerId}-${tag}`);
+        super(`${peerId} - ${tag}`, false);
 
         this.peerId = peerId;
         this.pc = pc;
         this.tag = tag;
         this.id = id;
 
-        this.reconnect = true;
-        this.isReconnectFused = false;
-        this.socket = null;
-
         this.isReliable = () => { return true };
-        this.send = () => { console.warn(`channel ${this.name} not connected, drop message`); };
     }
 
-    connect() {
-        if (this.socket != null) {
-            console.warn(`channel ${this.name} not closed`);
-            return;
-        }
-        this.socket = this.pc.createDataChannel(this.tag, { negotiated: true, id: this.id });
-        this.socket.onopen = () => {
-            this.send = (data) => {
-                this.socket.send(JSON.stringify(data))
-            };
-            this.setState(State.CONNECTED);
-            this.onopen();
-        };
-        this.socket.onmessage = (event) => {
-            this.onmessage(JSON.parse(event.data));
-        };
-        this.socket.onclose = (event) => {
-            if (this.state == State.CONNECTED) {
-                this.onclose(event);
-            }
-            this.setState(State.CLOSED);
-            this.socket = null;
-            this.send = () => { console.warn(`channel ${this.name} not connected, drop message`); };
-            if (!this.isReconnectFused && this.reconnect) {
-                this.close();
-                this.connect();
-            }
-        };
-        this.isReconnectFused = false;
-        this.setState(State.CONNECTING);
-    }
-
-    close() {
-        if (this.socket) {
-            this.isReconnectFused = true;
-            this.socket.close();
-            this.socket = null;
-        }
+    getSocket() {
+        return this.pc.createDataChannel(this.tag, { negotiated: true, id: this.id });
     }
 }
 
@@ -528,12 +509,12 @@ async function test() {
             console.log("message received from", chan.peerId, data);
         };
         chan.onStateUpdate = (state) => {
-            console.debug("state of chan", chan.peerId, state, chan.socket);
+            console.debug("state of chan", chan.peerId, state);
             if (state == State.CONNECTED) {
-                chan.send("hi !");
+                chan.send(`hi, i'm ${chan.peerId} !`);
             }
         };
-        chan.connect();
+        chan.onStateUpdate(chan.state);
     };
     connector2.onConnect = (connection) => {
         let chan = connection.channel;
@@ -541,12 +522,12 @@ async function test() {
             console.log("message received from", chan.peerId, data);
         };
         chan.onStateUpdate = (state) => {
-            console.debug("state of chan", chan.peerId, state, chan.socket);
+            console.debug("state of chan", chan.peerId, state);
             if (state == State.CONNECTED) {
-                chan.send("hi !");
+                chan.send(`hi, i'm ${chan.peerId} !`);
             }
         };
-        chan.connect();
+        chan.onStateUpdate(chan.state);
     };
 
     connector1.initiate("0002");

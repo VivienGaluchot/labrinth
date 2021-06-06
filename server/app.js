@@ -310,7 +310,7 @@ const wsServer = new WebSocketServer({
     httpServer: server,
     autoAcceptConnections: false,
     path: "/peer-connector",
-})
+});
 
 wsServer.on('request', function (request) {
     if (!originIsAllowed(request.origin)) {
@@ -333,10 +333,12 @@ wsServer.on('request', function (request) {
             if (data.id == "hi" && data?.src != undefined) {
                 if (peers.has(data.src)) {
                     websocketLogger.error(`peer already registered ${data.src}`);
+                    connection.close();
                 } else {
                     peers.set(data.src, connection);
                     websocketLogger.debug(`peer registered '${data.src}'`);
                     connection.peerId = data.src;
+                    connection.sendUTF(JSON.stringify({ id: data.id, src: data.src }));
                 }
             } else if (data.id == "offer" && data?.src != undefined && data?.dst != undefined) {
                 if (peers.has(data.dst)) {
@@ -351,6 +353,13 @@ wsServer.on('request', function (request) {
                     peers.get(data.dst).sendUTF(JSON.stringify({ id: data.id, src: data.src, dst: data.dst, data: data.data }));
                 } else {
                     websocketLogger.error(`can't forward answer, peer not registered ${data.src}`);
+                }
+            } else if (data.id == "candidate" && data?.src != undefined && data?.dst != undefined) {
+                if (peers.has(data.dst)) {
+                    websocketLogger.debug(`forward candidate '${data.src}' from to '${data.dst}'`);
+                    peers.get(data.dst).sendUTF(JSON.stringify({ id: data.id, src: data.src, dst: data.dst, data: data.data }));
+                } else {
+                    websocketLogger.error(`can't forward candidate, peer not registered ${data.src}`);
                 }
             } else {
                 websocketLogger.error(`received unexpected message: ${message.utf8Data}`);

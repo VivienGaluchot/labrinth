@@ -251,10 +251,12 @@ class WebSocketChannel extends SocketLikeChannel {
 // ---------------------------------
 
 /**
- *  WebRtcConnector allows to exchange offers through a websocket server and create
- *  WebRTC connections
+ *  WebRtcEndpoint allows to exchange offers through a websocket server and create
+ *  WebRTC connections with other peers
+ * 
+ *  inspired from https://w3c.github.io/webrtc-pc/#perfect-negotiation-example
  */
-class WebRtcConnector {
+class WebRtcEndpoint {
     constructor(serverUrl, localId) {
         this.serverUrl = serverUrl;
         this.localId = localId;
@@ -271,7 +273,7 @@ class WebRtcConnector {
         this.socket = new WebSocketChannel(this.serverUrl, "rtc-on-socket-connector", true);
     }
 
-    initiate(peerId) {
+    connectTo(peerId) {
         if (this.socket.state != State.CONNECTED) {
             throw new Error("connector websocket not connected");
         }
@@ -279,9 +281,9 @@ class WebRtcConnector {
             throw new Error("peerId already registered");
         }
         let connection = new WebRtcConnection(this, peerId);
-        this.onConnect(connection);
         this.connections.set(peerId, connection);
-        connection.initiate();
+        this.onConnect(connection);
+        return connection;
     }
 
     start() {
@@ -294,10 +296,8 @@ class WebRtcConnector {
             this.socket.onmessage = (data) => {
                 if (data?.id == "hi") {
                     resolve();
-                } else if (data?.id == "offer") {
-                    this.onOfferReceived(data);
-                } else if (data?.id == "answer") {
-                    this.onAnswerReceived(data);
+                } else if (data?.id == "desc") {
+                    this.onDescriptionReceived(data);
                 } else if (data?.id == "candidate") {
                     this.onIceCandidateReceived(data);
                 } else if (data?.id == "error") {
@@ -312,55 +312,31 @@ class WebRtcConnector {
         this.socket.close();
     }
 
-    sendOffer(peerId, offer) {
-        console.debug(`[WebRtcConnector] send offer and wait answer: ${peerId}`);
-        this.socket.send({ id: "offer", src: this.localId, dst: peerId, data: offer });
+    sendDescription(peerId, desc) {
+        console.debug(`[WebRtcEndpoint] send desc to ${peerId}`);
+        this.socket.send({ id: "desc", src: this.localId, dst: peerId, data: desc });
     }
 
     sendIceCandidate(peerId, candidate) {
-        console.debug(`[WebRtcConnector] send ICE candidate: ${peerId}`);
+        console.debug(`[WebRtcEndpoint] send ICE candidate: ${peerId}`);
         this.socket.send({ id: "candidate", src: this.localId, dst: peerId, data: candidate });
     }
 
     // private
 
-    onOfferReceived(data) {
-        if (data?.id != "offer")
-            throw new Error(`unexpected data.id, received '${data?.id}' expected 'offer'`);
+    onDescriptionReceived(data) {
+        if (data?.id != "desc")
+            throw new Error(`unexpected data.id, received '${data?.id}' expected 'desc'`);
         if (data?.src == undefined)
             throw new Error(`undefined data.src`);
         if (data?.dst != this.localId)
             throw new Error(`unexpected data.dst, received '${data?.dst}' expected '${this.localId}'`);
         if (data?.data == undefined)
             throw new Error(`undefined data.data`);
-        console.debug(`[WebRtcConnector] offer received from ${data.src}`);
-        let offer = data.data;
-        let peerId = data.src;
-        if (!this.connections.has(peerId)) {
-            let con = new WebRtcConnection(this, peerId);
-            this.connections.set(peerId, con);
-            this.onConnect(con);
-        }
-        let connection = this.connections.get(peerId);
-        connection.getAnswer(offer).then((answer) => {
-            this.socket.send({ id: "answer", src: this.localId, dst: peerId, data: answer });
-        });
-    }
-
-    onAnswerReceived(data) {
-        if (data?.id != "answer")
-            throw new Error(`unexpected data.id, received '${data?.id}' expected 'answer'`);
-        if (data?.src != peerId)
-            throw new Error(`unexpected data.src, received '${data?.src}' expected '${peerId}'`);
-        if (data?.dst != this.localId)
-            throw new Error(`unexpected data.dst, received '${data?.dst}' expected '${this.localId}'`);
-        if (data?.data == undefined)
-            throw new Error(`undefined data.data`);
-        console.debug(`[WebRtcConnector] answer received from ${data.src}`);
-        let answer = data.data;
-        let peerId = data.src;
-        let connection = this.connections.get(peerId);
-        connection.setAnswer(answer);
+        console.debug(`[WebRtcEndpoint] desc received from ${data.src}`);
+        if (!this.connections.has(data.src))
+            this.connectTo(data.src);
+        this.connections.get(data.src).onDescriptionReceived(data.data);
     }
 
     onIceCandidateReceived(data) {
@@ -372,20 +348,27 @@ class WebRtcConnector {
             throw new Error(`unexpected data.dst, received '${data?.dst}' expected '${this.localId}'`);
         if (data?.data == undefined)
             throw new Error(`undefined data.data`);
+        console.debug(`[WebRtcEndpoint] ICE candidate received: ${data.src}`);
         if (!this.connections.has(data?.src))
             throw new Error(`peer from data.src not registered`);
-        console.debug(`[WebRtcConnector] ICE candidate received: ${peerId}`);
-        let peerId = data.src;
-        let connection = this.connections.get(peerId);
-        connection.onIceCandidateReceived(data.data);
+        this.connections.get(data.src).onIceCandidateReceived(data.data);
     }
 }
 
+/**
+ *  WebRtcConnection is a link between two peers
+ *  It allows to create multiple communications channels
+ */
 class WebRtcConnection {
+
     constructor(connector, peerId) {
         this.peerId = peerId;
         this.connector = connector;
-        this.isInitiator = null;
+        this.isPolite = peerId > this.connector.localId;
+
+        this.isMakingOffer = false;
+        this.isOfferIgnored = false;
+        this.isSettingRemoteAnswerPending = false;
 
         const config = {
             iceServers: [{
@@ -408,9 +391,16 @@ class WebRtcConnection {
                 this.pc.restartIce();
             }
         };
-        this.pc.onnegotiationneeded = (event) => {
-            console.debug(`[WebRtcConnection to ${this.peerId}] negotiationneeded`);
-            this.initiate();
+        this.pc.onnegotiationneeded = async (event) => {
+            try {
+                this.isMakingOffer = true;
+                await this.pc.setLocalDescription();
+                this.connector.sendDescription(this.peerId, this.pc.localDescription);
+            } catch (err) {
+                console.error(err);
+            } finally {
+                this.isMakingOffer = false;
+            }
         };
         this.pc.onicecandidate = (event) => {
             if (event.candidate) {
@@ -418,52 +408,47 @@ class WebRtcConnection {
                 this.connector.sendIceCandidate(this.peerId, event.candidate);
             }
         };
-
-        this.channel = new WebRtcDataChannel(this.peerId, this.pc, "main", 0);
-        this.channel.onStateUpdate = (state) => {
-            console.debug(`[WebRtcConnection to ${this.peerId}] state of channel`, this.channel.peerId, state);
-        };
-        this.channel.connect();
-
-        this.isReliable = () => { return true };
     }
 
-    // do not call directly, expected to be called by the connector
-    async initiate() {
+    getChannel(tag, id) {
+        return new WebRtcDataChannel(this.peerId, this.pc, tag, id);
+    }
+
+    // expected to be called by the connector
+    async onDescriptionReceived(description) {
         try {
-            this.isInitiator = true;
-            await this.pc.setLocalDescription();
-            await this.connector.sendOffer(this.peerId, this.pc.localDescription);
+            const readyForOffer =
+                !this.isMakingOffer &&
+                (this.pc.signalingState == "stable" || this.isSettingRemoteAnswerPending);
+            const offerCollision = description.type == "offer" && !readyForOffer;
+
+            this.isOfferIgnored = !this.isPolite && offerCollision;
+            if (this.isOfferIgnored) {
+                return;
+            }
+            this.isSettingRemoteAnswerPending = description.type == "answer";
+            await this.pc.setRemoteDescription(description); // SRD rolls back as needed
+            this.isSettingRemoteAnswerPending = false;
+            if (description.type == "offer") {
+                await this.pc.setLocalDescription();
+                this.connector.sendDescription(this.peerId, this.pc.localDescription);
+            }
         } catch (err) {
             console.error(err);
-        } finally {
-            this.isInitiator = false;
         }
     }
 
-    // do not call directly, expected to be called by the connector
-    async setAnswer(answer) {
-        if (this.isInitiator) {
-            await this.pc.setRemoteDescription(answer);
+    // expected to be called by the connector
+    async onIceCandidateReceived(candidate) {
+        try {
+            try {
+                await this.pc.addIceCandidate(candidate);
+            } catch (err) {
+                if (!this.isOfferIgnored) throw err; // Suppress ignored offer's candidates
+            }
+        } catch (err) {
+            console.error(err);
         }
-    }
-
-    // do not call directly, expected to be called by the connector
-    async getAnswer(offer) {
-        if (!this.isInitiator) {
-            await this.pc.setRemoteDescription(offer);
-            await this.pc.setLocalDescription();
-            return this.pc.localDescription;
-        }
-    }
-
-    // do not call directly, expected to be called by the connector
-    onIceCandidateReceived(candidate) {
-        this.pc.addIceCandidate(candidate);
-    }
-
-    // do not call directly, expected to be called by the connector
-    close() {
     }
 }
 
@@ -497,40 +482,34 @@ async function test() {
     }
     wsUrl.pathname = "/connector";
 
-    let connector1 = new WebRtcConnector(wsUrl.href, "0001");
-    let connector2 = new WebRtcConnector(wsUrl.href, "0002");
+    let connector1 = new WebRtcEndpoint(wsUrl.href, "0001");
+    let connector2 = new WebRtcEndpoint(wsUrl.href, "0002");
+    let connector3 = new WebRtcEndpoint(wsUrl.href, "0003");
+
+    let onConnect = (connection) => {
+        let chan = connection.getChannel("main", 0);
+        chan.onmessage = (data) => {
+            console.info(`[${connection.connector.localId}] message received from ${chan.peerId} '${data}'`);
+        };
+        chan.onStateUpdate = (state) => {
+            console.debug("state of chan", chan.peerId, state);
+            if (state == State.CONNECTED) {
+                chan.send(`hi, i'm ${connection.connector.localId} !`);
+            }
+        };
+        chan.connect();
+    };
+    connector1.onConnect = onConnect;
+    connector2.onConnect = onConnect;
+    connector3.onConnect = onConnect;
 
     await connector1.start();
     await connector2.start();
+    await connector3.start();
 
-    connector1.onConnect = (connection) => {
-        let chan = connection.channel;
-        chan.onmessage = (data) => {
-            console.log("message received from", chan.peerId, data);
-        };
-        chan.onStateUpdate = (state) => {
-            console.debug("state of chan", chan.peerId, state);
-            if (state == State.CONNECTED) {
-                chan.send(`hi, i'm ${chan.peerId} !`);
-            }
-        };
-        chan.onStateUpdate(chan.state);
-    };
-    connector2.onConnect = (connection) => {
-        let chan = connection.channel;
-        chan.onmessage = (data) => {
-            console.log("message received from", chan.peerId, data);
-        };
-        chan.onStateUpdate = (state) => {
-            console.debug("state of chan", chan.peerId, state);
-            if (state == State.CONNECTED) {
-                chan.send(`hi, i'm ${chan.peerId} !`);
-            }
-        };
-        chan.onStateUpdate(chan.state);
-    };
-
-    connector1.initiate("0002");
+    connector1.connectTo("0002");
+    connector1.connectTo("0003");
+    connector2.connectTo("0003");
 }
 test();
 

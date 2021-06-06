@@ -210,25 +210,17 @@ wsServer.on('request', (request) => {
                     connection.peerId = data.src;
                     connection.sendUTF(JSON.stringify({ id: data.id, src: data.src }));
                 }
-            } else if (data.id == "offer" && data?.src != undefined && data?.dst != undefined) {
+            } else if (data.id == "desc" && data?.src != undefined && data?.dst != undefined) {
                 if (peers.has(data.dst)) {
-                    websocketLogger.debug(`forward offer '${data.src}' from to '${data.dst}'`);
+                    websocketLogger.debug(`forward desc from '${data.src}' to '${data.dst}'`);
                     peers.get(data.dst).sendUTF(JSON.stringify({ id: data.id, src: data.src, dst: data.dst, data: data.data }));
                 } else {
-                    websocketLogger.error(`can't forward offer, peer not registered ${data.src}`);
-                    connection.sendUTF(JSON.stringify({ id: "error", data: "peer not registered" }));
-                }
-            } else if (data.id == "answer" && data?.src != undefined && data?.dst != undefined) {
-                if (peers.has(data.dst)) {
-                    websocketLogger.debug(`forward answer '${data.src}' from to '${data.dst}'`);
-                    peers.get(data.dst).sendUTF(JSON.stringify({ id: data.id, src: data.src, dst: data.dst, data: data.data }));
-                } else {
-                    websocketLogger.error(`can't forward answer, peer not registered ${data.src}`);
+                    websocketLogger.error(`can't forward desc, peer not registered ${data.src}`);
                     connection.sendUTF(JSON.stringify({ id: "error", data: "peer not registered" }));
                 }
             } else if (data.id == "candidate" && data?.src != undefined && data?.dst != undefined) {
                 if (peers.has(data.dst)) {
-                    websocketLogger.debug(`forward candidate '${data.src}' from to '${data.dst}'`);
+                    websocketLogger.debug(`forward candidate from '${data.src}' to '${data.dst}'`);
                     peers.get(data.dst).sendUTF(JSON.stringify({ id: data.id, src: data.src, dst: data.dst, data: data.data }));
                 } else {
                     websocketLogger.error(`can't forward candidate, peer not registered ${data.src}`);

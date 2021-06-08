@@ -77,26 +77,17 @@
 
         <div class="block">
             <h2>P2P</h2>
-            <table>
-                <thead>
-                    <th>Field</th>
-                    <th>Value</th>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Local user</td>
-                        <td><code class="p2p-local-user">-</code></td>
-                    </tr>
-                    <tr>
-                        <td>Local device</td>
-                        <td><code class="p2p-local-device">-</code>
-                    </tr>
-                    <tr>
-                        <td>Local session</td>
-                        <td><code class="p2p-local-session">-</code></td>
-                    </tr>
-                </tbody>
-            </table>
+            <h3>Peers</h3>
+            <p>
+                Local peer id is <code id="p2p-local-id">-</code>.
+            </p>
+            <p>
+                Currently connected to <code id="p2p-peer-count">-</code> peers.
+            </p>
+            <p>
+                Connect to peer by id <input id="p2p-peer-connect-id"> <button id="p2p-peer-connect-btn"
+                    class="blue">Go</button>.
+            </p>
             <h3>Tests</h3>
             <p>
                 <button id="p2p-tests-btn" class="blue">Run</button>
@@ -166,16 +157,6 @@
                 <tbody class="webrtc-ice-candidates-tbody">
                 </tbody>
             </table>
-            <h3>Local offer</h3>
-            <p>
-                Generate a dummy local offer
-            </p>
-            <div>
-                <button class="blue btn-gen-offer">Generate</button>
-            </div>
-            <p>
-                <code class="webrtc-offer">-</code>
-            </p>
         </div>
 
         <!-- <div class="block">

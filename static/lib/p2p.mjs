@@ -6,89 +6,10 @@
 
 import * as MyMath from './math.mjs';
 import * as Storage from './storage.mjs';
+import * as Channel from './channel.mjs';
 
 
 const storage = new Storage.ModularStorage("p2p");
-
-
-
-// ---------------------------------
-// WebRTC
-// ---------------------------------
-
-const config = {
-    iceServers: [{
-        urls: [
-            "stun:stun.l.google.com:19302",
-            "stun:stun1.l.google.com:19302"
-        ]
-    }],
-    iceTransportPolicy: "all",
-    iceCandidatePoolSize: "0"
-};
-
-function getIceCandidates(onicecandidate) {
-    let pc = new RTCPeerConnection(config);
-    pc.onicecandidate = (event) => {
-        if (event.candidate) {
-            if (event.candidate.candidate === '') {
-                onicecandidate(null);
-            } else {
-                console.info("ice candidate", event.candidate.candidate);
-                // TODO parse event.candidate.candidate fields
-                onicecandidate(event.candidate.candidate);
-            }
-        }
-    };
-
-    const offerOptions = { iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: false };
-    pc.createOffer(offerOptions)
-        .then((desc) => {
-            pc.setLocalDescription(desc)
-                .then(() => {
-                    console.log("setLocalDescription terminated");
-                }).catch((error) => {
-                    console.error("setLocalDescription error", error);
-                });
-        }).catch((error) => {
-            console.error("createOffer error", error);
-        });
-};
-
-function offer() {
-    return new Promise((resolve, reject) => {
-        let pc = new RTCPeerConnection(config);
-        pc.onicecandidate = (event) => {
-            if (event.candidate) {
-                if (event.candidate.candidate === '') {
-                    return;
-                }
-                console.info("ice candidate", event.candidate.candidate);
-            }
-        };
-        pc.onicegatheringstatechange = (event) => {
-            console.log("onicegatheringstatechange", pc.iceGatheringState);
-            if (pc.iceGatheringState == "complete") {
-                resolve(pc);
-            }
-        };
-
-        const offerOptions = { iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: false };
-        pc.createOffer(offerOptions)
-            .then((desc) => {
-                pc.setLocalDescription(desc)
-                    .then(() => {
-                        console.log("setLocalDescription terminated");
-                    }).catch((error) => {
-                        console.error("setLocalDescription error", error);
-                        reject(error);
-                    });
-            }).catch((error) => {
-                console.error("createOffer error", error);
-                reject(error);
-            });
-    });
-};
 
 
 // ---------------------------------
@@ -96,21 +17,34 @@ function offer() {
 // ---------------------------------
 
 class Endpoint {
-    constructor(user, device, session) {
+    constructor(user, device, session, isLocal) {
         // identify a user
         this.user = user;
         // identify an user device able to store data between sessions
         this.device = device;
         // unique volatile session id
         this.session = session;
+
+        this.isLocal = isLocal;
     }
 
     serialize() {
-        return {
-            user: this.user,
-            device: this.device,
-            session: this.session
-        };
+        return `${this.user}_${this.device}_${this.session}`;
+    }
+}
+
+class RemoteEndpoint extends Endpoint {
+    constructor(user, device, session) {
+        super(user, device, session, false);
+    }
+
+    static deserialize(str) {
+        const regex = /^([0-9a-f]+)_([0-9a-f]+)_([0-9a-f]+)$/;
+        let matches = str.match(regex);
+        if (!matches) {
+            throw new Error(`invalid endpoint '${str}'`);
+        }
+        return new RemoteEndpoint(matches[1], matches[2], matches[3], true);
     }
 }
 
@@ -121,23 +55,19 @@ class LocalEndpoint extends Endpoint {
         let session = MyMath.bufferToHex(MyMath.getRandomByteArray(32 / 8));
         return new LocalEndpoint(user, device, session);
     }
-}
 
-class RemoteEndpoint extends Endpoint {
     constructor(user, device, session) {
-        super(user, device, session);
-    }
+        super(user, device, session, true);
 
-    static deserialize(data) {
-        if (data.user == undefined) {
-            throw new Error(`unexpected input '${JSON.stringify(data)}'`);
-        } else if (data.device == undefined) {
-            throw new Error(`unexpected input '${JSON.stringify(data)}'`);
-        } else if (data.session == undefined) {
-            throw new Error(`unexpected input '${JSON.stringify(data)}'`);
+        let serverWebsocketUrl = new URL(window.location.href);
+        if (serverWebsocketUrl.protocol == "http:") {
+            serverWebsocketUrl.protocol = "ws:";
         } else {
-            return new RemoteEndpoint(data.user, data.device, data.session);
+            serverWebsocketUrl.protocol = "wss:";
         }
+        serverWebsocketUrl.pathname = "/connector";
+        this.webRtcEndpoint = new Channel.WebRtcEndpoint(serverWebsocketUrl, this.serialize());
+        this.webRtcEndpoint.start();
     }
 }
 
@@ -600,4 +530,4 @@ class TimestampedHistory {
     }
 }
 
-export { localEndpoint, offer, getIceCandidates, TimestampedHistory, SharedValue, SharedSet }
+export { localEndpoint, RemoteEndpoint, TimestampedHistory, SharedValue, SharedSet }

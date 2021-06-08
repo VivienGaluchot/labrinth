@@ -251,42 +251,71 @@ class WebSocketChannel extends SocketLikeChannel {
 // ---------------------------------
 
 /**
+ *  Event raised when a peer is connected to a WebRtcEndpoint
+ */
+class WebRtcConnectionEvent extends Event {
+    constructor(type, connection) {
+        super(type);
+        this.connection = connection;
+    }
+}
+
+/**
  *  WebRtcEndpoint allows to exchange offers through a websocket server and create
  *  WebRTC connections with other peers
  * 
  *  inspired from https://w3c.github.io/webrtc-pc/#perfect-negotiation-example
+ * 
+ *  API services
+ *  Events
+ *   - onRegister: WebRtcConnectionEvent
+ *   - onUnregister: WebRtcConnectionEvent
+ *   - onConnect: WebRtcConnectionEvent
+ *   - onDisconnect: WebRtcConnectionEvent
  */
-class WebRtcEndpoint {
+class WebRtcEndpoint extends EventTarget {
     constructor(serverUrl, localId) {
+        super();
         this.serverUrl = serverUrl;
         this.localId = localId;
 
         this.connections = new Map();
 
-        // API services
-        // input (called internally on event)
-        this.onConnect = (connection) => { console.warn("unset onConnect"); };
-
-        this.onAnswerReceived = () => { };
-
         // socket used to publish id to server and wait for incoming offers
         this.socket = new WebSocketChannel(this.serverUrl, "rtc-on-socket-connector", true);
     }
 
-    connectTo(peerId) {
+    getOrCreateConnection(peerId) {
         if (this.socket.state != State.CONNECTED) {
-            throw new Error("connector websocket not connected");
+            throw new Error("websocket not connected to server");
         }
-        if (this.connections.has(peerId)) {
-            throw new Error("peerId already registered");
+        if (peerId == this.localId) {
+            throw new Error("can't connect to localId");
         }
-        let connection = new WebRtcConnection(this, peerId);
-        this.connections.set(peerId, connection);
-        this.onConnect(connection);
-        return connection;
+        if (!this.connections.has(peerId)) {
+            console.debug(`[WebRtcEndpoint] new connection to '${peerId}'`);
+            let connection = new WebRtcConnection(this, peerId);
+            this.connections.set(peerId, connection);
+            this.dispatchEvent(new WebRtcConnectionEvent("onRegister", connection));
+        }
+        return this.connections.get(peerId);
+    }
+
+    getConnection(peerId) {
+        if (!this.connections.has(peerId)) {
+            throw new Error(`peerId not ${peerId} registered`);
+        }
+        return getOrCreateConnection(peerId);
+    }
+
+    close(peerId) {
+        getConnection(peerId).close();
+        this.connections.delete(peerId);
+        this.dispatchEvent(new WebRtcConnectionEvent("onUnregister", connection));
     }
 
     start() {
+        console.debug(`[WebRtcEndpoint] start endpoint with local id '${this.localId}'`);
         return new Promise((resolve, reject) => {
             this.socket.onStateUpdate = (state) => {
                 if (state == State.CONNECTED) {
@@ -334,9 +363,7 @@ class WebRtcEndpoint {
         if (data?.data == undefined)
             throw new Error(`undefined data.data`);
         console.debug(`[WebRtcEndpoint] desc received from ${data.src}`);
-        if (!this.connections.has(data.src))
-            this.connectTo(data.src);
-        this.connections.get(data.src).onDescriptionReceived(data.data);
+        this.getOrCreateConnection(data.src).onDescriptionReceived(data.data);
     }
 
     onIceCandidateReceived(data) {
@@ -355,12 +382,22 @@ class WebRtcEndpoint {
     }
 }
 
+const rtcPeerConnectionConfig = {
+    iceServers: [{
+        urls: [
+            "stun:stun.l.google.com:19302",
+            "stun:stun1.l.google.com:19302"
+        ]
+    }],
+    iceTransportPolicy: "all",
+    iceCandidatePoolSize: "0"
+};
+
 /**
  *  WebRtcConnection is a link between two peers
  *  It allows to create multiple communications channels
  */
 class WebRtcConnection {
-
     constructor(connector, peerId) {
         this.peerId = peerId;
         this.connector = connector;
@@ -369,21 +406,31 @@ class WebRtcConnection {
         this.isMakingOffer = false;
         this.isOfferIgnored = false;
         this.isSettingRemoteAnswerPending = false;
+        this.pc = new RTCPeerConnection(rtcPeerConnectionConfig);
 
-        const config = {
-            iceServers: [{
-                urls: [
-                    "stun:stun.l.google.com:19302",
-                    "stun:stun1.l.google.com:19302"
-                ]
-            }],
-            iceTransportPolicy: "all",
-            iceCandidatePoolSize: "0"
-        };
-        this.pc = new RTCPeerConnection(config);
+        this.state = State.CLOSED;
 
         this.pc.onsignalingstatechange = (event) => {
             console.debug(`[WebRtcConnection to ${this.peerId}] signaling state change: `, this.pc.signalingState);
+        };
+        this.pc.onconnectionstatechange = (event) => {
+            let prev = this.state;
+            switch (this.pc.connectionState) {
+                case "connected":
+                    this.state = State.CONNECTED;
+                    if (prev != this.state) {
+                        this.connector.dispatchEvent(new WebRtcConnectionEvent("onConnect", this));
+                    }
+                    break;
+                case "disconnected":
+                case "failed":
+                case "closed":
+                    this.state = State.CLOSED;
+                    if (prev != this.state) {
+                        this.connector.dispatchEvent(new WebRtcConnectionEvent("onDisconnect", this));
+                    }
+                    break;
+            }
         };
         this.pc.oniceconnectionstatechange = (event) => {
             console.debug(`[WebRtcConnection to ${this.peerId}] ice state change: `, this.pc.iceConnectionState);
@@ -450,6 +497,11 @@ class WebRtcConnection {
             console.error(err);
         }
     }
+
+    // expected to be called by the connector
+    close() {
+        this.pc.close();
+    }
 }
 
 /**
@@ -472,6 +524,34 @@ class WebRtcDataChannel extends SocketLikeChannel {
     }
 }
 
+function getIceCandidates(onicecandidate) {
+    let pc = new RTCPeerConnection(rtcPeerConnectionConfig);
+    pc.onicecandidate = (event) => {
+        if (event.candidate) {
+            if (event.candidate.candidate === '') {
+                onicecandidate(null);
+            } else {
+                console.info("ice candidate", event.candidate.candidate);
+                // TODO parse event.candidate.candidate fields
+                onicecandidate(event.candidate.candidate);
+            }
+        }
+    };
+
+    const offerOptions = { iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: false };
+    pc.createOffer(offerOptions)
+        .then((desc) => {
+            pc.setLocalDescription(desc)
+                .then(() => {
+                    console.log("setLocalDescription terminated");
+                }).catch((error) => {
+                    console.error("setLocalDescription error", error);
+                });
+        }).catch((error) => {
+            console.error("createOffer error", error);
+        });
+};
+
 
 async function test() {
     let wsUrl = new URL(window.location.href);
@@ -486,7 +566,8 @@ async function test() {
     let connector2 = new WebRtcEndpoint(wsUrl.href, "0002");
     let connector3 = new WebRtcEndpoint(wsUrl.href, "0003");
 
-    let onConnect = (connection) => {
+    let onConnect = (event) => {
+        let connection = event.connection;
         let chan = connection.getChannel("main", 0);
         chan.onmessage = (data) => {
             console.info(`[${connection.connector.localId}] message received from ${chan.peerId} '${data}'`);
@@ -499,19 +580,19 @@ async function test() {
         };
         chan.connect();
     };
-    connector1.onConnect = onConnect;
-    connector2.onConnect = onConnect;
-    connector3.onConnect = onConnect;
+    connector1.addEventListener("onConnect", onConnect);
+    connector2.addEventListener("onConnect", onConnect);
+    connector3.addEventListener("onConnect", onConnect);
 
     await connector1.start();
     await connector2.start();
     await connector3.start();
 
-    connector1.connectTo("0002");
-    connector1.connectTo("0003");
-    connector2.connectTo("0003");
+    connector1.getOrCreateConnection("0002");
+    connector1.getOrCreateConnection("0003");
+    connector2.getOrCreateConnection("0003");
 }
-test();
+// test();
 
 
-export { Multiplexer, WebSocketChannel, DebugChannel, State }
+export { Multiplexer, WebSocketChannel, DebugChannel, State, WebRtcEndpoint, getIceCandidates }

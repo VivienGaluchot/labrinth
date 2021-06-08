@@ -66,13 +66,10 @@ class Component {
         this.ws.connect();
 
         // P2P
-        let user = this.element.querySelector(".p2p-local-user");
-        let device = this.element.querySelector(".p2p-local-device");
-        let session = this.element.querySelector(".p2p-local-session");
+        let webRtcEndpoint = P2p.localEndpoint.webRtcEndpoint;
 
-        user.innerText = P2p.localEndpoint.user;
-        device.innerText = P2p.localEndpoint.device;
-        session.innerText = P2p.localEndpoint.session;
+        let localId = this.element.querySelector("#p2p-local-id");
+        localId.innerText = P2p.localEndpoint.serialize();
 
         this.element.querySelector("#p2p-tests-btn").onclick = () => {
             let tbody = this.element.querySelector("#p2p-tests-tbody");
@@ -101,6 +98,52 @@ class Component {
             addResult(new FNode("span").text("Done"), total);
         };
 
+        let updateP2pCount = () => {
+            let p2pCount = this.element.querySelector("#p2p-peer-count");
+            let count = 0;
+            for (let [id, con] of webRtcEndpoint.connections) {
+                if (con.state == Channel.State.CONNECTED) {
+                    count++;
+                }
+            }
+            p2pCount.innerText = count;
+        }
+        webRtcEndpoint.addEventListener("onConnect", updateP2pCount);
+        webRtcEndpoint.addEventListener("onDisconnect", updateP2pCount);
+        updateP2pCount();
+
+        let handleP2pConnection = (event) => {
+            let connection = event.connection;
+            let chan = connection.getChannel("main", 0);
+            chan.onmessage = (data) => {
+                console.log(`message received from ${chan.peerId} '${data}'`);
+            };
+            chan.onStateUpdate = (state) => {
+                console.log("state of chan", chan.peerId, state);
+                if (state == Channel.State.CONNECTED) {
+                    peerConnectId.value = "";
+                    chan.send(`hi, i'm ${connection.connector.localId} !`);
+                }
+            };
+            chan.connect();
+        }
+        webRtcEndpoint.addEventListener("onRegister", handleP2pConnection);
+
+        let peerConnectId = this.element.querySelector("#p2p-peer-connect-id");
+        let peerConnectBtn = this.element.querySelector("#p2p-peer-connect-btn");
+        let peerConnectTimeout = null;
+        peerConnectBtn.onclick = () => {
+            try {
+                let endpoint = P2p.RemoteEndpoint.deserialize(peerConnectId.value);
+                webRtcEndpoint.getOrCreateConnection(endpoint.serialize());
+            } catch (err) {
+                peerConnectId.classList.add("error");
+                clearTimeout(peerConnectTimeout);
+                peerConnectTimeout = setTimeout(() => { peerConnectId.classList.remove("error"); }, 1000);
+                throw err;
+            }
+        };
+
         // Local storage
         let localStorageTbody = this.element.querySelector(".local-storage-tbody");
         populateLocalStorageTbody(localStorageTbody);
@@ -120,28 +163,13 @@ class Component {
         };
 
         // WebRTC
-        let offerEl = this.element.querySelector(".webrtc-offer");
-        this.element.querySelector(".btn-gen-offer").onclick = () => {
-            offerEl.classList.remove(...offerEl.classList);
-            offerEl.innerText = "Offer generation pending";
-            P2p.offer()
-                .then((connection) => {
-                    offerEl.innerText = connection.localDescription.sdp;
-                    connection.close();
-                }).catch((reason) => {
-                    console.error(reason);
-                    offerEl.classList.add("failure");
-                    offerEl.innerText = "failed";
-                });
-        };
-
         let iceCandidatesEl = this.element.querySelector(".webrtc-ice-candidates-tbody");
         this.element.querySelector(".btn-gen-ice-candidates").onclick = () => {
             while (iceCandidatesEl.firstChild) {
                 iceCandidatesEl.firstChild.remove()
             }
 
-            P2p.getIceCandidates((candidate) => {
+            Channel.getIceCandidates((candidate) => {
                 console.log("candidate", candidate);
                 if (candidate) {
                     let tr = new FNode("tr")

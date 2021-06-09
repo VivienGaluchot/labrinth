@@ -180,9 +180,20 @@ button:active {
     transform: scale(.9);
 }
 
+/* form */
+
+input {
+    color: hsl(216, 77%, 76%);
+    background-color: hsla(216, 77%, 76%, 0.1);
+    border: none;
+    font-size: .95rem;
+    padding: .5rem;
+    border-radius: .5rem;
+}
+
 /* flavours */
 
-code.verbose, code.success {
+code.verbose, code.success, input.success {
     color: hsl(133, 77%, 76%);
     background-color: hsla(133, 77%, 76%, 0.1);
 }
@@ -197,12 +208,12 @@ code.info {
     background-color: hsla(216, 77%, 76%, 0.1);
 }
 
-code.warning {
+code.warning, input.warning {
     color: hsl(56, 77%, 76%);
     background-color: hsla(56, 77%, 76%, 0.1);
 }
 
-code.error, code.failure {
+code.error, code.failure, input.error {
     color: hsl(350, 77%, 76%);
     background-color: hsla(350, 77%, 76%, 0.1);
 }

@@ -272,6 +272,8 @@ class WebRtcConnectionEvent extends Event {
  *   - onUnregister: WebRtcConnectionEvent
  *   - onConnect: WebRtcConnectionEvent
  *   - onDisconnect: WebRtcConnectionEvent
+ *   - onStateUpdate: WebRtcConnectionEvent
+ *   - onPingUpdate: WebRtcConnectionEvent
  */
 class WebRtcEndpoint extends EventTarget {
     constructor(serverUrl, localId) {
@@ -408,36 +410,19 @@ class WebRtcConnection {
         this.isSettingRemoteAnswerPending = false;
         this.pc = new RTCPeerConnection(rtcPeerConnectionConfig);
 
+        this.pingDelayInMs = null;
         this.state = State.CLOSED;
 
         this.pc.onsignalingstatechange = (event) => {
-            console.debug(`[WebRtcConnection to ${this.peerId}] signaling state change: `, this.pc.signalingState);
-        };
-        this.pc.onconnectionstatechange = (event) => {
-            let prev = this.state;
-            switch (this.pc.connectionState) {
-                case "connected":
-                    this.state = State.CONNECTED;
-                    if (prev != this.state) {
-                        this.connector.dispatchEvent(new WebRtcConnectionEvent("onConnect", this));
-                    }
-                    break;
-                case "disconnected":
-                case "failed":
-                case "closed":
-                    this.state = State.CLOSED;
-                    if (prev != this.state) {
-                        this.connector.dispatchEvent(new WebRtcConnectionEvent("onDisconnect", this));
-                    }
-                    break;
-            }
+            this.connector.dispatchEvent(new WebRtcConnectionEvent("onStateUpdate", this));
         };
         this.pc.oniceconnectionstatechange = (event) => {
-            console.debug(`[WebRtcConnection to ${this.peerId}] ice state change: `, this.pc.iceConnectionState);
             if (this.pc.iceConnectionState === "failed") {
                 this.pc.restartIce();
             }
+            this.connector.dispatchEvent(new WebRtcConnectionEvent("onStateUpdate", this));
         };
+
         this.pc.onnegotiationneeded = async (event) => {
             try {
                 this.isMakingOffer = true;
@@ -455,6 +440,34 @@ class WebRtcConnection {
                 this.connector.sendIceCandidate(this.peerId, event.candidate);
             }
         };
+
+        this.pingChan = this.getChannel("ping", 0);
+        this.pingChan.onStateUpdate = (state) => {
+            this.state = state;
+            if (this.state == State.CONNECTED) {
+                this.connector.dispatchEvent(new WebRtcConnectionEvent("onConnect", this));
+            }
+            if (this.state == State.CLOSED) {
+                this.pingDelayInMs = null;
+                this.connector.dispatchEvent(new WebRtcConnectionEvent("onDisconnect", this));
+            }
+            this.connector.dispatchEvent(new WebRtcConnectionEvent("onStateUpdate", this));
+        };
+        this.pingChan.onmessage = (data) => {
+            if (data.src == this.peerId) {
+                this.pingChan.send(data);
+            }
+            if (data.src == this.connector.localId) {
+                this.pingDelayInMs = Date.now() - data.timestamp;
+                this.connector.dispatchEvent(new WebRtcConnectionEvent("onPingUpdate", this));
+            }
+        };
+        setInterval(() => {
+            if (this.pingChan.state == State.CONNECTED) {
+                this.pingChan.send({ src: this.connector.localId, timestamp: Date.now() });
+            }
+        }, 2000);
+        this.pingChan.connect();
     }
 
     getChannel(tag, id) {
@@ -568,7 +581,7 @@ async function test() {
 
     let onConnect = (event) => {
         let connection = event.connection;
-        let chan = connection.getChannel("main", 0);
+        let chan = connection.getChannel("main", 1);
         chan.onmessage = (data) => {
             console.info(`[${connection.connector.localId}] message received from ${chan.peerId} '${data}'`);
         };

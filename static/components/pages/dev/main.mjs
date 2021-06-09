@@ -69,7 +69,15 @@ class Component {
         let webRtcEndpoint = P2p.localEndpoint.webRtcEndpoint;
 
         let localId = this.element.querySelector("#p2p-local-id");
+        let localIdCopy = this.element.querySelector("#p2p-local-id-copy-btn");
         localId.innerText = P2p.localEndpoint.serialize();
+        localIdCopy.onclick = () => {
+            navigator.clipboard.writeText(localId.innerText)
+                .then(() => {
+                    localId.classList.add("success");
+                    setTimeout(() => { localId.classList.remove("success"); }, 1000);
+                });
+        };
 
         this.element.querySelector("#p2p-tests-btn").onclick = () => {
             let tbody = this.element.querySelector("#p2p-tests-tbody");
@@ -98,23 +106,59 @@ class Component {
             addResult(new FNode("span").text("Done"), total);
         };
 
-        let updateP2pCount = () => {
+        let updateP2pPeers = () => {
             let p2pCount = this.element.querySelector("#p2p-peer-count");
-            let count = 0;
-            for (let [id, con] of webRtcEndpoint.connections) {
-                if (con.state == Channel.State.CONNECTED) {
-                    count++;
-                }
+            p2pCount.innerText = webRtcEndpoint.connections.size;
+            let tbody = this.element.querySelector("#p2p-peers-tbody");
+            while (tbody.firstChild) {
+                tbody.firstChild.remove()
             }
-            p2pCount.innerText = count;
+            if (webRtcEndpoint.connections.size == 0) {
+                let tr = new FNode("tr")
+                    .child(new FNode("td").text("-"))
+                    .child(new FNode("td").text("-"))
+                    .child(new FNode("td").text("-"))
+                    .child(new FNode("td").text("-"))
+                    .child(new FNode("td").text("-"));
+                tbody.appendChild(tr.element);
+            }
+            let getNode = (state) => {
+                let cssClass = "info";
+                if (state == Channel.State.CONNECTED)
+                    cssClass = "success";
+                if (state == "stable")
+                    cssClass = "success";
+                if (state == "failed")
+                    cssClass = "error";
+                if (state == "checking")
+                    cssClass = "warning";
+                if (state == "undefined")
+                    cssClass = "warning";
+                if (state == "closed")
+                    cssClass = "info";
+                return new FNode("code").class(cssClass).text(state);
+            }
+            for (let [id, con] of webRtcEndpoint.connections) {
+                let signaling = con.pc.signalingState;
+                let ice = con.pc.iceConnectionState;
+                let tr = new FNode("tr")
+                    .child(new FNode("td").child(getNode(id)))
+                    .child(new FNode("td").child(getNode(signaling)))
+                    .child(new FNode("td").child(getNode(ice)))
+                    .child(new FNode("td").child(getNode(con.state)))
+                    .child(new FNode("td").text(`${con.pingDelayInMs} ms`));
+                tbody.appendChild(tr.element);
+            }
         }
-        webRtcEndpoint.addEventListener("onConnect", updateP2pCount);
-        webRtcEndpoint.addEventListener("onDisconnect", updateP2pCount);
-        updateP2pCount();
+        webRtcEndpoint.addEventListener("onRegister", updateP2pPeers);
+        webRtcEndpoint.addEventListener("onUnregister", updateP2pPeers);
+        webRtcEndpoint.addEventListener("onStateUpdate", updateP2pPeers);
+        webRtcEndpoint.addEventListener("onPingUpdate", updateP2pPeers);
+        updateP2pPeers();
 
         let handleP2pConnection = (event) => {
             let connection = event.connection;
-            let chan = connection.getChannel("main", 0);
+            let chan = connection.getChannel("main", 1);
             chan.onmessage = (data) => {
                 console.log(`message received from ${chan.peerId} '${data}'`);
             };
@@ -136,6 +180,12 @@ class Component {
             try {
                 let endpoint = P2p.RemoteEndpoint.deserialize(peerConnectId.value);
                 webRtcEndpoint.getOrCreateConnection(endpoint.serialize());
+                peerConnectId.classList.add("success");
+                clearTimeout(peerConnectTimeout);
+                peerConnectTimeout = setTimeout(() => {
+                    peerConnectId.classList.remove("success");
+                    peerConnectId.value = "";
+                }, 1000);
             } catch (err) {
                 peerConnectId.classList.add("error");
                 clearTimeout(peerConnectTimeout);

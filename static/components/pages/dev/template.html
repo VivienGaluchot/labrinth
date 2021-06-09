@@ -79,15 +79,30 @@
             <h2>P2P</h2>
             <h3>Peers</h3>
             <p>
-                Local peer id is <code id="p2p-local-id">-</code>.
-            </p>
-            <p>
-                Currently connected to <code id="p2p-peer-count">-</code> peers.
+                Local peer id is <code id="p2p-local-id">-</code> <button id="p2p-local-id-copy-btn">✂</button>.
             </p>
             <p>
                 Connect to peer by id <input id="p2p-peer-connect-id"> <button id="p2p-peer-connect-btn"
                     class="blue">Go</button>.
             </p>
+            <p>
+                Currently connected to <code id="p2p-peer-count">-</code> peers.
+            </p>
+            <table>
+                <thead>
+                    <th>Id</th>
+                    <th>Signaling</th>
+                    <th>ICE</th>
+                    <th>Global</th>
+                    <th>Ping</th>
+                </thead>
+                <tbody id="p2p-peers-tbody">
+                    <tr>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                </tbody>
+            </table>
             <h3>Tests</h3>
             <p>
                 <button id="p2p-tests-btn" class="blue">Run</button>

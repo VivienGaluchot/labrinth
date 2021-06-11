@@ -22,20 +22,18 @@ class Channel {
         this.state = State.CLOSED;
 
         // API services
-        // getter
-        this.isReliable = () => { return false };
 
         // input (called internally on event)
         this.onStateUpdate = (state) => { };
         this.onopen = () => { };
         this.onmessage = (data) => {
-            console.warn(`${this.name} unset onmessage: ${JSON.stringify(data)}`);
+            console.trace(`${this.name} unset onmessage: ${JSON.stringify(data)}`);
         };
         this.onclose = (event) => { };
 
         // output (to call externally)
         this.send = (data) => {
-            console.warn(`${this.name} unset send: ${JSON.stringify(data)}`);
+            console.trace(`${this.name} unset send: ${JSON.stringify(data)}`);
         };
     }
 
@@ -49,6 +47,41 @@ class Channel {
     }
 }
 
+class RequestContext {
+    constructor(channel, id) {
+        this.channel = channel;
+        this.id = id;
+        this.index = 0;
+        this.pending = new Map();
+    }
+
+    ask(data) {
+        this.index++;
+        return new Promise((resolve, reject) => {
+            this.pending.set(this.index, { resolve: resolve, reject: reject });
+            return this.channel.send({ id: this.id, index: this.index, data: data });
+        });
+    }
+
+    processInput(data) {
+        if (data.id == this.id) {
+            this.pending.get(data.index).resolve(data.data);
+            this.pending.delete(data.index);
+
+            let toReject = [];
+            for (let key of this.pending.keys()) {
+                if (key < data.index) {
+                    toReject.append(key);
+                }
+            }
+            for (let key of toReject) {
+                this.pending.get(key).reject("no response received");
+                this.pending.delete(key);
+            }
+        }
+    }
+}
+
 /**
  *  Debug channel, all received or send data are only logged
  */
@@ -56,7 +89,6 @@ class DebugChannel extends Channel {
     constructor(name) {
         super(`${name}`);
 
-        this.isReliable = () => { return true };
         this.onStateUpdate = (state) => {
             console.debug(`'${this.name}'.onStateUpdate(${state})`);
         }
@@ -71,6 +103,7 @@ class DebugChannel extends Channel {
         }
         this.send = (data) => {
             console.debug(`'${this.name}'.send(${JSON.stringify(data)})`);
+            return Promise.resolve();
         };
     }
 }
@@ -148,7 +181,6 @@ class Multiplexer {
 
         this.ids.set(id, handler);
 
-        handler.isReliable = this.root.isReliable;
         handler.send = (data) => {
             this.root.send({ id: id, data: data });
         };
@@ -173,8 +205,21 @@ class SocketLikeChannel extends Channel {
         this.isReconnectFused = false;
         this.socket = null;
 
-        this.unsetSend = () => { throw new Error(`channel ${this.name} socket not connected`); };
-        this.send = this.unsetSend;
+        this.pendingSend = [];
+
+        // return a promise resolved when the message is sent (when the connection is CONNECTED)
+        this.send = (data) => {
+            return new Promise((resolve, reject) => {
+                if (this.state == State.CONNECTED) {
+                    this.socket.send(JSON.stringify(data));
+                    resolve();
+                } else if (this.state == State.CONNECTING) {
+                    this.pendingSend.append({ data: data, resolve: resolve, reject: reject });
+                } else {
+                    throw new Error(`channel ${this.name} socket not connected`);
+                }
+            });
+        };
     }
 
     // to override
@@ -189,10 +234,15 @@ class SocketLikeChannel extends Channel {
         }
         this.socket = this.getSocket();
         this.socket.onopen = () => {
-            this.send = (data) => {
-                this.socket.send(JSON.stringify(data))
-            };
             this.setState(State.CONNECTED);
+            for (let pending of this.pendingSend) {
+                this.send(pending.data).then(() => {
+                    pending.resolve();
+                }).catch((reason) => {
+                    pending.reject(reason);
+                });
+            }
+            this.pendingSend = [];
             this.onopen();
         };
         this.socket.onmessage = (event) => {
@@ -204,7 +254,6 @@ class SocketLikeChannel extends Channel {
             }
             this.setState(State.CLOSED);
             this.socket = null;
-            this.send = this.unsetSend;
             if (!this.isReconnectFused && this.reconnect) {
                 this.close();
                 this.connect();
@@ -219,7 +268,6 @@ class SocketLikeChannel extends Channel {
             this.isReconnectFused = true;
             this.socket.close();
             this.socket = null;
-            this.send = this.unsetSend;
         }
     }
 }
@@ -237,7 +285,6 @@ class WebSocketChannel extends SocketLikeChannel {
         super(`${url}`, reconnect);
         this.url = url;
         this.protocols = protocols;
-        this.isReliable = () => { return true };
     }
 
     getSocket() {
@@ -307,11 +354,12 @@ class WebRtcEndpoint extends EventTarget {
         if (!this.connections.has(peerId)) {
             throw new Error(`peerId not ${peerId} registered`);
         }
-        return getOrCreateConnection(peerId);
+        return this.getOrCreateConnection(peerId);
     }
 
     close(peerId) {
-        getConnection(peerId).close();
+        let connection = this.getConnection(peerId);
+        connection.close();
         this.connections.delete(peerId);
         this.dispatchEvent(new WebRtcConnectionEvent("onUnregister", connection));
     }
@@ -528,8 +576,6 @@ class WebRtcDataChannel extends SocketLikeChannel {
         this.pc = pc;
         this.tag = tag;
         this.id = id;
-
-        this.isReliable = () => { return true };
     }
 
     getSocket() {

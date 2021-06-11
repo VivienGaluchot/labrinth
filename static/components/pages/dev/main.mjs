@@ -2,7 +2,7 @@
 
 import * as P2p from '/lib/p2p.mjs';
 import * as Storage from '/lib/storage.mjs';
-import { FNode } from '/lib/fdom.mjs';
+import { FNode, FButton } from '/lib/fdom.mjs';
 import * as Channel from '/lib/channel.mjs';
 import * as Sw from '/lib/sw-interface.mjs';
 
@@ -110,44 +110,60 @@ class Component {
             let p2pCount = this.element.querySelector("#p2p-peer-count");
             p2pCount.innerText = webRtcEndpoint.connections.size;
             let tbody = this.element.querySelector("#p2p-peers-tbody");
-            while (tbody.firstChild) {
-                tbody.firstChild.remove()
-            }
             if (webRtcEndpoint.connections.size == 0) {
                 let tr = new FNode("tr")
                     .child(new FNode("td").text("-"))
                     .child(new FNode("td").text("-"))
-                    .child(new FNode("td").text("-"))
-                    .child(new FNode("td").text("-"))
                     .child(new FNode("td").text("-"));
+                while (tbody.firstChild) {
+                    tbody.firstChild.remove()
+                }
                 tbody.appendChild(tr.element);
-            }
-            let getNode = (state) => {
-                let cssClass = "info";
-                if (state == Channel.State.CONNECTED)
-                    cssClass = "success";
-                if (state == "stable")
-                    cssClass = "success";
-                if (state == "failed")
-                    cssClass = "error";
-                if (state == "checking")
-                    cssClass = "warning";
-                if (state == "undefined")
-                    cssClass = "warning";
-                if (state == "closed")
-                    cssClass = "info";
-                return new FNode("code").class(cssClass).text(state);
-            }
-            for (let [id, con] of webRtcEndpoint.connections) {
-                let signaling = con.pc.signalingState;
-                let ice = con.pc.iceConnectionState;
-                let tr = new FNode("tr")
-                    .child(new FNode("td").child(getNode(id)))
-                    .child(new FNode("td").child(getNode(signaling)))
-                    .child(new FNode("td").child(getNode(ice)))
-                    .child(new FNode("td").child(getNode(con.state)))
-                    .child(new FNode("td").text(`${con.pingDelayInMs} ms`));
-                tbody.appendChild(tr.element);
+            } else {
+                let getNode = (state) => {
+                    let cssClass = "info";
+                    if (state == Channel.State.CONNECTED)
+                        cssClass = "success";
+                    if (state == "stable")
+                        cssClass = "success";
+                    if (state == "failed")
+                        cssClass = "error";
+                    if (state == "closed")
+                        cssClass = "error";
+                    if (state == "checking")
+                        cssClass = "warning";
+                    if (state == "connecting")
+                        cssClass = "warning";
+                    if (state == "undefined")
+                        cssClass = "warning";
+                    return new FNode("code").class(cssClass).text(state);
+                }
+                for (let [id, con] of webRtcEndpoint.connections) {
+                    let signaling = con.pc.signalingState;
+                    let ice = con.pc.iceConnectionState;
+                    let tr = new FNode("tr")
+                        .child(new FNode("td").child(getNode(id)))
+                        .child(new FNode("td")
+                            .child(new FNode("div").text("Signaling is ").child(getNode(signaling)))
+                            .child(new FNode("div").text("ICE is ").child(getNode(ice)))
+                            .child(new FNode("div").text("Global is ").child(getNode(con.state))));
+                    if (con.pingDelayInMs)
+                        tr.child(new FNode("td").text(`${con.pingDelayInMs} ms`));
+                    else
+                        tr.child(new FNode("td").text(`- ms`));
+                    tr.child(new FNode("td")
+                        .child(new FButton().text("Close").onclick(() => {
+                            webRtcEndpoint.close(id);
+                        }))
+                        .child(new FButton().text("Restart ICE").onclick(() => {
+                            con.pc.restartIce();
+                        }))
+                    );
+                    while (tbody.firstChild) {
+                        tbody.firstChild.remove()
+                    }
+                    tbody.appendChild(tr.element);
+                }
             }
         }
         webRtcEndpoint.addEventListener("onRegister", updateP2pPeers);

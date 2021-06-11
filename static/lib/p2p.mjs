@@ -29,7 +29,7 @@ class Endpoint {
     }
 
     serialize() {
-        return `${this.user}${this.device}${this.session}`;
+        return `${this.user}-${this.device}-${this.session}`;
     }
 }
 
@@ -39,7 +39,7 @@ class RemoteEndpoint extends Endpoint {
     }
 
     static deserialize(str) {
-        const regex = /^([0-9a-f]{16})([0-9a-f]{8})([0-9a-f]{8})$/;
+        const regex = /^([0-9a-f]{16})-([0-9a-f]{8})-([0-9a-f]{8})$/;
         let matches = str.match(regex);
         if (!matches) {
             throw new Error(`invalid endpoint '${str}'`);

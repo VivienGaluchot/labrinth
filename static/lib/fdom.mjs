@@ -30,5 +30,16 @@ class FNode {
     }
 }
 
+class FButton extends FNode {
+    constructor() {
+        super("button");
+    }
 
-export { FNode }
+    onclick(onclick) {
+        this.element.onclick = onclick;
+        return this;
+    }
+}
+
+
+export { FNode, FButton }

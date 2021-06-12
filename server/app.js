@@ -28,7 +28,7 @@ class Logger {
         console.log(this.formatLog(`INF`, msg));
     }
 
-    warning(msg) {
+    warn(msg) {
         console.warn(this.formatLog(`WAR`, msg));
     }
 
@@ -44,7 +44,7 @@ const logger = new Logger("root");
 
 const isDev = process.argv.length > 2 && process.argv[2] == "dev";
 if (isDev) {
-    logger.warning(`dev environnement, not suitable for production`);
+    logger.warn(`dev environnement, not suitable for production`);
 }
 
 
@@ -181,63 +181,83 @@ const wsServer = new WebSocketServer({
     path: "/peer-connector",
 });
 
+
+
+function sendData(connection, data) {
+    connection.sendUTF(JSON.stringify(data));
+}
+
+function handleRequest(connection, index, data) {
+    function sendReply(data) {
+        sendData(connection, { id: "rep", index: index, isOk: true, data: data });
+    }
+    function sendError(msg) {
+        sendData(connection, { id: "rep", index: index, isOk: false, msg: msg });
+    }
+
+    if (data.id == "hi" && data?.src != undefined) {
+        if (peers.has(data.src)) {
+            websocketLogger.error(`peer already registered ${data.src}`);
+            sendError("peer already registered");
+        } else if (connection.peerId != null) {
+            websocketLogger.error(`connection already registered`);
+            sendError("connection already registered");
+        } else {
+            peers.set(data.src, connection);
+            websocketLogger.debug(`peer registered '${data.src}'`);
+            connection.peerId = data.src;
+            sendReply();
+        }
+    } else if ((data.id == "desc" || data.id == "candidate") && data?.src != undefined && data?.dst != undefined) {
+        if (peers.has(data.dst)) {
+            websocketLogger.debug(`forward ${data.id} from '${data.src}' to '${data.dst}'`);
+            sendData(peers.get(data.dst), { id: data.id, src: data.src, dst: data.dst, data: data.data });
+            sendReply();
+        } else {
+            websocketLogger.error(`can't forward ${data.id}, peer not registered ${data.src}`);
+            sendError(`peer ${data.dst} not registered`);
+        }
+    } else {
+        sendError(`unexpected message id: '${data.id}'`);
+    }
+}
+
+function handleData(connection, data) {
+    if (data.id == "req" && data?.index != undefined && data?.data != undefined) {
+        handleRequest(connection, data.index, data.data);
+    } else {
+        websocketLogger.warn(`drop unexpected data ${JSON.stringify(data)}`);
+    }
+}
+
 wsServer.on('request', (request) => {
     if (!originIsAllowed(request.origin)) {
         request.reject();
         websocketLogger.error(`connection from origin '${request.origin}' rejected.`);
-        return;
-    }
-    try {
-        let connection = request.accept('rtc-on-socket-connector', request.origin);
-        connection.on('message', message => {
-            if (message.type === 'binary') {
-                websocketLogger.error(`received binary message of ${message.binaryData.length} bytes`);
-                return;
-            }
-            if (message.type !== 'utf8') {
-                websocketLogger.error(`received non utf8 message of type ${message.type}`);
-                return;
-            }
-            let data = JSON.parse(message.utf8Data);
-            if (data.id == "hi" && data?.src != undefined) {
-                if (peers.has(data.src)) {
-                    websocketLogger.error(`peer already registered ${data.src}`);
-                    connection.sendUTF(JSON.stringify({ id: "error", data: "peer already registered" }));
-                    connection.close();
-                } else {
-                    peers.set(data.src, connection);
-                    websocketLogger.debug(`peer registered '${data.src}'`);
-                    connection.peerId = data.src;
-                    connection.sendUTF(JSON.stringify({ id: data.id, src: data.src }));
+    } else {
+        try {
+            let connection = request.accept('rtc-on-socket-connector', request.origin);
+            connection.peerId = null;
+            connection.on('message', message => {
+                if (message.type === 'binary') {
+                    websocketLogger.warn(`drop binary message of ${message.binaryData.length} bytes`);
+                    return;
                 }
-            } else if (data.id == "desc" && data?.src != undefined && data?.dst != undefined) {
-                if (peers.has(data.dst)) {
-                    websocketLogger.debug(`forward desc from '${data.src}' to '${data.dst}'`);
-                    peers.get(data.dst).sendUTF(JSON.stringify({ id: data.id, src: data.src, dst: data.dst, data: data.data }));
-                } else {
-                    websocketLogger.error(`can't forward desc, peer not registered ${data.src}`);
-                    connection.sendUTF(JSON.stringify({ id: "error", data: "peer not registered" }));
+                if (message.type !== 'utf8') {
+                    websocketLogger.warn(`drop non utf8 message of type ${message.type}`);
+                    return;
                 }
-            } else if (data.id == "candidate" && data?.src != undefined && data?.dst != undefined) {
-                if (peers.has(data.dst)) {
-                    websocketLogger.debug(`forward candidate from '${data.src}' to '${data.dst}'`);
-                    peers.get(data.dst).sendUTF(JSON.stringify({ id: data.id, src: data.src, dst: data.dst, data: data.data }));
-                } else {
-                    websocketLogger.error(`can't forward candidate, peer not registered ${data.src}`);
-                    connection.sendUTF(JSON.stringify({ id: "error", data: "peer not registered" }));
+                handleData(connection, JSON.parse(message.utf8Data));
+            });
+            connection.on('close', (reasonCode, description) => {
+                websocketLogger.debug("connection closed, " + reasonCode + ": " + description);
+                if (peers.has(connection.peerId)) {
+                    peers.delete(connection.peerId);
+                    websocketLogger.debug(`peer unregistered '${connection.peerId}'`);
                 }
-            } else {
-                websocketLogger.error(`received unexpected message: ${message.utf8Data}`);
-            }
-        });
-        connection.on('close', (reasonCode, description) => {
-            websocketLogger.debug("connection closed, " + reasonCode + ": " + description);
-            if (peers.has(connection.peerId)) {
-                peers.delete(connection.peerId);
-                websocketLogger.debug(`peer unregistered '${connection.peerId}'`);
-            }
-        });
-    } catch (error) {
-        websocketLogger.error(error);
+            });
+        } catch (error) {
+            websocketLogger.error(error);
+        }
     }
 });

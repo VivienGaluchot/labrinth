@@ -138,6 +138,9 @@ class Component {
                         cssClass = "warning";
                     return new FNode("code").class(cssClass).text(state);
                 }
+                while (tbody.firstChild) {
+                    tbody.firstChild.remove()
+                }
                 for (let [id, con] of webRtcEndpoint.connections) {
                     let signaling = con.pc.signalingState;
                     let ice = con.pc.iceConnectionState;
@@ -159,9 +162,6 @@ class Component {
                             con.pc.restartIce();
                         }))
                     );
-                    while (tbody.firstChild) {
-                        tbody.firstChild.remove()
-                    }
                     tbody.appendChild(tr.element);
                 }
             }

@@ -11,6 +11,23 @@ const State = {
     CONNECTED: 'connected'
 }
 
+function timeoutPromise(timeoutInMs, promise) {
+    let timeoutId;
+    let timeoutPromise = new Promise((resolve, reject) => {
+        timeoutId = setTimeout(() => {
+            reject('promise timed out in ' + timeoutInMs + 'ms');
+        }, timeoutInMs);
+    });
+    return Promise.race([promise, timeoutPromise])
+        .then((result) => {
+            clearTimeout(timeoutId);
+            return result;
+        }).catch((reason) => {
+            clearTimeout(timeoutId);
+            return Promise.reject(reason);
+        });
+}
+
 
 /**
  * A channel is reliable when frame can't be lost and are received in order
@@ -20,6 +37,9 @@ class Channel {
     constructor(name) {
         this.name = name;
         this.state = State.CLOSED;
+
+        this.reqIndex = 0;
+        this.pendingRequests = new Map();
 
         // API services
 
@@ -34,7 +54,26 @@ class Channel {
         // output (to call externally)
         this.send = (data) => {
             console.trace(`${this.name} unset send: ${JSON.stringify(data)}`);
+            return Promise.reject('send non implemented');
         };
+    }
+
+    request(data, timeoutInMs = 10000) {
+        this.reqIndex++;
+        let index = this.reqIndex;
+        let requestPromise = this.send({ id: "req", index: index, data: data })
+            .then(() => {
+                return new Promise((resolve, reject) => {
+                    this.pendingRequests.set(index, { resolve: resolve, reject: reject });
+                });
+            });
+        return timeoutPromise(timeoutInMs, requestPromise).catch((reason) => {
+            // in case of timeout unregister the pending request
+            if (this.pendingRequests.has(index)) {
+                this.pendingRequests.delete(index);
+            }
+            return Promise.reject(`request '${JSON.stringify(data)}' failed\n - ${reason}`);
+        });
     }
 
     // internal
@@ -45,42 +84,23 @@ class Channel {
             this.onStateUpdate(state);
         }
     }
-}
 
-class RequestContext {
-    constructor(channel, id) {
-        this.channel = channel;
-        this.id = id;
-        this.index = 0;
-        this.pending = new Map();
-    }
-
-    ask(data) {
-        this.index++;
-        return new Promise((resolve, reject) => {
-            this.pending.set(this.index, { resolve: resolve, reject: reject });
-            return this.channel.send({ id: this.id, index: this.index, data: data });
-        });
-    }
-
-    processInput(data) {
-        if (data.id == this.id) {
-            this.pending.get(data.index).resolve(data.data);
-            this.pending.delete(data.index);
-
-            let toReject = [];
-            for (let key of this.pending.keys()) {
-                if (key < data.index) {
-                    toReject.append(key);
+    internalOnMessage(data) {
+        if (data.id == "rep" && data.index != undefined && data.isOk != undefined) {
+            let index = data.index;
+            if (this.pendingRequests.has(index)) {
+                if (data.isOk == true) {
+                    this.pendingRequests.get(index).resolve(data.data);
+                } else {
+                    this.pendingRequests.get(index).reject(`server error: '${data.msg}'`);
                 }
-            }
-            for (let key of toReject) {
-                this.pending.get(key).reject("no response received");
-                this.pending.delete(key);
+                this.pendingRequests.delete(index);
             }
         }
+        this.onmessage(data);
     }
 }
+
 
 /**
  *  Debug channel, all received or send data are only logged
@@ -214,9 +234,9 @@ class SocketLikeChannel extends Channel {
                     this.socket.send(JSON.stringify(data));
                     resolve();
                 } else if (this.state == State.CONNECTING) {
-                    this.pendingSend.append({ data: data, resolve: resolve, reject: reject });
+                    this.pendingSend.push({ data: data, resolve: resolve, reject: reject });
                 } else {
-                    throw new Error(`channel ${this.name} socket not connected`);
+                    reject(`channel ${this.name} socket not connected`);
                 }
             });
         };
@@ -246,7 +266,7 @@ class SocketLikeChannel extends Channel {
             this.onopen();
         };
         this.socket.onmessage = (event) => {
-            this.onmessage(JSON.parse(event.data));
+            this.internalOnMessage(JSON.parse(event.data));
         };
         this.socket.onclose = (event) => {
             if (this.state == State.CONNECTED) {
@@ -366,21 +386,23 @@ class WebRtcEndpoint extends EventTarget {
 
     start() {
         console.debug(`[WebRtcEndpoint] start endpoint with local id '${this.localId}'`);
+        this.socket.onmessage = (data) => {
+            if (data?.id == "desc") {
+                this.onDescriptionReceived(data);
+            } else if (data?.id == "candidate") {
+                this.onIceCandidateReceived(data);
+            }
+        };
         return new Promise((resolve, reject) => {
             this.socket.onStateUpdate = (state) => {
                 if (state == State.CONNECTED) {
-                    this.socket.send({ id: "hi", src: this.localId });
-                }
-            };
-            this.socket.onmessage = (data) => {
-                if (data?.id == "hi") {
-                    resolve();
-                } else if (data?.id == "desc") {
-                    this.onDescriptionReceived(data);
-                } else if (data?.id == "candidate") {
-                    this.onIceCandidateReceived(data);
-                } else if (data?.id == "error") {
-                    reject(`server error: ${data?.data}`);
+                    this.socket.request({ id: "hi", src: this.localId })
+                        .then(() => {
+                            console.log(`[WebRtcEndpoint] endpoint registered on server`);
+                            resolve();
+                        }).catch((reason) => {
+                            reject(`can't register local endpoint\n - ${reason}`);
+                        });
                 }
             };
             this.socket.connect();
@@ -392,13 +414,17 @@ class WebRtcEndpoint extends EventTarget {
     }
 
     sendDescription(peerId, desc) {
-        console.debug(`[WebRtcEndpoint] send desc to ${peerId}`);
-        this.socket.send({ id: "desc", src: this.localId, dst: peerId, data: desc });
+        return this.socket.request({ id: "desc", src: this.localId, dst: peerId, data: desc })
+            .then(() => {
+                console.debug(`[WebRtcEndpoint] send desc to ${peerId}, done`);
+            });
     }
 
     sendIceCandidate(peerId, candidate) {
-        console.debug(`[WebRtcEndpoint] send ICE candidate: ${peerId}`);
-        this.socket.send({ id: "candidate", src: this.localId, dst: peerId, data: candidate });
+        return this.socket.request({ id: "candidate", src: this.localId, dst: peerId, data: candidate })
+            .then(() => {
+                console.debug(`[WebRtcEndpoint] send ICE candidate: ${peerId}, done`);
+            });
     }
 
     // private
@@ -475,17 +501,17 @@ class WebRtcConnection {
             try {
                 this.isMakingOffer = true;
                 await this.pc.setLocalDescription();
-                this.connector.sendDescription(this.peerId, this.pc.localDescription);
+                await this.connector.sendDescription(this.peerId, this.pc.localDescription);
             } catch (err) {
                 console.error(err);
             } finally {
                 this.isMakingOffer = false;
             }
         };
-        this.pc.onicecandidate = (event) => {
+        this.pc.onicecandidate = async (event) => {
             if (event.candidate) {
                 // Send the candidate to the remote peer
-                this.connector.sendIceCandidate(this.peerId, event.candidate);
+                await this.connector.sendIceCandidate(this.peerId, event.candidate);
             }
         };
 
@@ -539,7 +565,7 @@ class WebRtcConnection {
             this.isSettingRemoteAnswerPending = false;
             if (description.type == "offer") {
                 await this.pc.setLocalDescription();
-                this.connector.sendDescription(this.peerId, this.pc.localDescription);
+                await this.connector.sendDescription(this.peerId, this.pc.localDescription);
             }
         } catch (err) {
             console.error(err);

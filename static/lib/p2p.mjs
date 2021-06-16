@@ -7,6 +7,7 @@
 import * as MyMath from './math.mjs';
 import * as Storage from './storage.mjs';
 import * as Channel from './channel.mjs';
+import { set } from './storage.mjs';
 
 
 const storage = new Storage.ModularStorage("p2p");
@@ -34,10 +35,6 @@ class Endpoint {
 }
 
 class RemoteEndpoint extends Endpoint {
-    constructor(user, device, session) {
-        super(user, device, session, false);
-    }
-
     static deserialize(str) {
         const regex = /^([0-9a-f]{16})-([0-9a-f]{8})-([0-9a-f]{8})$/;
         let matches = str.match(regex);
@@ -46,12 +43,23 @@ class RemoteEndpoint extends Endpoint {
         }
         return new RemoteEndpoint(matches[1], matches[2], matches[3], true);
     }
+
+    constructor(user, device, session) {
+        super(user, device, session, false);
+    }
 }
 
 class LocalEndpoint extends Endpoint {
     static generate() {
-        let user = storage.get("user-id", () => MyMath.bufferToHex(MyMath.getRandomByteArray(64 / 8)));
-        let device = storage.get("device-id", () => MyMath.bufferToHex(MyMath.getRandomByteArray(32 / 8)));
+        let init = () => {
+            return {
+                user: MyMath.bufferToHex(MyMath.getRandomByteArray(64 / 8)),
+                device: MyMath.bufferToHex(MyMath.getRandomByteArray(32 / 8))
+            };
+        };
+        let persist = storage.get("local-endpoint", init);
+        let user = persist.user;
+        let device = persist.device;
         let session = MyMath.bufferToHex(MyMath.getRandomByteArray(32 / 8));
         return new LocalEndpoint(user, device, session);
     }
@@ -72,6 +80,48 @@ class LocalEndpoint extends Endpoint {
 }
 
 const localEndpoint = LocalEndpoint.generate();
+
+
+// ---------------------------------
+// Friends
+// ---------------------------------
+
+function setLocalName(name) {
+    // TODO send the local name to all the connected peers
+    storage.set("local-name", { value: name });
+}
+
+function getLocalName() {
+    return storage.get("local-name", () => {
+        return { value: "unknown" };
+    }).value;
+}
+
+function getFriends() {
+    let data = storage.get("friends", () => { return {}; });
+    let friends = new Map();
+    for (let key of Object.keys(data)) {
+        friends.set(key, data[key]);
+    }
+    return friends;
+}
+
+function registerFriend(id, name) {
+    let friends = storage.get("friends", () => { return {}; });
+    friends[id] = name;
+    storage.set("friends", friends);
+}
+
+function removeFriend(id) {
+    let friends = storage.get("friends", () => { return {}; });
+    let newFriends = {};
+    for (let key of Object.keys(friends)) {
+        if (id != key) {
+            newFriends[key] = friends[key];
+        }
+    }
+    storage.set("friends", newFriends);
+}
 
 
 // ---------------------------------
@@ -530,4 +580,8 @@ class TimestampedHistory {
     }
 }
 
-export { localEndpoint, RemoteEndpoint, TimestampedHistory, SharedValue, SharedSet }
+export {
+    localEndpoint, RemoteEndpoint,
+    setLocalName, getLocalName, getFriends, registerFriend, removeFriend,
+    TimestampedHistory, SharedValue, SharedSet
+}

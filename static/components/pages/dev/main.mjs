@@ -13,10 +13,10 @@ function populateLocalStorageTbody(element) {
     while (element.firstChild) {
         element.firstChild.remove()
     }
-    for (let [module, key, value] of Storage.all()) {
+    for (let [mod, key, value] of Storage.all()) {
         let tr = new FNode("tr")
             .child(new FNode("td")
-                .child(new FNode("code").text(module)))
+                .child(new FNode("code").text(mod)))
             .child(new FNode("td")
                 .child(new FNode("code").text(key)))
             .child(new FNode("td")
@@ -107,17 +107,18 @@ class Component {
         };
 
         let updateP2pPeers = () => {
+            let tbody = this.element.querySelector("#p2p-peers-tbody");
+            while (tbody.firstChild) {
+                tbody.firstChild.remove()
+            }
+
             let p2pCount = this.element.querySelector("#p2p-peer-count");
             p2pCount.innerText = webRtcEndpoint.connections.size;
-            let tbody = this.element.querySelector("#p2p-peers-tbody");
             if (webRtcEndpoint.connections.size == 0) {
                 let tr = new FNode("tr")
                     .child(new FNode("td").text("-"))
                     .child(new FNode("td").text("-"))
                     .child(new FNode("td").text("-"));
-                while (tbody.firstChild) {
-                    tbody.firstChild.remove()
-                }
                 tbody.appendChild(tr.element);
             } else {
                 let getNode = (state) => {
@@ -137,9 +138,6 @@ class Component {
                     if (state == "undefined")
                         cssClass = "warning";
                     return new FNode("code").class(cssClass).text(state);
-                }
-                while (tbody.firstChild) {
-                    tbody.firstChild.remove()
                 }
                 for (let [id, con] of webRtcEndpoint.connections) {
                     let signaling = con.pc.signalingState;
@@ -165,7 +163,7 @@ class Component {
                     tbody.appendChild(tr.element);
                 }
             }
-        }
+        };
         webRtcEndpoint.addEventListener("onRegister", updateP2pPeers);
         webRtcEndpoint.addEventListener("onUnregister", updateP2pPeers);
         webRtcEndpoint.addEventListener("onStateUpdate", updateP2pPeers);
@@ -210,6 +208,67 @@ class Component {
             }
         };
 
+        let p2pLocalName = this.element.querySelector("#p2p-friends-local-name");
+        let updateP2pLocalName = () => {
+            p2pLocalName.value = P2p.getLocalName();
+        };
+        p2pLocalName.onchange = () => {
+            P2p.setLocalName(p2pLocalName.value);
+            console.log("set name", p2pLocalName.value);
+        }
+        updateP2pLocalName();
+
+        let updateP2pFriends = () => {
+            let tbody = this.element.querySelector("#p2p-friends-tbody");
+            while (tbody.firstChild) {
+                tbody.firstChild.remove()
+            }
+
+            let friends = P2p.getFriends();
+            if (friends.length == 0) {
+                let tr = new FNode("tr")
+                    .child(new FNode("td").text("-"))
+                    .child(new FNode("td").text("-"))
+                    .child(new FNode("td").text("-"));
+                tbody.appendChild(tr.element);
+            } else {
+                for (let [id, name] of friends) {
+                    let tr = new FNode("tr")
+                        .child(new FNode("td").child(new FNode("code").text(id)))
+                        .child(new FNode("td").text(name == null ? "-" : name))
+                        .child(new FNode("td").text("unknown"));
+                    tr.child(new FNode("td")
+                        .child(new FButton().text("Connect").onclick(() => {
+                            // TODO
+                        }))
+                        .child(new FButton().text("Delete").onclick(() => {
+                            this.element.querySelector("#p2p-friends-confirm-modal").internal.ask().then((choice) => {
+                                if (choice == "yes") {
+                                    P2p.removeFriend(id);
+                                    updateP2pFriends();
+                                }
+                            });
+                        }))
+                    );
+                    tbody.appendChild(tr.element);
+                }
+            }
+        };
+        updateP2pFriends();
+
+        let friendAddTimeout = null;
+        let peerFriendsId = this.element.querySelector("#p2p-friends-add-id");
+        this.element.querySelector("#p2p-friends-add-btn").onclick = () => {
+            P2p.registerFriend(peerFriendsId.value, null);
+            updateP2pFriends();
+            peerFriendsId.classList.add("success");
+            clearTimeout(friendAddTimeout);
+            friendAddTimeout = setTimeout(() => {
+                peerFriendsId.classList.remove("success");
+                peerFriendsId.value = "";
+            }, 1000);
+        };
+
         // Local storage
         let localStorageTbody = this.element.querySelector(".local-storage-tbody");
         populateLocalStorageTbody(localStorageTbody);
@@ -220,6 +279,8 @@ class Component {
                 if (choice == "yes") {
                     Storage.clear();
                     populateLocalStorageTbody(localStorageTbody);
+                    updateP2pFriends();
+                    updateP2pLocalName();
                 }
             });
         };

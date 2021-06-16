@@ -4,25 +4,28 @@
 
 "use strict";
 
-function getModularKey(module, key) {
-    return JSON.stringify({ module, key });
+function getModularKey(mod, key) {
+    return JSON.stringify({ mod, key });
 }
 
-function get(module, key, initialize) {
-    let value = localStorage.getItem(getModularKey(module, key));
+function get(mod, key, initialize) {
+    let value = localStorage.getItem(getModularKey(mod, key));
+    if (value != null) {
+        value = JSON.parse(value);
+    }
     if (value == null && initialize != null) {
         value = initialize();
-        set(module, key, value)
+        set(mod, key, value);
     }
     return value;
 }
 
-function set(module, key, value) {
-    localStorage.setItem(getModularKey(module, key), value);
+function set(mod, key, value) {
+    localStorage.setItem(getModularKey(mod, key), JSON.stringify(value));
 }
 
-function remove(module, key) {
-    localStorage.removeItem(getModularKey(module, key));
+function remove(mod, key) {
+    localStorage.removeItem(getModularKey(mod, key));
 }
 
 function clear() {
@@ -37,8 +40,8 @@ function* all() {
         } catch (error) {
             keyObject = null;
         }
-        if (keyObject?.module && keyObject?.key) {
-            yield [keyObject.module, keyObject.key, localStorage.getItem(key)];
+        if (keyObject?.mod && keyObject?.key) {
+            yield [keyObject.mod, keyObject.key, localStorage.getItem(key)];
         } else {
             yield [null, key, localStorage.getItem(key)];
         }
@@ -46,20 +49,20 @@ function* all() {
 }
 
 class ModularStorage {
-    constructor(module) {
-        this.module = module;
+    constructor(mod) {
+        this.mod = mod;
     }
 
     get(key, initialize) {
-        return get(this.module, key, initialize);
+        return get(this.mod, key, initialize);
     }
 
     set(key, value) {
-        return set(this.module, key, value);
+        return set(this.mod, key, value);
     }
 
     remove(key) {
-        return remove(this.module, key);
+        return remove(this.mod, key);
     }
 }
 

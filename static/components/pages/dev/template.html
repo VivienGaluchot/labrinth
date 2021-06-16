@@ -102,6 +102,38 @@
                     </tr>
                 </tbody>
             </table>
+            <h3>Friends</h3>
+            <p>
+                Local name for friends <input id="p2p-friends-local-name">
+            </p>
+            <p>
+                Add friend by id <input id="p2p-friends-add-id"> <button id="p2p-friends-add-btn"
+                    class="blue">Add</button>.
+            </p>
+            <table>
+                <thead>
+                    <th>Id</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                </thead>
+                <tbody id="p2p-friends-tbody">
+                    <tr>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
+                </tbody>
+                <min-component id="p2p-friends-confirm-modal" data-path="/components/ui/modal">
+                    <span slot="title">Confirmation</span>
+                    <p slot="content">
+                        Do you really want to remove this friend ?
+                    </p>
+                    <div slot="choices">
+                        <button class="green" data-choice="yes">Yes, go</button>
+                        <button class="blue">Cancel</button>
+                    </div>
+                </min-component>
+            </table>
             <h3>Tests</h3>
             <p>
                 <button id="p2p-tests-btn" class="blue">Run</button>

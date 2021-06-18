@@ -42,8 +42,6 @@ function* all() {
         }
         if (keyObject?.mod && keyObject?.key) {
             yield [keyObject.mod, keyObject.key, localStorage.getItem(key)];
-        } else {
-            yield [null, key, localStorage.getItem(key)];
         }
     }
 }

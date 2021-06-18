@@ -7,6 +7,7 @@ import * as Channel from '/lib/channel.mjs';
 import * as Sw from '/lib/sw-interface.mjs';
 
 import * as P2pTest from '/lib/p2p-test.mjs';
+import { RemoteEndpoint } from '../../../lib/p2p.mjs';
 
 
 function populateLocalStorageTbody(element) {
@@ -159,6 +160,10 @@ class Component {
                         .child(new FButton().text("Restart ICE").onclick(() => {
                             con.pc.restartIce();
                         }))
+                        .child(new FButton().text("Add friend").onclick(() => {
+                            P2p.registerFriend(P2p.RemoteEndpoint.deserialize(id).user, null);
+                            updateP2pFriends();
+                        }))
                     );
                     tbody.appendChild(tr.element);
                 }
@@ -226,35 +231,63 @@ class Component {
 
             let friends = P2p.getFriends();
             if (friends.length == 0) {
-                let tr = new FNode("tr")
-                    .child(new FNode("td").text("-"))
+                let tr = new FNode("ul")
                     .child(new FNode("td").text("-"))
                     .child(new FNode("td").text("-"));
                 tbody.appendChild(tr.element);
             } else {
                 for (let [id, name] of friends) {
-                    let tr = new FNode("tr")
-                        .child(new FNode("td").child(new FNode("code").text(id)))
-                        .child(new FNode("td").text(name == null ? "-" : name))
-                        .child(new FNode("td").text("unknown"));
-                    tr.child(new FNode("td")
-                        .child(new FButton().text("Connect").onclick(() => {
-                            // TODO
-                        }))
-                        .child(new FButton().text("Delete").onclick(() => {
-                            this.element.querySelector("#p2p-friends-confirm-modal").internal.ask().then((choice) => {
-                                if (choice == "yes") {
-                                    P2p.removeFriend(id);
-                                    updateP2pFriends();
+                    let tr = new FNode("tr");
+
+                    let subIds = [];
+                    let sync = () => {
+                        webRtcEndpoint.getConnectedPeerIds([id]).then((ids) => {
+                            for (let el of subIds) {
+                                el.remove();
+                            }
+                            subIds = [];
+                            for (let peerId of ids) {
+                                if (peerId != webRtcEndpoint.localId) {
+                                    let endpoint = RemoteEndpoint.deserialize(peerId);
+                                    let subTr = new FNode("tr")
+                                        .child(new FNode("td").text(""))
+                                        .child(new FNode("td").child(new FNode("code").class("success").text(`${endpoint.device}-${endpoint.session}`)))
+                                        .child(new FNode("td")
+                                            .child(new FButton().text("Connect").onclick(() => {
+                                                webRtcEndpoint.getOrCreateConnection(endpoint.serialize());
+                                            }))
+                                        );
+                                    subIds.push(subTr.element);
+                                    tr.element.parentNode.insertBefore(subTr.element, tr.element.nextSibling);
                                 }
-                            });
-                        }))
-                    );
+                            }
+                        });
+                    };
+
+                    tr.child(new FNode("td")
+                        .child(new FNode("div").text(name == null ? "-" : name))
+                        .child(new FNode("code").text(id)))
+                        .child(new FNode("td").text(""))
+                        .child(new FNode("td")
+                            .child(new FButton().text("Sync").onclick(sync))
+                            .child(new FButton().text("Delete").onclick(() => {
+                                this.element.querySelector("#p2p-friends-confirm-modal").internal.ask().then((choice) => {
+                                    if (choice == "yes") {
+                                        P2p.removeFriend(id);
+                                        updateP2pFriends();
+                                    }
+                                });
+                            }))
+                        );
+
                     tbody.appendChild(tr.element);
+
+                    sync();
                 }
             }
         };
         updateP2pFriends();
+        this.element.querySelector("#p2p-friends-refresh").onclick = updateP2pFriends;
 
         let friendAddTimeout = null;
         let peerFriendsId = this.element.querySelector("#p2p-friends-add-id");

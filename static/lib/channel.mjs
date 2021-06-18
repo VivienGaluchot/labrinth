@@ -427,6 +427,16 @@ class WebRtcEndpoint extends EventTarget {
             });
     }
 
+    getConnectedPeerIds(userIds) {
+        if (!Array.isArray(userIds)) {
+            throw new Error("unexpected argument");
+        }
+        return this.socket.request({ id: "find-peers", ids: userIds })
+            .then((response) => {
+                return response.ids;
+            });
+    }
+
     // private
 
     onDescriptionReceived(data) {

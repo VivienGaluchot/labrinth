@@ -110,15 +110,16 @@
                 Add friend by id <input id="p2p-friends-add-id"> <button id="p2p-friends-add-btn"
                     class="blue">Add</button>.
             </p>
+            <p>
+                <button id="p2p-friends-refresh" class="blue">Refresh</button>
+            </p>
             <table>
                 <thead>
-                    <th>Id</th>
-                    <th>Name</th>
-                    <th>Status</th>
+                    <th>User</th>
+                    <th>Session</th>
                 </thead>
                 <tbody id="p2p-friends-tbody">
                     <tr>
-                        <td>-</td>
                         <td>-</td>
                         <td>-</td>
                     </tr>
@@ -129,26 +130,10 @@
                         Do you really want to remove this friend ?
                     </p>
                     <div slot="choices">
-                        <button class="green" data-choice="yes">Yes, go</button>
+                        <button class="green" data-choice="yes">Sure</button>
                         <button class="blue">Cancel</button>
                     </div>
                 </min-component>
-            </table>
-            <h3>Tests</h3>
-            <p>
-                <button id="p2p-tests-btn" class="blue">Run</button>
-            </p>
-            <table class="p2p-test-table">
-                <thead>
-                    <th>Test name</th>
-                    <th>Result</th>
-                </thead>
-                <tbody id="p2p-tests-tbody">
-                    <tr>
-                        <td>-</td>
-                        <td>-</td>
-                    </tr>
-                </tbody>
             </table>
         </div>
 
@@ -201,6 +186,26 @@
             <th>Priority</th> -->
                 </thead>
                 <tbody class="webrtc-ice-candidates-tbody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="block">
+            <h2>Tests</h2>
+            <h3>Tests</h3>
+            <p>
+                <button id="p2p-tests-btn" class="blue">Run</button>
+            </p>
+            <table class="p2p-test-table">
+                <thead>
+                    <th>Test name</th>
+                    <th>Result</th>
+                </thead>
+                <tbody id="p2p-tests-tbody">
+                    <tr>
+                        <td>-</td>
+                        <td>-</td>
+                    </tr>
                 </tbody>
             </table>
         </div>

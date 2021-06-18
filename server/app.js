@@ -159,6 +159,14 @@ server.listen(port, function () {
 // id -> connection
 const peers = new Map();
 
+function getUserId(peerId) {
+    const regex = /^([0-9a-f]+)-([0-9a-f]+)-([0-9a-f]+)$/;
+    let matches = peerId.match(regex);
+    if (!matches) {
+        throw new Error(`invalid peer id '${peerId}'`);
+    }
+    return matches[1];
+}
 
 // websocket
 
@@ -195,30 +203,48 @@ function handleRequest(connection, index, data) {
         sendData(connection, { id: "rep", index: index, isOk: false, msg: msg });
     }
 
-    if (data.id == "hi" && data?.src != undefined) {
-        if (peers.has(data.src)) {
-            websocketLogger.error(`peer already registered ${data.src}`);
-            sendError("peer already registered");
-        } else if (connection.peerId != null) {
-            websocketLogger.error(`connection already registered`);
-            sendError("connection already registered");
+    try {
+        if (data.id == "hi" && data?.src != undefined) {
+            if (peers.has(data.src)) {
+                websocketLogger.error(`peer already registered ${data.src}`);
+                sendError("peer already registered");
+            } else if (connection.peerId != null) {
+                websocketLogger.error(`connection already registered`);
+                sendError("connection already registered");
+            } else {
+                peers.set(data.src, connection);
+                websocketLogger.debug(`peer registered '${data.src}'`);
+                connection.peerId = data.src;
+                sendReply();
+            }
+        } else if ((data.id == "desc" || data.id == "candidate") && data?.src != undefined && data?.dst != undefined) {
+            if (peers.has(data.dst)) {
+                websocketLogger.debug(`forward ${data.id} from '${data.src}' to '${data.dst}'`);
+                sendData(peers.get(data.dst), { id: data.id, src: data.src, dst: data.dst, data: data.data });
+                sendReply();
+            } else {
+                websocketLogger.error(`can't forward ${data.id}, peer not registered ${data.src}`);
+                sendError(`peer ${data.dst} not registered`);
+            }
+        } else if (data.id == "find-peers" && data?.ids != undefined) {
+            // TODO not really optimal
+            let searched = new Set();
+            for (let id of data.ids) {
+                searched.add(id);
+            }
+            let matches = [];
+            for (let [id, con] of peers) {
+                if (searched.has(getUserId(id))) {
+                    matches.push(id);
+                }
+            }
+            sendReply({ ids: matches });
         } else {
-            peers.set(data.src, connection);
-            websocketLogger.debug(`peer registered '${data.src}'`);
-            connection.peerId = data.src;
-            sendReply();
+            sendError(`unexpected message id: '${data.id}'`);
         }
-    } else if ((data.id == "desc" || data.id == "candidate") && data?.src != undefined && data?.dst != undefined) {
-        if (peers.has(data.dst)) {
-            websocketLogger.debug(`forward ${data.id} from '${data.src}' to '${data.dst}'`);
-            sendData(peers.get(data.dst), { id: data.id, src: data.src, dst: data.dst, data: data.data });
-            sendReply();
-        } else {
-            websocketLogger.error(`can't forward ${data.id}, peer not registered ${data.src}`);
-            sendError(`peer ${data.dst} not registered`);
-        }
-    } else {
-        sendError(`unexpected message id: '${data.id}'`);
+    } catch (err) {
+        websocketLogger.error(`unexpected server error ${err}`);
+        sendError(`unexpected server error`);
     }
 }
 

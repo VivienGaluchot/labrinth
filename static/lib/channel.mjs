@@ -374,7 +374,10 @@ class WebRtcEndpoint extends EventTarget {
         if (!this.connections.has(peerId)) {
             throw new Error(`peerId not ${peerId} registered`);
         }
-        return this.getOrCreateConnection(peerId);
+        if (peerId == this.localId) {
+            throw new Error("can't connect to localId");
+        }
+        return this.connections.get(peerId);
     }
 
     close(peerId) {

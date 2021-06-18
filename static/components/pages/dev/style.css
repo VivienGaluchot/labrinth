@@ -5,7 +5,7 @@
     display: grid;
 }
 
-@media (max-width: 50rem) {
+@media (max-width: 60rem) {
     :host {
         padding: 1.5rem;
     }
@@ -27,7 +27,7 @@
 
 .layout {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, auto));
+    grid-template-columns: repeat(auto-fit, minmax(600px, auto));
     grid-gap: 1.5rem;
     grid-auto-flow: row dense;
     margin-top: 1.5rem;
@@ -41,7 +41,7 @@
     padding: 1.5rem;
 }
 
-@media (max-width: 50rem) {
+@media (max-width: 60rem) {
     .layout {
         grid-template-columns: 1fr;
     }

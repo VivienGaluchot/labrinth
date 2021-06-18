@@ -107,7 +107,7 @@ body {
     overflow: auto;
 }
 
-@media (max-width: 50rem) {
+@media (max-width: 60rem) {
     #root {
         min-width: 20rem;
         min-height: 100%;
@@ -323,7 +323,7 @@ button.icon img {
     grid-row: 3;
 }
 
-@media (max-width: 50rem) {
+@media (max-width: 60rem) {
     #root {
         grid-template-columns: 1fr;
         grid-template-rows: min-content minmax(min-content, 1fr) min-content;
@@ -356,7 +356,7 @@ header, .sidebar, footer {
     border-right: 1px solid #151515;
 }
 
-@media (max-width: 50rem) {
+@media (max-width: 60rem) {
     .sidebar, footer, header {
         border-right: none;
     }
@@ -377,7 +377,7 @@ header {
     align-items: center;
 }
 
-@media (max-width: 50rem) {
+@media (max-width: 60rem) {
     header {
         padding: .4rem 1rem;
     }
@@ -419,7 +419,7 @@ button.icon.sidebar-toggle img {
     display: none;
 }
 
-@media (max-width: 50rem) {
+@media (max-width: 60rem) {
     .sidebar-toggle {
         display: initial;
     }

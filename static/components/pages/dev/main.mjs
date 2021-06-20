@@ -1,5 +1,6 @@
 "use strict";
 
+import * as Apps from '/lib/apps.mjs';
 import * as P2p from '/lib/p2p.mjs';
 import * as Storage from '/lib/storage.mjs';
 import { FNode, FButton } from '/lib/fdom.mjs';
@@ -25,6 +26,7 @@ function populateLocalStorageTbody(element) {
         element.appendChild(tr.element);
     }
 }
+
 
 class Component {
     constructor(element) {
@@ -177,7 +179,7 @@ class Component {
 
         let handleP2pConnection = (event) => {
             let connection = event.connection;
-            let chan = connection.getChannel("main", 1);
+            let chan = connection.getChannel("main", 100);
             chan.onmessage = (data) => {
                 console.log(`message received from ${chan.peerId} '${data}'`);
             };

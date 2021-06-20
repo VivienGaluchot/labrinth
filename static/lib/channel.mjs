@@ -618,7 +618,12 @@ class WebRtcDataChannel extends SocketLikeChannel {
     }
 
     getSocket() {
-        return this.pc.createDataChannel(this.tag, { negotiated: true, id: this.id });
+        try {
+            return this.pc.createDataChannel(this.tag, { negotiated: true, id: this.id });
+        } catch (err) {
+            console.error("createDataChannel error", this);
+            throw err;
+        }
     }
 }
 
@@ -649,48 +654,6 @@ function getIceCandidates(onicecandidate) {
             console.error("createOffer error", error);
         });
 };
-
-
-async function test() {
-    let wsUrl = new URL(window.location.href);
-    if (wsUrl.protocol == "http:") {
-        wsUrl.protocol = "ws:";
-    } else {
-        wsUrl.protocol = "wss:";
-    }
-    wsUrl.pathname = "/connector";
-
-    let connector1 = new WebRtcEndpoint(wsUrl.href, "0001");
-    let connector2 = new WebRtcEndpoint(wsUrl.href, "0002");
-    let connector3 = new WebRtcEndpoint(wsUrl.href, "0003");
-
-    let onConnect = (event) => {
-        let connection = event.connection;
-        let chan = connection.getChannel("main", 1);
-        chan.onmessage = (data) => {
-            console.info(`[${connection.connector.localId}] message received from ${chan.peerId} '${data}'`);
-        };
-        chan.onStateUpdate = (state) => {
-            console.debug("state of chan", chan.peerId, state);
-            if (state == State.CONNECTED) {
-                chan.send(`hi, i'm ${connection.connector.localId} !`);
-            }
-        };
-        chan.connect();
-    };
-    connector1.addEventListener("onConnect", onConnect);
-    connector2.addEventListener("onConnect", onConnect);
-    connector3.addEventListener("onConnect", onConnect);
-
-    await connector1.start();
-    await connector2.start();
-    await connector3.start();
-
-    connector1.getOrCreateConnection("0002");
-    connector1.getOrCreateConnection("0003");
-    connector2.getOrCreateConnection("0003");
-}
-// test();
 
 
 export { Multiplexer, WebSocketChannel, DebugChannel, State, WebRtcEndpoint, getIceCandidates }

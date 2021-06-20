@@ -154,19 +154,91 @@ server.listen(port, function () {
 });
 
 
-// peer map
+// errors
 
-// id -> connection
-const peers = new Map();
+class RequestError extends Error { }
 
-function getUserId(peerId) {
-    const regex = /^([0-9a-f]+)-([0-9a-f]+)-([0-9a-f]+)$/;
-    let matches = peerId.match(regex);
-    if (!matches) {
-        throw new Error(`invalid peer id '${peerId}'`);
+
+// peers
+
+const peersLogger = new Logger("peers");
+
+class PeerSet {
+    static getUserId(sessionId) {
+        const regex = /^([0-9a-f]+)-([0-9a-f]+)-([0-9a-f]+)$/;
+        let matches = sessionId.match(regex);
+        if (!matches) {
+            throw new RequestError(`invalid session id '${sessionId}'`);
+        }
+        return matches[1];
     }
-    return matches[1];
+
+    constructor() {
+        // session id -> connection
+        this.connections = new Map();
+
+        // registered users
+        // user id -> Set(session id)
+        this.users = new Map();
+    }
+
+    register(sessionId, connection) {
+        let userId = PeerSet.getUserId(sessionId);
+        if (this.connections.has(sessionId)) {
+            peersLogger.error(`peer already registered ${sessionId}`);
+            throw new RequestError("peer already registered");
+        } else if (connection.sessionId != null) {
+            peersLogger.error(`connection already registered`);
+            throw new RequestError("connection already registered");
+        } else {
+            connection.sessionId = sessionId;
+            this.connections.set(sessionId, connection);
+            peersLogger.debug(`peer registered '${sessionId}'`);
+            if (!this.users.has(userId)) {
+                this.users.set(userId, new Set());
+            }
+            this.users.get(userId).add(sessionId);
+            peersLogger.debug(`'${this.users.size}' distinct user connected`);
+        }
+    }
+
+    getConnection(sessionId) {
+        if (this.connections.has(sessionId)) {
+            return this.connections.get(sessionId);
+        } else {
+            throw new RequestError(`peer not registered '${sessionId}'`);
+        }
+    }
+
+    * getUserSessions(userId) {
+        if (this.users.has(userId)) {
+            for (let sessionId of this.users.get(userId)) {
+                yield sessionId;
+            }
+        }
+    }
+
+    unregister(connection) {
+        if (connection.sessionId) {
+            let sessionId = connection.sessionId;
+            let userId = PeerSet.getUserId(sessionId);
+            if (this.connections.has(sessionId)) {
+                this.connections.delete(sessionId);
+                peersLogger.debug(`peer unregistered '${sessionId}'`);
+            }
+            if (this.users.has(userId)) {
+                this.users.get(userId).delete(sessionId);
+                if (this.users.get(userId).size == 0) {
+                    this.users.delete(userId);
+                }
+                peersLogger.debug(`'${this.users.size}' distinct user connected`);
+            }
+        }
+    }
 }
+
+const peerSet = new PeerSet();
+
 
 // websocket
 
@@ -205,37 +277,17 @@ function handleRequest(connection, index, data) {
 
     try {
         if (data.id == "hi" && data?.src != undefined) {
-            if (peers.has(data.src)) {
-                websocketLogger.error(`peer already registered ${data.src}`);
-                sendError("peer already registered");
-            } else if (connection.peerId != null) {
-                websocketLogger.error(`connection already registered`);
-                sendError("connection already registered");
-            } else {
-                peers.set(data.src, connection);
-                websocketLogger.debug(`peer registered '${data.src}'`);
-                connection.peerId = data.src;
-                sendReply();
-            }
+            peerSet.register(data.src, connection);
+            sendReply();
         } else if ((data.id == "desc" || data.id == "candidate") && data?.src != undefined && data?.dst != undefined) {
-            if (peers.has(data.dst)) {
-                websocketLogger.debug(`forward ${data.id} from '${data.src}' to '${data.dst}'`);
-                sendData(peers.get(data.dst), { id: data.id, src: data.src, dst: data.dst, data: data.data });
-                sendReply();
-            } else {
-                websocketLogger.error(`can't forward ${data.id}, peer not registered ${data.src}`);
-                sendError(`peer ${data.dst} not registered`);
-            }
+            let con = peerSet.getConnection(data.dst);
+            sendData(con, { id: data.id, src: data.src, dst: data.dst, data: data.data });
+            sendReply();
         } else if (data.id == "find-peers" && data?.ids != undefined) {
-            // TODO not really optimal
-            let searched = new Set();
-            for (let id of data.ids) {
-                searched.add(id);
-            }
             let matches = [];
-            for (let [id, con] of peers) {
-                if (searched.has(getUserId(id))) {
-                    matches.push(id);
+            for (let userId of data.ids) {
+                for (let sessionId of peerSet.getUserSessions(userId)) {
+                    matches.push(sessionId);
                 }
             }
             sendReply({ ids: matches });
@@ -243,8 +295,13 @@ function handleRequest(connection, index, data) {
             sendError(`unexpected message id: '${data.id}'`);
         }
     } catch (err) {
-        websocketLogger.error(`unexpected server error ${err}`);
-        sendError(`unexpected server error`);
+        if (err instanceof RequestError) {
+            websocketLogger.error(`request error ${err}`);
+            sendError(err.message);
+        } else {
+            websocketLogger.error(`unexpected server error ${err}`);
+            sendError(`unexpected server error`);
+        }
     }
 }
 
@@ -277,10 +334,7 @@ wsServer.on('request', (request) => {
             });
             connection.on('close', (reasonCode, description) => {
                 websocketLogger.debug("connection closed, " + reasonCode + ": " + description);
-                if (peers.has(connection.peerId)) {
-                    peers.delete(connection.peerId);
-                    websocketLogger.debug(`peer unregistered '${connection.peerId}'`);
-                }
+                peerSet.unregister(connection);
             });
         } catch (error) {
             websocketLogger.error(error);

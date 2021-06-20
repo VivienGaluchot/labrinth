@@ -161,7 +161,7 @@ class Component {
                             con.pc.restartIce();
                         }))
                         .child(new FButton().text("Add friend").onclick(() => {
-                            P2p.registerFriend(P2p.RemoteEndpoint.deserialize(id).user, null);
+                            P2p.Notebook.register(P2p.RemoteEndpoint.deserialize(id).user, null);
                             updateP2pFriends();
                         }))
                     );
@@ -215,10 +215,10 @@ class Component {
 
         let p2pLocalName = this.element.querySelector("#p2p-friends-local-name");
         let updateP2pLocalName = () => {
-            p2pLocalName.value = P2p.getLocalName();
+            p2pLocalName.value = P2p.Notebook.getLocalName();
         };
         p2pLocalName.onchange = () => {
-            P2p.setLocalName(p2pLocalName.value);
+            P2p.Notebook.setLocalName(p2pLocalName.value);
             console.log("set name", p2pLocalName.value);
         }
         updateP2pLocalName();
@@ -229,7 +229,7 @@ class Component {
                 tbody.firstChild.remove()
             }
 
-            let friends = P2p.getFriends();
+            let friends = P2p.Notebook.friends();
             if (friends.length == 0) {
                 let tr = new FNode("ul")
                     .child(new FNode("td").text("-"))
@@ -273,7 +273,7 @@ class Component {
                             .child(new FButton().text("Delete").onclick(() => {
                                 this.element.querySelector("#p2p-friends-confirm-modal").internal.ask().then((choice) => {
                                     if (choice == "yes") {
-                                        P2p.removeFriend(id);
+                                        P2p.Notebook.remove(id);
                                         updateP2pFriends();
                                     }
                                 });
@@ -292,7 +292,7 @@ class Component {
         let friendAddTimeout = null;
         let peerFriendsId = this.element.querySelector("#p2p-friends-add-id");
         this.element.querySelector("#p2p-friends-add-btn").onclick = () => {
-            P2p.registerFriend(peerFriendsId.value, null);
+            P2p.Notebook.register(peerFriendsId.value, null);
             updateP2pFriends();
             peerFriendsId.classList.add("success");
             clearTimeout(friendAddTimeout);

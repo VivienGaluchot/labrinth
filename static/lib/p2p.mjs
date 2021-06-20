@@ -86,41 +86,43 @@ const localEndpoint = LocalEndpoint.generate();
 // Friends
 // ---------------------------------
 
-function setLocalName(name) {
-    // TODO send the local name to all the connected peers
-    storage.set("local-name", { value: name });
-}
-
-function getLocalName() {
-    return storage.get("local-name", () => {
-        return { value: "unknown" };
-    }).value;
-}
-
-function getFriends() {
-    let data = storage.get("friends", () => { return {}; });
-    let friends = new Map();
-    for (let key of Object.keys(data)) {
-        friends.set(key, data[key]);
-    }
-    return friends;
-}
-
-function registerFriend(id, name) {
-    let friends = storage.get("friends", () => { return {}; });
-    friends[id] = name;
-    storage.set("friends", friends);
-}
-
-function removeFriend(id) {
-    let friends = storage.get("friends", () => { return {}; });
-    let newFriends = {};
-    for (let key of Object.keys(friends)) {
-        if (id != key) {
-            newFriends[key] = friends[key];
+class Notebook {
+    static friends() {
+        let data = storage.get("friends", () => { return {}; });
+        let friends = new Map();
+        for (let key of Object.keys(data)) {
+            friends.set(key, data[key]);
         }
+        return friends;
     }
-    storage.set("friends", newFriends);
+
+    static register(id, data) {
+        let friends = storage.get("friends", () => { return {}; });
+        friends[id] = data;
+        storage.set("friends", friends);
+    }
+
+    static remove(id) {
+        let friends = storage.get("friends", () => { return {}; });
+        let newFriends = {};
+        for (let key of Object.keys(friends)) {
+            if (id != key) {
+                newFriends[key] = friends[key];
+            }
+        }
+        storage.set("friends", newFriends);
+    }
+
+    static setLocalName(name) {
+        // TODO send the local name to all the connected peers
+        storage.set("local-name", { value: name });
+    }
+
+    static getLocalName() {
+        return storage.get("local-name", () => {
+            return { value: "unknown" };
+        }).value;
+    }
 }
 
 
@@ -582,6 +584,6 @@ class TimestampedHistory {
 
 export {
     localEndpoint, RemoteEndpoint,
-    setLocalName, getLocalName, getFriends, registerFriend, removeFriend,
+    Notebook,
     TimestampedHistory, SharedValue, SharedSet
 }

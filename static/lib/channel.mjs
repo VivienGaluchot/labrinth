@@ -479,7 +479,7 @@ const rtcPeerConnectionConfig = {
         ]
     }],
     iceTransportPolicy: "all",
-    iceCandidatePoolSize: "0"
+    iceCandidatePoolSize: "4"
 };
 
 /**

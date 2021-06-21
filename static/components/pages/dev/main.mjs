@@ -225,7 +225,13 @@ class Component {
         }
         updateP2pLocalName();
 
+        let friendSyncs = [];
         let updateP2pFriends = () => {
+            for (let sync of friendSyncs) {
+                clearInterval(sync);
+            }
+            friendSyncs = [];
+
             let tbody = this.element.querySelector("#p2p-friends-tbody");
             while (tbody.firstChild) {
                 tbody.firstChild.remove()
@@ -284,6 +290,7 @@ class Component {
 
                     tbody.appendChild(tr.element);
 
+                    friendSyncs.push(setInterval(sync, 5000));
                     sync();
                 }
             }

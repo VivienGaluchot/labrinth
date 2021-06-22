@@ -424,6 +424,7 @@ class WebRtcEndpoint extends EventTarget {
     }
 
     sendIceCandidate(peerId, candidate) {
+        console.log("->", candidate);
         return this.socket.request({ id: "candidate", src: this.localId, dst: peerId, data: candidate })
             .then(() => {
                 console.debug(`[WebRtcEndpoint] send ICE candidate: ${peerId}, done`);
@@ -504,7 +505,7 @@ class WebRtcConnection {
             this.connector.dispatchEvent(new WebRtcConnectionEvent("onStateUpdate", this));
         };
         this.pc.oniceconnectionstatechange = (event) => {
-            if (this.pc.iceConnectionState === "failed") {
+            if (this.pc.iceConnectionState === "failed" && this.pc.signalingState !== "closed") {
                 this.pc.restartIce();
             }
             this.connector.dispatchEvent(new WebRtcConnectionEvent("onStateUpdate", this));

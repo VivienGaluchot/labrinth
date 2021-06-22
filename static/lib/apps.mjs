@@ -19,8 +19,6 @@ class AppServer {
         // peerId -> Set(appName)
         this.requestedChannels = new Map();
 
-        // peerIs -> connection
-        this.connections = new Map();
         // peerIs -> channel
         this.channels = new Map();
 
@@ -39,13 +37,29 @@ class AppServer {
     }
 
     openChannel(app, peerId) {
-        if (!this.connections.has(peerId)) {
-            let connection = this.webRtcEndpoint.getOrCreateConnection(peerId);
-            this.connections.set(peerId, connection);
+        if (!this.requestedChannels.has(peerId)) {
+            this.requestedChannels.set(peerId, new Set());
+        }
+        if (!this.requestedChannels.get(peerId).has(app.name)) {
+            this.requestedChannels.get(peerId).add(app.name);
+
+            if (this.channels.has(peerId)) {
+                app.onChannelStateChange(peerId, Channel.State.CONNECTED);
+            } else {
+                this.webRtcEndpoint.getOrCreateConnection(peerId);
+            }
         }
     }
 
     closeChannel(app, peerId) {
+        if (this.requestedChannels.has(peerId)) {
+            this.requestedChannels.get(peerId).delete(app.name);
+            if (this.requestedChannels.get(peerId).size == 0) {
+                this.requestedChannels.delete(peerId);
+                this.webRtcEndpoint.close(peerId);
+            }
+            app.onChannelStateChange(peerId, Channel.State.CLOSED);
+        }
     }
 
     sendMessage(app, peerId, data) {
@@ -54,21 +68,41 @@ class AppServer {
 
     // internal
 
+    handleChanMessage(chan, data) {
+        if (data.app != undefined && data.data != undefined && this.apps.has(data.app)) {
+            this.apps.get(data.app).onMessage(chan.peerId, data.data);
+        } else {
+            console.warn(`message dropped ${JSON.stringify(data)}`);
+        }
+    }
+
+    handleChanStateUpdate(chan, state) {
+        if (this.requestedChannels.has(chan.peerId)) {
+            for (let appName of this.requestedChannels.get(chan.peerId)) {
+                this.apps.get(appName).onChannelStateChange(chan.peerId, state);
+            }
+        }
+    }
+
     handleP2pConnection(event) {
         let connection = event.connection;
         let chan = connection.getChannel("apps", 1);
-        chan.onmessage = (data) => {
-            if (data.app != undefined && data.data != undefined && this.apps.has(data.app)) {
-                this.apps.get(data.app).onMessage(chan.peerId, data.data);
-            } else {
-                console.warn(`message dropped ${JSON.stringify(data)}`);
+        let peerId = chan.peerId;
+
+        for (let [appName, app] of this.apps) {
+            if (!this.requestedChannels.has(peerId) || !this.requestedChannels.get(peerId).has(appName)) {
+                app.onIncomingConnection(peerId);
             }
+        }
+
+        this.channels.set(peerId, chan);
+        chan.onmessage = (data) => {
+            this.handleChanMessage(chan, data);
         };
         chan.onStateUpdate = (state) => {
-            console.log("state of chan", chan.peerId, state);
+            this.handleChanStateUpdate(chan, state);
         };
         chan.connect();
-        this.channels.set(chan.peerId, chan);
     }
 }
 
@@ -87,6 +121,8 @@ class App {
     onChannelStateChange(peerId, state) { }
 
     onMessage(peerId, data) { }
+
+    onIncomingConnection(peerId) { };
 
     //  API
 
@@ -117,14 +153,22 @@ class DummyApp extends App {
                 for (let id of ids) {
                     if (id != this.appServer.webRtcEndpoint.localId) {
                         this.openChannel(id);
-                        this.sendMessage(id, "Hi from DummyApp !");
                     }
                 }
-            })
+            });
     }
+
+    onIncomingConnection(peerId) {
+        console.log("[DummyApp] onIncomingConnection", peerId);
+        // open channel if messaged are expected to be exchanged
+        this.openChannel(peerId);
+    };
 
     onChannelStateChange(peerId, state) {
         console.log("[DummyApp] onChannelStateChange", peerId, state);
+        if (state == Channel.State.CONNECTED) {
+            this.sendMessage(peerId, "Hi from DummyApp !");
+        }
     }
 
     onMessage(peerId, data) {
@@ -132,7 +176,7 @@ class DummyApp extends App {
     }
 }
 
-// new DummyApp();
+new DummyApp();
 
 
 export {

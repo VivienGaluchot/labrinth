@@ -50,7 +50,8 @@ class Component {
 
             promises.push(import(`${this.path}/main.mjs`)
                 .catch((err) => {
-                    console.error(`module ${this.path} load failed:\n- ${err}`);
+                    console.error(`module ${this.path} load failed`);
+                    console.exception(err);
                 }));
 
             this.loadPromise =

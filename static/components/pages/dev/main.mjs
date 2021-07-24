@@ -1,6 +1,6 @@
 "use strict";
 
-import * as Apps from '/lib/apps.mjs';
+import * as Friends from '/lib/p2p-apps/friends.mjs';
 import * as P2p from '/lib/p2p.mjs';
 import * as Storage from '/lib/storage.mjs';
 import { FNode, FButton } from '/lib/fdom.mjs';
@@ -69,7 +69,7 @@ class Component {
         this.ws.connect();
 
         // P2P
-        let webRtcEndpoint = P2p.localEndpoint.webRtcEndpoint;
+        let webRtcEndpoint = P2p.webRtcEndpoint;
 
         let localId = this.element.querySelector("#p2p-local-id");
         let localIdCopy = this.element.querySelector("#p2p-local-id-copy-btn");
@@ -163,7 +163,7 @@ class Component {
                             con.pc.restartIce();
                         }))
                         .child(new FButton().text("Add friend").onclick(() => {
-                            P2p.Notebook.register(P2p.RemoteEndpoint.deserialize(id).user, null);
+                            Friends.app.add(P2p.RemoteEndpoint.deserialize(id).user, null);
                             updateP2pFriends();
                         }))
                     );
@@ -217,10 +217,15 @@ class Component {
 
         let p2pLocalName = this.element.querySelector("#p2p-friends-local-name");
         let updateP2pLocalName = () => {
-            p2pLocalName.value = P2p.Notebook.getLocalName();
+            let local = Friends.app.getLocalData();
+            if (local?.name != undefined) {
+                p2pLocalName.value = local.name;
+            } else {
+                p2pLocalName.value = "";
+            }
         };
         p2pLocalName.onchange = () => {
-            P2p.Notebook.setLocalName(p2pLocalName.value);
+            Friends.app.setLocalData({ name: p2pLocalName.value });
             console.log("set name", p2pLocalName.value);
         }
         updateP2pLocalName();
@@ -237,14 +242,16 @@ class Component {
                 tbody.firstChild.remove()
             }
 
-            let friends = P2p.Notebook.friends();
+            let friends = Friends.app.getFriends();
             if (friends.length == 0) {
                 let tr = new FNode("ul")
                     .child(new FNode("td").text("-"))
                     .child(new FNode("td").text("-"));
                 tbody.appendChild(tr.element);
             } else {
-                for (let [id, name] of friends) {
+                for (let [id, data] of friends) {
+                    let name = data?.name;
+
                     let tr = new FNode("tr");
 
                     let subIds = [];
@@ -272,6 +279,7 @@ class Component {
                         });
                     };
 
+
                     tr.child(new FNode("td")
                         .child(new FNode("div").text(name == null ? "-" : name))
                         .child(new FNode("code").text(id)))
@@ -281,7 +289,7 @@ class Component {
                             .child(new FButton().text("Delete").onclick(() => {
                                 this.element.querySelector("#p2p-friends-confirm-modal").internal.ask().then((choice) => {
                                     if (choice == "yes") {
-                                        P2p.Notebook.remove(id);
+                                        Friends.app.remove(id);
                                         updateP2pFriends();
                                     }
                                 });
@@ -301,7 +309,7 @@ class Component {
         let friendAddTimeout = null;
         let peerFriendsId = this.element.querySelector("#p2p-friends-add-id");
         this.element.querySelector("#p2p-friends-add-btn").onclick = () => {
-            P2p.Notebook.register(peerFriendsId.value, null);
+            Friends.app.add(peerFriendsId.value, null);
             updateP2pFriends();
             peerFriendsId.classList.add("success");
             clearTimeout(friendAddTimeout);

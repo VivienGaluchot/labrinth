@@ -6,11 +6,10 @@ import * as Storage from '/lib/storage.mjs';
 import * as Channel from '/lib/channel.mjs';
 
 
-
-class AppServer {
-    constructor(localEndpoint) {
+class NetworkManager {
+    constructor(webRtcEndpoint, localEndpoint) {
+        this.webRtcEndpoint = webRtcEndpoint;
         this.localEndpoint = localEndpoint;
-        this.webRtcEndpoint = localEndpoint.webRtcEndpoint;
 
         // appName -> App
         this.apps = new Map();
@@ -106,17 +105,21 @@ class AppServer {
     }
 }
 
-const defaultAppServer = new AppServer(P2p.localEndpoint);
+
+const networkManager = new NetworkManager(P2p.webRtcEndpoint, P2p.localEndpoint);
+const storage = new Storage.ModularStorage("apps");
 
 
 class App {
-    constructor(name, appServer = defaultAppServer) {
+    constructor(name) {
         this.name = name;
-        this.appServer = appServer;
-        this.appServer.registerApp(this);
+        this.webRtcEndpoint = networkManager.webRtcEndpoint;
+        networkManager.registerApp(this);
     }
 
-    // functions to override, called by the server
+    // 1- Networking
+
+    // event handler to override
 
     onChannelStateChange(peerId, state) { }
 
@@ -127,56 +130,35 @@ class App {
     //  API
 
     openChannel(peerId) {
-        this.appServer.openChannel(this, peerId);
+        networkManager.openChannel(this, peerId);
     }
 
     closeChannel(peerId) {
-        this.appServer.closeChannel(this, peerId);
+        networkManager.closeChannel(this, peerId);
     }
 
     sendMessage(peerId, data) {
-        this.appServer.sendMessage(this, peerId, data);
+        networkManager.sendMessage(this, peerId, data);
+    }
+
+    // 2 - Local storage
+
+    storageKey(key) {
+        return JSON.stringify({ name: this.name, key: key });
+    }
+
+    storageGet(key, initialize) {
+        return storage.get(this.storageKey(key), initialize);
+    }
+
+    storageSet(key, value) {
+        storage.set(this.storageKey(key), value);
+    }
+
+    storageRemove(key) {
+        storage.remove(this.storageKey(key));
     }
 }
-
-
-class DummyApp extends App {
-    constructor() {
-        super("dummy");
-
-        let friendIds = [];
-        for (let [id, data] of P2p.Notebook.friends()) {
-            friendIds.push(id);
-        }
-        this.appServer.webRtcEndpoint.getConnectedPeerIds(friendIds)
-            .then((ids) => {
-                for (let id of ids) {
-                    if (id != this.appServer.webRtcEndpoint.localId) {
-                        this.openChannel(id);
-                    }
-                }
-            });
-    }
-
-    onIncomingConnection(peerId) {
-        console.log("[DummyApp] onIncomingConnection", peerId);
-        // open channel if messaged are expected to be exchanged
-        this.openChannel(peerId);
-    };
-
-    onChannelStateChange(peerId, state) {
-        console.log("[DummyApp] onChannelStateChange", peerId, state);
-        if (state == Channel.State.CONNECTED) {
-            this.sendMessage(peerId, "Hi from DummyApp !");
-        }
-    }
-
-    onMessage(peerId, data) {
-        console.log("[DummyApp] onMessage", peerId, data);
-    }
-}
-
-new DummyApp();
 
 
 export {

@@ -343,8 +343,17 @@ class WebRtcConnectionEvent extends Event {
  *   - onPingUpdate: WebRtcConnectionEvent
  */
 class WebRtcEndpoint extends EventTarget {
-    constructor(serverUrl, localId) {
+    constructor(localId) {
         super();
+
+        let serverUrl = new URL(window.location.href);
+        if (serverUrl.protocol == "http:") {
+            serverUrl.protocol = "ws:";
+        } else {
+            serverUrl.protocol = "wss:";
+        }
+        serverUrl.pathname = "/connector";
+
         this.serverUrl = serverUrl;
         this.localId = localId;
 

@@ -7,7 +7,6 @@
 import * as MyMath from './math.mjs';
 import * as Storage from './storage.mjs';
 import * as Channel from './channel.mjs';
-import { set } from './storage.mjs';
 
 
 const storage = new Storage.ModularStorage("p2p");
@@ -66,64 +65,12 @@ class LocalEndpoint extends Endpoint {
 
     constructor(user, device, session) {
         super(user, device, session, true);
-
-        let serverWebsocketUrl = new URL(window.location.href);
-        if (serverWebsocketUrl.protocol == "http:") {
-            serverWebsocketUrl.protocol = "ws:";
-        } else {
-            serverWebsocketUrl.protocol = "wss:";
-        }
-        serverWebsocketUrl.pathname = "/connector";
-        this.webRtcEndpoint = new Channel.WebRtcEndpoint(serverWebsocketUrl, this.serialize());
-        this.webRtcEndpoint.start();
     }
 }
 
 const localEndpoint = LocalEndpoint.generate();
-
-
-// ---------------------------------
-// Friends
-// ---------------------------------
-
-class Notebook {
-    static friends() {
-        let data = storage.get("friends", () => { return {}; });
-        let friends = new Map();
-        for (let key of Object.keys(data)) {
-            friends.set(key, data[key]);
-        }
-        return friends;
-    }
-
-    static register(id, data) {
-        let friends = storage.get("friends", () => { return {}; });
-        friends[id] = data;
-        storage.set("friends", friends);
-    }
-
-    static remove(id) {
-        let friends = storage.get("friends", () => { return {}; });
-        let newFriends = {};
-        for (let key of Object.keys(friends)) {
-            if (id != key) {
-                newFriends[key] = friends[key];
-            }
-        }
-        storage.set("friends", newFriends);
-    }
-
-    static setLocalName(name) {
-        // TODO send the local name to all the connected peers
-        storage.set("local-name", { value: name });
-    }
-
-    static getLocalName() {
-        return storage.get("local-name", () => {
-            return { value: "unknown" };
-        }).value;
-    }
-}
+const webRtcEndpoint = new Channel.WebRtcEndpoint(localEndpoint.serialize());
+webRtcEndpoint.start();
 
 
 // ---------------------------------
@@ -584,6 +531,6 @@ class TimestampedHistory {
 
 export {
     localEndpoint, RemoteEndpoint,
-    Notebook,
+    webRtcEndpoint,
     TimestampedHistory, SharedValue, SharedSet
 }

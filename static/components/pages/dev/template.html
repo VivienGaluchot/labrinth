@@ -14,10 +14,32 @@
             </h3>
             <p>
                 <button>default</button>
+                <button class="grey">.grey</button>
                 <button class="blue">.blue</button>
                 <button class="green">.green</button>
                 <button class="red">.red</button>
                 <button class="yellow">.yellow</button>
+            </p>
+            <p>
+                <button class="outline">outline</button>
+                <button class="outline grey">.grey</button>
+                <button class="outline blue">.blue</button>
+                <button class="outline green">.green</button>
+                <button class="outline red">.red</button>
+                <button class="outline yellow">.yellow</button>
+            </p>
+            <p>
+                <button class="text-icon">🗑</button>
+                <button class="text-icon grey">🗑</button>
+                <button class="text-icon blue">🗑</button>
+                <button class="text-icon green">🗑</button>
+                <button class="text-icon red">🗑</button>
+                <button class="text-icon yellow">🗑</button>
+            </p>
+            <p>
+                <button class="outline icon grey" aria-label="menu">
+                    <img src="img/cross.svg" alt="cross">
+                </button>
             </p>
             <h3>
                 Code
@@ -124,6 +146,7 @@
                         <td>-</td>
                     </tr>
                 </tbody>
+                <!-- TODO fix display bug -->
                 <min-component id="p2p-friends-confirm-modal" data-path="/components/ui/modal">
                     <span slot="title">Confirmation</span>
                     <p slot="content">

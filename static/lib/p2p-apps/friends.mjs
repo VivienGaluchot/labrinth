@@ -11,15 +11,38 @@ import * as Channel from '/lib/channel.mjs';
 import * as P2p from '/lib/p2p.mjs';
 
 
+/**
+ *  Event related to a friend
+ */
+class FriendEvent extends Event {
+    constructor(type, userId) {
+        super(type);
+        this.userId = userId;
+    }
+}
+
+
 // TODO list
 // * produce event on friend connection / data update
 // * on local data update send new value to peers
 // * do not answer to peer if not in friend list
+
+/**
+ *  Manage friend list /  friend connection status
+ * 
+ *  Events
+ *   - onAdd: FriendEvent
+ *   - onDataChange: FriendEvent
+ *   - onRemove: FriendEvent
+ *   - onConnectionStatusChange: FriendEvent
+ */
 class FriendsApp extends P2pApps.App {
     constructor() {
         super("friends");
 
-        this.localData = this.storageLocalGet();
+        this.eventTarget = new EventTarget();
+
+        this.connectedUserIds = new Set();
 
         // Map userId -> data
         this.friendMap = this.storageFriendGetAll();
@@ -38,9 +61,26 @@ class FriendsApp extends P2pApps.App {
         }
         this.webRtcEndpoint.getConnectedPeerIds(friendIds)
             .then((ids) => {
-                ids = ids.filter((id => id != this.webRtcEndpoint.localId));
+                let prevConnected = this.connectedUserIds;
+                this.connectedUserIds = new Set();
                 for (let id of ids) {
-                    this.openChannel(id);
+                    let userId = P2p.RemoteEndpoint.deserialize(id).user;
+                    this.connectedUserIds.add(userId);
+                    if (id != this.webRtcEndpoint.localId) {
+                        this.openChannel(id);
+                    }
+                }
+                for (let userId of this.connectedUserIds) {
+                    if (!prevConnected.has(userId)) {
+                        console.log("connected", userId);
+                        this.eventTarget.dispatchEvent(new FriendEvent("onConnectionStatusChange", userId));
+                    }
+                }
+                for (let userId of prevConnected) {
+                    if (!this.connectedUserIds.has(userId)) {
+                        console.log("disconnected", userId);
+                        this.eventTarget.dispatchEvent(new FriendEvent("onConnectionStatusChange", userId));
+                    }
                 }
             });
     }
@@ -52,23 +92,48 @@ class FriendsApp extends P2pApps.App {
         return this.friendMap;
     }
 
+    getData(userId) {
+        return this.friendMap.get(userId);
+    }
+
     add(userId, data) {
+        if (this.friendMap.has(userId)) {
+            throw new Error("user already friend");
+        }
         this.storageFriendRegister(userId, data);
         this.friendMap = this.storageFriendGetAll();
+        this.eventTarget.dispatchEvent(new FriendEvent("onAdd", userId));
+    }
+
+    set(userId, data) {
+        if (!this.friendMap.has(userId)) {
+            throw new Error("user not already friend");
+        }
+        this.storageFriendRegister(userId, data);
+        this.friendMap = this.storageFriendGetAll();
+        this.eventTarget.dispatchEvent(new FriendEvent("onDataChange", userId));
     }
 
     remove(userId) {
+        if (userId == this.localEndpoint.user) {
+            throw new Error("can't remove self from friends");
+        }
         this.storageFriendRemove(userId);
         this.friendMap = this.storageFriendGetAll();
+        this.eventTarget.dispatchEvent(new FriendEvent("onRemove", userId));
     }
 
     setLocalData(data) {
-        this.storageSet("local", data);
-        this.localData = this.storageLocalGet();
+        this.set(this.localEndpoint.user, data);
+        // TODO send update to friends
     }
 
     getLocalData() {
-        return this.localData;
+        return this.getData(this.localEndpoint.user);
+    }
+
+    isConnected(userId) {
+        return this.connectedUserIds.has(userId);
     }
 
 
@@ -83,7 +148,7 @@ class FriendsApp extends P2pApps.App {
     onChannelStateChange(peerId, state) {
         console.log("[Friends] onChannelStateChange", peerId, state);
         if (state == Channel.State.CONNECTED) {
-            this.sendMessage(peerId, this.localData);
+            this.sendMessage(peerId, this.getLocalData());
         }
     }
 
@@ -91,22 +156,16 @@ class FriendsApp extends P2pApps.App {
         let userId = P2p.RemoteEndpoint.deserialize(peerId).user;
         this.storageFriendRegister(userId, data);
         this.friendMap = this.storageFriendGetAll();
+        this.eventTarget.dispatchEvent(new FriendEvent("onDataChange", id));
     }
 
 
     // Storage
 
-    storageLocalGet() {
-        return this.storageGet("local", () => { return {}; });
-    }
-
-    storageLocalSet(data) {
-        return this.storageSet("local", data);
-    }
-
     storageFriendGetAll() {
         let data = this.storageGet("ids", () => { return {}; });
         let friends = new Map();
+        friends.set(this.localEndpoint.user, {});
         for (let key of Object.keys(data)) {
             friends.set(key, data[key]);
         }

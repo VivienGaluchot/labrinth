@@ -114,6 +114,7 @@ class App {
     constructor(name) {
         this.name = name;
         this.webRtcEndpoint = networkManager.webRtcEndpoint;
+        this.localEndpoint = networkManager.localEndpoint;
         networkManager.registerApp(this);
     }
 

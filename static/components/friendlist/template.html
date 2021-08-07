@@ -1,5 +1,40 @@
 <template>
-    <ul></ul>
+    <ul>
+        <li class="self">
+            <div class="icon"></div>
+            <div class="name">[todo]</div>
+            <button id="profile-btn" class="outline grey">Profile</button>
+        </li>
+    </ul>
+    <div class="tools">
+        <button id="add-friend-btn" class="outline grey">Add friend</button>
+    </div>
+
+    <min-component id="profile-modal" data-path="/components/ui/modal">
+        <span slot="title">Your Profile</span>
+        <div class="form-field" slot="content">
+            <label>Pseudo</label>
+            <input value="[todo]">
+            <small>Set your pseudo for your frens</small>
+        </div>
+        <div slot="choices">
+            <button class="green" data-choice="apply">Ok</button>
+            <button class="blue">Cancel</button>
+        </div>
+    </min-component>
+
+    <min-component id="add-friend-modal" data-path="/components/ui/modal">
+        <span slot="title">Add a friend</span>
+        <div class="form-field" slot="content">
+            <label>Friend id</label>
+            <input value="[todo]">
+        </div>
+        <div slot="choices">
+            <button class="green" data-choice="apply">Ok</button>
+            <button class="blue">Cancel</button>
+        </div>
+    </min-component>
+
     <min-component id="del-confirm-modal" data-path="/components/ui/modal">
         <span slot="title">Confirmation</span>
         <p slot="content">

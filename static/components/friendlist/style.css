@@ -4,6 +4,24 @@ ul {
     margin: 0;
 }
 
+.tools {
+    margin-top: .5rem;
+    padding: .2rem .4rem;
+}
+
+.form-field {
+    margin: 1rem;
+}
+
+.form-field label, .form-field input, .form-field small {
+    margin-top: 0.5rem;
+    display: block;
+}
+
+.form-field small {
+    opacity: 0.5;
+}
+
 li {
     list-style: none;
     display: flex;

@@ -169,6 +169,7 @@ button {
     color: #242424;
     border: none;
     background-color: var(--pop-color);
+    cursor: pointer;
 }
 
 button:focus, button:hover {
@@ -312,17 +313,14 @@ button.yellow {
     #root>.sidebar {
         grid-column: 1;
         grid-row: 2;
-        z-index: 2;
     }
     #root>.main {
         grid-column: 1;
         grid-row: 2/4;
-        z-index: 1;
     }
     #root>footer {
         grid-column: 1;
         grid-row: 3;
-        z-index: 2;
     }
     #root.sidebar-active>.main, #root:not(.sidebar-active)>.sidebar, #root:not(.sidebar-active)>footer {
         display: none;
@@ -490,24 +488,11 @@ min-component.error {
     margin: .2rem;
 }
 
-min-component:not(.error):not(.render) {
-    animation: showComponent 50ms ease-in-out forwards;
-}
-
 @keyframes load-rotate {
     0% {
         transform: rotate(0deg);
     }
     100% {
         transform: rotate(360deg);
-    }
-}
-
-@keyframes showComponent {
-    0% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 1;
     }
 }

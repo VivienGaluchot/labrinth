@@ -11,6 +11,21 @@ class Component {
     }
 
     onRender() {
+        this.element.querySelector("#profile-btn").onclick = () => {
+            this.element.querySelector("#profile-modal").internal.ask().then((choice) => {
+                if (choice == "apply") {
+                    // TODO
+                }
+            });
+        };
+        this.element.querySelector("#add-friend-btn").onclick = () => {
+            this.element.querySelector("#add-friend-modal").internal.ask().then((choice) => {
+                if (choice == "apply") {
+                    // TODO
+                }
+            });
+        };
+
         for (let [id, data] of Friends.app.getFriends()) {
             let el = this.renderFriend(id);
             this.userElements.set(id, el);

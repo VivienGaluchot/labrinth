@@ -2,20 +2,23 @@
     <ul>
         <li class="self">
             <div class="icon"></div>
-            <div class="name">[todo]</div>
+            <div class="infos">
+                <div id="friends-local-name" class="name"></div>
+                <div id="friends-local-id" class="id"></div>
+            </div>
             <button id="profile-btn" class="outline grey">Profile</button>
         </li>
     </ul>
     <div class="tools">
-        <button id="add-friend-btn" class="outline grey">Add friend</button>
+        <button id="add-friend-modal-btn" class="outline grey">Add friends</button>
     </div>
 
     <min-component id="profile-modal" data-path="/components/ui/modal">
         <span slot="title">Your Profile</span>
         <div class="form-field" slot="content">
             <label>Pseudo</label>
-            <input value="[todo]">
-            <small>Set your pseudo for your frens</small>
+            <input id="profile-modal-name" placeholder="enter your pseudo" value="">
+            <small>Give a little name for your frens.</small>
         </div>
         <div slot="choices">
             <button class="green" data-choice="apply">Ok</button>
@@ -24,14 +27,21 @@
     </min-component>
 
     <min-component id="add-friend-modal" data-path="/components/ui/modal">
-        <span slot="title">Add a friend</span>
-        <div class="form-field" slot="content">
-            <label>Friend id</label>
-            <input value="[todo]">
-        </div>
-        <div slot="choices">
-            <button class="green" data-choice="apply">Ok</button>
-            <button class="blue">Cancel</button>
+        <span slot="title">Add friends</span>
+        <div slot="content">
+            <div class="form-field">
+                <div>Your id is <code id="add-friend-local-id">[todo]</code></div>
+                <small>Share this id with friends to be able to communicate.<br>
+                    This ID shall remain private.
+                </small>
+            </div>
+            <div class="form-field">
+                <label>Friend id</label>
+                <div class="input-and-button">
+                    <input id="add-friend-id" placeholder="enter friend id" value="">
+                    <button id="add-friend-btn" class="outline grey">Add</button>
+                </div>
+            </div>
         </div>
     </min-component>
 

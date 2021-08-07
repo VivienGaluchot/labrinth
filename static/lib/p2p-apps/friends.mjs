@@ -84,7 +84,10 @@ class FriendsApp extends P2pApps.App {
 
     add(userId, data) {
         if (this.friendMap.has(userId)) {
-            throw new Error("user already friend");
+            throw new Error("friend already defined");
+        }
+        if (userId.length == 0) {
+            throw new Error("friend id malformed");
         }
         this.storageFriendRegister(userId, data);
         this.friendMap = this.storageFriendGetAll();
@@ -131,6 +134,12 @@ class FriendsApp extends P2pApps.App {
 
     onIncomingConnection(peerId) {
         console.log("[Friends] onIncomingConnection", peerId);
+
+        let userId = P2p.RemoteEndpoint.deserialize(peerId).user;
+        if (!this.friendMap.has(userId)) {
+            this.add(userId, null);
+        }
+
         // TODO only open channel if messages are expected to be exchanged
         this.openChannel(peerId);
     };
@@ -159,9 +168,7 @@ class FriendsApp extends P2pApps.App {
 
     onMessage(peerId, data) {
         let userId = P2p.RemoteEndpoint.deserialize(peerId).user;
-        this.storageFriendRegister(userId, data);
-        this.friendMap = this.storageFriendGetAll();
-        this.eventTarget.dispatchEvent(new FriendEvent("onDataChange", userId));
+        this.set(userId, data);
     }
 
 

@@ -20,6 +20,11 @@ class FNode {
         return this;
     }
 
+    id(cssId) {
+        this.element.id = cssId;
+        return this;
+    }
+
     child(element) {
         if (element instanceof FNode) {
             this.element.appendChild(element.element);

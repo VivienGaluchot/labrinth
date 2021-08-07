@@ -4,16 +4,11 @@ ul {
     margin: 0;
 }
 
-.tools {
-    margin-top: .5rem;
-    padding: .2rem .4rem;
-}
-
 .form-field {
-    margin: 1rem;
+    margin: 1.5rem 1rem;
 }
 
-.form-field label, .form-field input, .form-field small {
+.form-field>* {
     margin-top: 0.5rem;
     display: block;
 }
@@ -22,15 +17,34 @@ ul {
     opacity: 0.5;
 }
 
+.form-field input {
+    width: 100%;
+}
+
+.input-and-button {
+    display: flex;
+}
+
+.input-and-button input {
+    flex-grow: 1;
+    margin-right: .2rem;
+}
+
 li {
     list-style: none;
     display: flex;
     align-items: center;
-    padding: .2rem .4rem;
 }
 
-ul li {
-    margin: 0;
+ul li, .tools {
+    padding: .2rem .4rem;
+    margin: .5rem 0;
+}
+
+.tools button {
+    border-radius: 2rem;
+    width: 100%;
+    padding: .5rem;
 }
 
 li:hover {
@@ -38,9 +52,14 @@ li:hover {
     border-radius: 2rem;
 }
 
-.name {
+.infos {
     flex-grow: 1;
-    margin: .5rem;
+    margin: 0 .5rem;
+}
+
+.infos .id {
+    font-size: small;
+    opacity: .2;
 }
 
 li button {

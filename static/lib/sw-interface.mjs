@@ -60,14 +60,14 @@ function handleRegistration(reg) {
     }
 }
 
-if (navigator.serviceWorker.controller) {
+if (navigator.serviceWorker?.controller) {
     setCurrentSw(navigator.serviceWorker.controller);
     getVersion().then((version) => {
         console.log(`service worker already running: ${version}`);
     });
 }
 
-navigator.serviceWorker.register("/sw.js", { scope: '/' })
+navigator.serviceWorker?.register("/sw.js", { scope: '/' })
     .then((reg) => {
         handleRegistration(reg);
     })

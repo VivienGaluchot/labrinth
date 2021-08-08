@@ -50,8 +50,12 @@ class Component {
 
             promises.push(import(`${this.path}/main.mjs`)
                 .catch((err) => {
-                    console.error(`module ${this.path} load failed`);
-                    console.exception(err);
+                    if (err instanceof SyntaxError) {
+                        console.error(`module ${this.path} load failed\n${err.name}: ${err.message}\nfrom ${err.fileName}:${err.lineNumber}:${err.columnNumber}`);
+                    } else {
+                        console.error(`module ${this.path} load failed`);
+                        console.exception(err);
+                    }
                 }));
 
             this.loadPromise =
@@ -105,8 +109,9 @@ class Element extends HTMLElement {
 
     // custom component attributes changed
     attributeChangedCallback(name, oldValue, newValue) {
-        if (name == "data-path")
+        if (name == "data-path") {
             this.render();
+        }
     }
 
     render() {
@@ -141,9 +146,10 @@ class Element extends HTMLElement {
                         this.onRender();
                         this.classList.remove(renderCssClass);
                     })
-                    .catch((reason) => {
-                        console.error(`component load failed`, reason);
-                        this.onRenderError(`component load failed: ${reason}`);
+                    .catch((err) => {
+                        console.error(`component ${path} load failed`);
+                        console.exception(err);
+                        this.onRenderError(`component load failed: ${err}`);
                         this.classList.remove(renderCssClass);
                         this.classList.add(errorCssClass);
                     });

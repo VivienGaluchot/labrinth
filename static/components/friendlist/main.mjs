@@ -58,34 +58,42 @@ class Component {
         // friend list
         for (let [userId, data] of Friends.app.getFriends()) {
             if (userId != P2p.localEndpoint.user) {
-                let el = this.renderFriend(userId);
-                this.userElements.set(userId, el);
-                this.ulElement.appendChild(el);
+                this.renderFriend(userId);
+                this.ulElement.appendChild(this.userElements.get(userId));
             }
         }
 
         let updateForEvent = (event) => {
-            if (event.userId == P2p.localEndpoint.user) {
+            let userId = event.userId;
+            if (userId == P2p.localEndpoint.user) {
                 updateLocalName();
             } else {
-                let el = this.userElements.get(event.userId);
-                let newEl = this.renderFriend(event.userId);
-                this.userElements.set(event.userId, newEl);
-                el.replaceWith(newEl);
+                let el = this.userElements.get(userId);
+                this.renderFriend(userId);
+                el.replaceWith(this.userElements.get(userId));
             }
         };
 
         Friends.app.eventTarget.addEventListener("onConnectionStatusChange", updateForEvent);
         Friends.app.eventTarget.addEventListener("onDataChange", updateForEvent);
         Friends.app.eventTarget.addEventListener("onAdd", (event) => {
-            let el = this.renderFriend(event.userId);
-            this.userElements.set(event.userId, el);
-            this.ulElement.appendChild(el);
+            let userId = event.userId;
+            this.renderFriend(userId);
+            this.ulElement.appendChild(this.userElements.get(userId));
         });
         Friends.app.eventTarget.addEventListener("onRemove", (event) => {
-            let el = this.userElements.get(event.userId);
-            this.userElements.delete(event.userId);
+            let userId = event.userId;
+            let el = this.userElements.get(userId);
+            this.userElements.delete(userId);
             el.remove();
+        });
+
+        P2p.webRtcEndpoint.addEventListener("onPingUpdate", (event) => {
+            let userId = P2p.RemoteEndpoint.deserialize(event.connection.peerId).user;
+            if (this.userElements.has(userId)) {
+                let text = `${event.connection.pingDelayInMs} ms`;
+                this.userElements.get(userId).querySelector(".ping").innerText = text;
+            }
         });
     }
 
@@ -98,12 +106,14 @@ class Component {
     renderFriend(userId) {
         let name = Friends.app.getData(userId)?.name;
         let isConnected = Friends.app.isConnected(userId);
+        let pingNode = new FNode("div").class("ping");
         let li = new FNode("li")
             .class(isConnected ? "connected" : "disconnected")
             .child(new FNode("div").class("icon"))
             .child(new FNode("div").class("infos")
                 .child(new FNode("div").id("friends-local-name").class("name").text(name))
                 .child(new FNode("div").id("friends-local-id").class("id").text(userId)))
+            .child(pingNode)
             .child(new FButton().class("outline").class("grey")
                 .text("Chat")
                 .onclick(() => {
@@ -118,7 +128,7 @@ class Component {
                         }
                     });
                 }));
-        return li.element;
+        this.userElements.set(userId, li.element);
     }
 }
 

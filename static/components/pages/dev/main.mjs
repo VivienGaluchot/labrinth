@@ -32,13 +32,15 @@ class Component {
     constructor(element) {
         this.element = element;
 
-        let wsUrl = new URL(window.location.href);
-        if (wsUrl.protocol == "http:") {
-            wsUrl.protocol = "ws:";
+        let currentUrl = new URL(window.location.href);
+        let protocol = null;
+        if (currentUrl.protocol == "http:") {
+            protocol = "ws:";
         } else {
-            wsUrl.protocol = "wss:";
+            protocol = "wss:";
         }
-        wsUrl.pathname = "/connector";
+        let wsUrl = new URL(`${protocol}//${currentUrl.host}/connector`);
+
         this.ws = new Channel.WebSocketChannel(wsUrl.href, "rtc-on-socket-connector", true);
     }
 

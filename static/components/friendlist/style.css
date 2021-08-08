@@ -38,7 +38,7 @@ li {
 
 ul li, .tools {
     padding: .2rem .4rem;
-    margin: .5rem 0;
+    margin: .8rem 0;
 }
 
 .tools button {
@@ -83,9 +83,15 @@ li>div.icon {
 }
 
 li:not(:hover) button {
-    visibility: hidden;
+    display: none;
 }
 
-li:hover button {
-    visibility: visible;
+li .ping {
+    font-size: small;
+    opacity: .2;
+    align-self: start;
+}
+
+li:hover .ping {
+    display: none;
 }

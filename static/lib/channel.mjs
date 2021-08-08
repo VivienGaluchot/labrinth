@@ -128,95 +128,6 @@ class DebugChannel extends Channel {
     }
 }
 
-/**
- *  A multiplexer allows to split a channel in multiple sub channels.
- * 
- *             |             | <---> Sub channel A
- *  Root <---> | Multiplexer | <---> Sub channel B
- *             |             | <---> Sub channel C
- * 
- *  The message received on the Root channel is expected to be in the {id:<ID>, data:<DATA>} format,
- *  when this is the case, the <DATA> content is passed to the sub channel <ID>.
- * 
- *  The message sent by the sub channels are encapsulated in an object {id: <ID>, data:<DATA>} with
- *  <ID> the index of the sub channel and <DATA> the data sent.
- * 
- *  When the root channel is opened / closed, the sub channels are also opened / closed.
- * 
- * Example of usage:
- * ```
- * let root = new DebugChannel("root");
- * let x = new Multiplexer(root);
- * 
- * let a = new DebugChannel("A");
- * x.registerSubChannel("a", a);
- * 
- * let b = new DebugChannel("B");
- * x.registerSubChannel("b", b);
- * 
- * let y = new Multiplexer(b);
- * let b1 = new DebugChannel("B1");
- * y.registerSubChannel("b1", b1);
- * 
- * root.onmessage({ id: "a", data: "test" });
- * root.onmessage({ id: "b", data: { id: "b1", data: "test" } });
- * a.send("test");
- * b.send("test");
- * b1.send("test");
- * ```
- */
-class Multiplexer {
-    constructor(root) {
-        this.root = root;
-        this.ids = new Map();
-
-        root.onStateUpdate = (state) => {
-            for (let [id, handler] of this.ids) {
-                handler.onStateUpdate(state);
-            }
-        };
-        root.onopen = () => {
-            for (let [id, handler] of this.ids) {
-                handler.onopen();
-            }
-        };
-        root.onmessage = (data) => {
-            if (data && data.id) {
-                this.ids.get(data.id)?.onmessage(data.data);
-            } else {
-                console.warn(`data ${JSON.stringify(data)} dropped from '${root.name}' multiplexer`)
-            }
-        };
-        root.onclose = (event) => {
-            for (let [id, handler] of this.ids) {
-                handler.onclose(event);
-            }
-        };
-    }
-
-    registerSubChannel(id, handler) {
-        if (this.ids.has(id)) {
-            throw new Error(`sub channel id '${id}' is already registered`);
-        }
-
-        this.ids.set(id, handler);
-
-        handler.send = (data) => {
-            this.root.send({ id: id, data: data });
-        };
-
-        // close handler already connected
-        if (handler.state == State.CONNECTED) {
-            this.onclose();
-        }
-        // update state
-        handler.setState(this.root.state);
-        if (this.root.state == State.CONNECTED) {
-            handler.onopen();
-        }
-    }
-}
-
 class SocketLikeChannel extends Channel {
     constructor(name, reconnect) {
         super(name);
@@ -347,14 +258,13 @@ class WebRtcEndpoint extends EventTarget {
         super();
 
         let serverUrl = new URL(window.location.href);
+        let protocol = null;
         if (serverUrl.protocol == "http:") {
-            serverUrl.protocol = "ws:";
+            protocol = "ws:";
         } else {
-            serverUrl.protocol = "wss:";
+            protocol = "wss:";
         }
-        serverUrl.pathname = "/connector";
-
-        this.serverUrl = serverUrl;
+        this.serverUrl = new URL(`${protocol}//${serverUrl.host}/connector`);
         this.localId = localId;
 
         this.connections = new Map();
@@ -666,4 +576,4 @@ function getIceCandidates(onicecandidate) {
 };
 
 
-export { Multiplexer, WebSocketChannel, DebugChannel, State, WebRtcEndpoint, getIceCandidates }
+export { WebSocketChannel, DebugChannel, State, WebRtcEndpoint, getIceCandidates }

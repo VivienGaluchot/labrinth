@@ -1,7 +1,7 @@
 <template>
     <ul>
         <li class="self">
-            <div class="icon"></div>
+            <div id="friends-local-picture" class="profile-picture"></div>
             <div class="infos">
                 <div id="friends-local-name" class="name"></div>
                 <div id="friends-local-id" class="id"></div>
@@ -15,10 +15,54 @@
 
     <min-component id="profile-modal" data-path="/components/ui/modal">
         <span slot="title">Your Profile</span>
-        <div class="form-field" slot="content">
-            <label>Pseudo</label>
-            <input id="profile-modal-name" placeholder="enter your pseudo" value="">
-            <small>Give a little name for your frens.</small>
+        <div slot="content">
+            <div class="form-field">
+                <label>Pseudo</label>
+                <input id="profile-modal-name" placeholder="enter your pseudo" value="">
+                <small>Give a little name for your frens.</small>
+            </div>
+            <div class="form-field">
+                <label>Picture</label>
+                <div class="radio-picts">
+                    <div>
+                        <label class="profile-picture pic1"></label>
+                        <input type="radio" name="profile-modal-pict" value="pic1">
+                    </div>
+                    <div>
+                        <label class="profile-picture pic2"></label>
+                        <input type="radio" name="profile-modal-pict" value="pic2">
+                    </div>
+                    <div>
+                        <label class="profile-picture pic3"></label>
+                        <input type="radio" name="profile-modal-pict" value="pic3">
+                    </div>
+                    <div>
+                        <label class="profile-picture pic4"></label>
+                        <input type="radio" name="profile-modal-pict" value="pic4">
+                    </div>
+                    <div>
+                        <label class="profile-picture pic5"></label>
+                        <input type="radio" name="profile-modal-pict" value="pic5">
+                    </div>
+                    <div>
+                        <label class="profile-picture pic6"></label>
+                        <input type="radio" name="profile-modal-pict" value="pic6">
+                    </div>
+                    <div>
+                        <label class="profile-picture pic7"></label>
+                        <input type="radio" name="profile-modal-pict" value="pic7">
+                    </div>
+                    <div>
+                        <label class="profile-picture pic8"></label>
+                        <input type="radio" name="profile-modal-pict" value="pic8">
+                    </div>
+                    <div>
+                        <label class="profile-picture pic9"></label>
+                        <input type="radio" name="profile-modal-pict" value="pic9">
+                    </div>
+                </div>
+                <small>Maybe a little picture.</small>
+            </div>
         </div>
         <div slot="choices">
             <button class="green" data-choice="apply">Ok</button>

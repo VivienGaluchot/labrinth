@@ -16,16 +16,23 @@ class Component {
         this.element.querySelector("#profile-btn").onclick = () => {
             this.element.querySelector("#profile-modal").internal.ask().then((choice) => {
                 if (choice == "apply") {
-                    let data = Friends.app.getLocalData();
-                    data.name = this.element.querySelector("#profile-modal-name").value;
-                    Friends.app.setLocalData(data);
+                    let name = this.element.querySelector("#profile-modal-name").value;
+                    let picture = this.element.querySelector('input[name="profile-modal-pict"]:checked').value;
+                    Friends.app.setLocalData({ name: name, picture: picture });
                 }
             });
         };
         let updateLocalName = () => {
-            let name = Friends.app.getLocalData().name;
+            let data = Friends.app.getLocalData();
+            let name = data.name;
+            let picture = data.picture;
             this.element.querySelector("#friends-local-name").innerText = name;
             this.element.querySelector("#profile-modal-name").value = name;
+            this.element.querySelector("#friends-local-picture").setAttribute("class", `profile-picture ${picture}`);
+            for (let el of this.element.querySelectorAll('input[name = "profile-modal-pict"]')) {
+                el.checked = (el.value == picture);
+            }
+            this.element.querySelector("#friends-local-picture").setAttribute("class", `profile-picture ${picture}`);
         }
         updateLocalName();
         this.element.querySelector("#friends-local-id").innerText = P2p.localEndpoint.user;;
@@ -104,12 +111,14 @@ class Component {
     // internal
 
     renderFriend(userId) {
-        let name = Friends.app.getData(userId)?.name;
+        let data = Friends.app.getData(userId);
+        let name = data.name;
+        let picture = data.picture;
         let isConnected = Friends.app.isConnected(userId);
         let pingNode = new FNode("div").class("ping");
         let li = new FNode("li")
             .class(isConnected ? "connected" : "disconnected")
-            .child(new FNode("div").class("icon"))
+            .child(new FNode("div").class("profile-picture").class(picture))
             .child(new FNode("div").class("infos")
                 .child(new FNode("div").id("friends-local-name").class("name").text(name))
                 .child(new FNode("div").id("friends-local-id").class("id").text(userId)))

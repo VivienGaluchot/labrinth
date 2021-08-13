@@ -75,18 +75,14 @@ class Component {
             if (userId == P2p.localEndpoint.user) {
                 updateLocalName();
             } else {
-                let el = this.userElements.get(userId);
                 this.renderFriend(userId);
-                el.replaceWith(this.userElements.get(userId));
             }
         };
 
         Friends.app.eventTarget.addEventListener("onConnectionStatusChange", updateForEvent);
         Friends.app.eventTarget.addEventListener("onDataChange", updateForEvent);
         Friends.app.eventTarget.addEventListener("onAdd", (event) => {
-            let userId = event.userId;
-            this.renderFriend(userId);
-            this.ulElement.appendChild(this.userElements.get(userId));
+            this.renderFriend(event.userId);
         });
         Friends.app.eventTarget.addEventListener("onRemove", (event) => {
             let userId = event.userId;
@@ -112,32 +108,38 @@ class Component {
 
     renderFriend(userId) {
         let data = Friends.app.getData(userId);
-        let name = data.name;
-        let picture = data.picture;
+        let name = data?.name;
+        let picture = data?.picture;
         let isConnected = Friends.app.isConnected(userId);
         let pingNode = new FNode("div").class("ping");
-        let li = new FNode("li")
-            .class(isConnected ? "connected" : "disconnected")
+        let li = new FNode("li").class(isConnected ? "connected" : "disconnected")
             .child(new FNode("div").class("profile-picture").class(picture))
             .child(new FNode("div").class("infos")
                 .child(new FNode("div").id("friends-local-name").class("name").text(name))
                 .child(new FNode("div").id("friends-local-id").class("id").text(userId)))
-            .child(pingNode)
-            .child(new FButton().class("outline").class("grey")
-                .text("Chat")
-                .onclick(() => {
-                    // TODO
-                }))
-            .child(new FButton().class("outline").class("text-icon").class("grey")
-                .text("🗑")
-                .onclick(() => {
-                    this.element.querySelector("#del-confirm-modal").internal.ask().then((choice) => {
-                        if (choice == "yes") {
-                            Friends.app.remove(userId);
-                        }
-                    });
-                }));
-        this.userElements.set(userId, li.element);
+            .child(pingNode);
+        li.child(new FButton().class("outline").class("grey")
+            .text("Chat")
+            .onclick(() => {
+                // TODO
+            }))
+        li.child(new FButton().class("outline").class("text-icon").class("grey")
+            .text("🗑")
+            .onclick(() => {
+                this.element.querySelector("#del-confirm-modal").internal.ask().then((choice) => {
+                    if (choice == "yes") {
+                        Friends.app.remove(userId);
+                    }
+                });
+            }));
+
+        let newEl = li.element;
+        if (this.userElements.has(userId)) {
+            this.userElements.get(userId).replaceWith(newEl);
+        } else {
+            this.ulElement.appendChild(newEl);
+        }
+        this.userElements.set(userId, newEl);
     }
 }
 

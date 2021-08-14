@@ -12,31 +12,6 @@ class Component {
     }
 
     onRender() {
-        // local profile
-        this.element.querySelector("#profile-btn").onclick = () => {
-            this.element.querySelector("#profile-modal").internal.ask().then((choice) => {
-                if (choice == "apply") {
-                    let name = this.element.querySelector("#profile-modal-name").value;
-                    let picture = this.element.querySelector('input[name="profile-modal-pict"]:checked').value;
-                    Friends.app.setLocalData({ name: name, picture: picture });
-                }
-            });
-        };
-        let updateLocalName = () => {
-            let data = Friends.app.getLocalData();
-            let name = data.name;
-            let picture = data.picture;
-            this.element.querySelector("#friends-local-name").innerText = name;
-            this.element.querySelector("#profile-modal-name").value = name;
-            this.element.querySelector("#friends-local-picture").setAttribute("class", `profile-picture ${picture}`);
-            for (let el of this.element.querySelectorAll('input[name = "profile-modal-pict"]')) {
-                el.checked = (el.value == picture);
-            }
-            this.element.querySelector("#friends-local-picture").setAttribute("class", `profile-picture ${picture}`);
-        }
-        updateLocalName();
-        this.element.querySelector("#friends-local-id").innerText = P2p.localEndpoint.user;;
-
         // add friend form
         this.element.querySelector("#add-friend-modal-btn").onclick = () => {
             this.element.querySelector("#add-friend-local-id").innerText = P2p.localEndpoint.user;
@@ -64,19 +39,12 @@ class Component {
 
         // friend list
         for (let [userId, data] of Friends.app.getFriends()) {
-            if (userId != P2p.localEndpoint.user) {
-                this.renderFriend(userId);
-                this.ulElement.appendChild(this.userElements.get(userId));
-            }
+            this.renderFriend(userId);
+            this.ulElement.appendChild(this.userElements.get(userId));
         }
 
         let updateForEvent = (event) => {
-            let userId = event.userId;
-            if (userId == P2p.localEndpoint.user) {
-                updateLocalName();
-            } else {
-                this.renderFriend(userId);
-            }
+            this.renderFriend(event.userId);
         };
 
         Friends.app.eventTarget.addEventListener("onConnectionStatusChange", updateForEvent);
@@ -106,32 +74,66 @@ class Component {
 
     // internal
 
+    showProfileForm() {
+        let data = Friends.app.getLocalData();
+        let name = data.name;
+        let picture = data.picture;
+        this.element.querySelector("#profile-modal-name").value = name;
+        for (let el of this.element.querySelectorAll('input[name = "profile-modal-pict"]')) {
+            el.checked = (el.value == picture);
+        }
+        this.element.querySelector("#profile-modal").internal.ask().then((choice) => {
+            if (choice == "apply") {
+                let name = this.element.querySelector("#profile-modal-name").value;
+                let picture = this.element.querySelector('input[name="profile-modal-pict"]:checked').value;
+                Friends.app.setLocalData({ name: name, picture: picture });
+            }
+        });
+    }
+
     renderFriend(userId) {
+        let isLocal = userId == P2p.localEndpoint.user;
+
         let data = Friends.app.getData(userId);
-        let name = data?.name;
+        let name = data?.name ? data?.name : "unknown";
         let picture = data?.picture;
-        let isConnected = Friends.app.isConnected(userId);
-        let pingNode = new FNode("div").class("ping");
-        let li = new FNode("li").class(isConnected ? "connected" : "disconnected")
-            .child(new FNode("div").class("profile-picture").class(picture))
-            .child(new FNode("div").class("infos")
-                .child(new FNode("div").id("friends-local-name").class("name").text(name))
-                .child(new FNode("div").id("friends-local-id").class("id").text(userId)))
-            .child(pingNode);
-        li.child(new FButton().class("outline").class("grey")
-            .text("Chat")
-            .onclick(() => {
-                // TODO
-            }))
-        li.child(new FButton().class("outline").class("text-icon").class("grey")
-            .text("🗑")
-            .onclick(() => {
-                this.element.querySelector("#del-confirm-modal").internal.ask().then((choice) => {
-                    if (choice == "yes") {
-                        Friends.app.remove(userId);
-                    }
-                });
-            }));
+
+        let li = new FNode("li");
+        if (isLocal) {
+            li.class("self");
+        } else {
+            let isConnected = Friends.app.isConnected(userId);
+            li.class(isConnected ? "connected" : "disconnected");
+        }
+
+        li.child(new FNode("div").class("profile-picture").class(picture));
+        li.child(new FNode("div").class("infos")
+            .child(new FNode("div").id("friends-local-name").class("name").text(name))
+            .child(new FNode("div").id("friends-local-id").class("id").text(userId)))
+            .child(new FNode("div").class("ping"));
+
+        if (!isLocal) {
+            li.child(new FButton().class("outline").class("grey")
+                .text("Chat")
+                .onclick(() => {
+                    // TODO
+                }));
+            li.child(new FButton().class("outline").class("text-icon").class("grey")
+                .text("🗑")
+                .onclick(() => {
+                    this.element.querySelector("#del-confirm-modal").internal.ask().then((choice) => {
+                        if (choice == "yes") {
+                            Friends.app.remove(userId);
+                        }
+                    });
+                }));
+        } else {
+            li.child(new FButton().class("outline").class("grey")
+                .text("Profile")
+                .onclick(() => {
+                    this.showProfileForm();
+                }));
+        }
 
         let newEl = li.element;
         if (this.userElements.has(userId)) {

@@ -228,10 +228,10 @@ button.icon img {
 /* form */
 
 input {
-    color: hsl(216, 77%, 76%);
+    color: #e0dbdb;
     background-color: hsla(216, 77%, 76%, 0.1);
     border: none;
-    font-size: .95rem;
+    font-size: 1rem;
     padding: .5rem;
     border-radius: .5rem;
 }

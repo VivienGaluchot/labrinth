@@ -137,30 +137,26 @@ li:hover .ping {
 }
 
 .profile-picture.pic10 {
-    background-image: url('/img/profiles/pic10.png');
+    background-image: url('/img/profiles/pic10.jpg');
 }
 
 .profile-picture.pic11 {
-    background-image: url('/img/profiles/pic11.png');
+    background-image: url('/img/profiles/pic11.jpg');
 }
 
 .profile-picture.pic12 {
-    background-image: url('/img/profiles/pic12.png');
+    background-image: url('/img/profiles/pic12.jpg');
 }
 
 .profile-picture.pic13 {
-    background-image: url('/img/profiles/pic13.png');
+    background-image: url('/img/profiles/pic13.jpg');
 }
 
 .profile-picture.pic14 {
-    background-image: url('/img/profiles/pic14.png');
+    background-image: url('/img/profiles/pic14.jpg');
 }
 
 /* profile picture radio select */
-
-label.profile-picture {
-    display: inline-block;
-}
 
 .radio-picts {
     display: grid;

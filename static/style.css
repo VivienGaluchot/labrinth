@@ -228,7 +228,7 @@ button.icon img {
 /* form */
 
 input {
-    color: #e0dbdb;
+    color: hsl(216, 77%, 76%);
     background-color: hsla(216, 77%, 76%, 0.1);
     border: none;
     font-size: 1rem;

@@ -12,6 +12,13 @@ class Component {
     }
 
     onRender() {
+        // profile form
+        for (let el of this.element.querySelectorAll('#profile-modal button.profile-picture')) {
+            el.onclick = () => {
+                el.parentNode.querySelector('input').checked = true;
+            };
+        }
+
         // add friend form
         this.element.querySelector("#add-friend-modal-btn").onclick = () => {
             this.element.querySelector("#add-friend-local-id").innerText = P2p.localEndpoint.user;
@@ -43,33 +50,37 @@ class Component {
             this.ulElement.appendChild(this.userElements.get(userId));
         }
 
-        let updateForEvent = (event) => {
+        this.onFriendUpdate = (event) => {
             this.renderFriend(event.userId);
         };
+        Friends.app.eventTarget.addEventListener("onConnectionStatusChange", this.onFriendUpdate);
+        Friends.app.eventTarget.addEventListener("onDataChange", this.onFriendUpdate);
+        Friends.app.eventTarget.addEventListener("onAdd", this.onFriendUpdate);
 
-        Friends.app.eventTarget.addEventListener("onConnectionStatusChange", updateForEvent);
-        Friends.app.eventTarget.addEventListener("onDataChange", updateForEvent);
-        Friends.app.eventTarget.addEventListener("onAdd", (event) => {
-            this.renderFriend(event.userId);
-        });
-        Friends.app.eventTarget.addEventListener("onRemove", (event) => {
+        this.onFriendRemove = (event) => {
             let userId = event.userId;
             let el = this.userElements.get(userId);
             this.userElements.delete(userId);
             el.remove();
-        });
+        };
+        Friends.app.eventTarget.addEventListener("onRemove", this.onFriendRemove);
 
-        P2p.webRtcEndpoint.addEventListener("onPingUpdate", (event) => {
+        this.onPingUpdate = (event) => {
             let userId = P2p.RemoteEndpoint.deserialize(event.connection.peerId).user;
             if (this.userElements.has(userId)) {
                 let text = `${event.connection.pingDelayInMs} ms`;
                 this.userElements.get(userId).querySelector(".ping").innerText = text;
             }
-        });
+        };
+        P2p.webRtcEndpoint.addEventListener("onPingUpdate", this.onPingUpdate);
     }
 
     onRemove() {
-
+        Friends.app.eventTarget.removeEventListener("onConnectionStatusChange", this.onFriendUpdate);
+        Friends.app.eventTarget.removeEventListener("onDataChange", this.onFriendUpdate);
+        Friends.app.eventTarget.removeEventListener("onAdd", this.onFriendUpdate);
+        Friends.app.eventTarget.removeEventListener("onRemove", this.onFriendRemove);
+        P2p.webRtcEndpoint.removeEventListener("onPingUpdate", this.onPingUpdate);
     }
 
     // internal
@@ -113,12 +124,12 @@ class Component {
             .child(new FNode("div").class("ping"));
 
         if (!isLocal) {
-            li.child(new FButton().class("outline").class("grey")
+            li.child(new FButton().class("outline grey")
                 .text("Chat")
                 .onclick(() => {
                     // TODO
                 }));
-            li.child(new FButton().class("outline").class("text-icon").class("grey")
+            li.child(new FButton().class("outline text-icon grey")
                 .text("🗑")
                 .onclick(() => {
                     this.element.querySelector("#del-confirm-modal").internal.ask().then((choice) => {
@@ -128,7 +139,7 @@ class Component {
                     });
                 }));
         } else {
-            li.child(new FButton().class("outline").class("grey")
+            li.child(new FButton().class("outline grey")
                 .text("Profile")
                 .onclick(() => {
                     this.showProfileForm();

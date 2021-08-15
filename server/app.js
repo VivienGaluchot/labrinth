@@ -296,7 +296,7 @@ function handleRequest(connection, index, data) {
         }
     } catch (err) {
         if (err instanceof RequestError) {
-            websocketLogger.error(`request error ${err}`);
+            websocketLogger.error(`request error ${err.message}`);
             sendError(err.message);
         } else {
             websocketLogger.error(`unexpected server error ${err}`);

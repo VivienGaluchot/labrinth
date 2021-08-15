@@ -85,8 +85,12 @@ class NetworkManager {
 
     handleP2pConnection(event) {
         let connection = event.connection;
-        let chan = connection.getChannel("apps", 1);
-        let peerId = chan.peerId;
+        let chan_1 = connection.getChannel("apps-1", 1);
+        // TODO multiplex messages over multiple channels to prevent lock
+        // when a long message is emitted
+        let chan_2 = connection.getChannel("apps-2", 2);
+        let chan_3 = connection.getChannel("apps-3", 3);
+        let peerId = connection.peerId;
 
         for (let [appName, app] of this.apps) {
             if (!this.requestedChannels.has(peerId) || !this.requestedChannels.get(peerId).has(appName)) {
@@ -94,14 +98,14 @@ class NetworkManager {
             }
         }
 
-        this.channels.set(peerId, chan);
-        chan.onmessage = (data) => {
-            this.handleChanMessage(chan, data);
+        this.channels.set(peerId, chan_1);
+        chan_1.onmessage = (data) => {
+            this.handleChanMessage(chan_1, data);
         };
-        chan.onStateUpdate = (state) => {
-            this.handleChanStateUpdate(chan, state);
+        chan_1.onStateUpdate = (state) => {
+            this.handleChanStateUpdate(chan_1, state);
         };
-        chan.connect();
+        chan_1.connect();
     }
 }
 

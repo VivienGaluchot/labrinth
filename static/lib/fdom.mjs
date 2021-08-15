@@ -16,7 +16,11 @@ class FNode {
     }
 
     class(cssClass) {
-        this.element.classList.add(cssClass);
+        if (cssClass != undefined) {
+            for (let cl of cssClass.split(' ')) {
+                this.element.classList.add(cl);
+            }
+        }
         return this;
     }
 

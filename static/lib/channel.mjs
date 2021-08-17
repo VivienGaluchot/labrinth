@@ -11,6 +11,7 @@ const State = {
     CONNECTED: 'connected'
 }
 
+
 function timeoutPromise(timeoutInMs, promise) {
     let timeoutId;
     let timeoutPromise = new Promise((resolve, reject) => {
@@ -251,7 +252,6 @@ class WebRtcConnectionEvent extends Event {
  *   - onConnect: WebRtcConnectionEvent
  *   - onDisconnect: WebRtcConnectionEvent
  *   - onStateUpdate: WebRtcConnectionEvent
- *   - onPingUpdate: WebRtcConnectionEvent
  */
 class WebRtcEndpoint extends EventTarget {
     constructor(localId) {
@@ -416,8 +416,6 @@ class WebRtcConnection {
         this.isOfferIgnored = false;
         this.isSettingRemoteAnswerPending = false;
         this.pc = new RTCPeerConnection(rtcPeerConnectionConfig);
-
-        this.pingDelayInMs = null;
         this.state = State.CLOSED;
 
         this.pc.onsignalingstatechange = (event) => {
@@ -450,30 +448,17 @@ class WebRtcConnection {
 
         this.pingChan = this.getChannel("ping", 0);
         this.pingChan.onStateUpdate = (state) => {
-            this.state = state;
-            if (this.state == State.CONNECTED) {
-                this.connector.dispatchEvent(new WebRtcConnectionEvent("onConnect", this));
-            }
-            if (this.state == State.CLOSED) {
-                this.pingDelayInMs = null;
-                this.connector.dispatchEvent(new WebRtcConnectionEvent("onDisconnect", this));
-            }
-            this.connector.dispatchEvent(new WebRtcConnectionEvent("onStateUpdate", this));
-        };
-        this.pingChan.onmessage = (data) => {
-            if (data.src == this.peerId) {
-                this.pingChan.send(data);
-            }
-            if (data.src == this.connector.localId) {
-                this.pingDelayInMs = Date.now() - data.timestamp;
-                this.connector.dispatchEvent(new WebRtcConnectionEvent("onPingUpdate", this));
+            if (this.state != state) {
+                this.state = state;
+                if (this.state == State.CONNECTED) {
+                    this.connector.dispatchEvent(new WebRtcConnectionEvent("onConnect", this));
+                }
+                if (this.state == State.CLOSED) {
+                    this.connector.dispatchEvent(new WebRtcConnectionEvent("onDisconnect", this));
+                }
+                this.connector.dispatchEvent(new WebRtcConnectionEvent("onStateUpdate", this));
             }
         };
-        setInterval(() => {
-            if (this.pingChan.state == State.CONNECTED) {
-                this.pingChan.send({ src: this.connector.localId, timestamp: Date.now() });
-            }
-        }, 2000);
         this.pingChan.connect();
     }
 
@@ -537,6 +522,10 @@ class WebRtcDataChannel extends SocketLikeChannel {
         this.id = id;
     }
 
+    getBufferedAmount() {
+        return this.socket.bufferedAmount;
+    }
+
     getSocket() {
         try {
             return this.pc.createDataChannel(this.tag, { negotiated: true, id: this.id });
@@ -547,33 +536,5 @@ class WebRtcDataChannel extends SocketLikeChannel {
     }
 }
 
-function getIceCandidates(onicecandidate) {
-    let pc = new RTCPeerConnection(rtcPeerConnectionConfig);
-    pc.onicecandidate = (event) => {
-        if (event.candidate) {
-            if (event.candidate.candidate === '') {
-                onicecandidate(null);
-            } else {
-                console.info("ice candidate", event.candidate.candidate);
-                // TODO parse event.candidate.candidate fields
-                onicecandidate(event.candidate.candidate);
-            }
-        }
-    };
 
-    const offerOptions = { iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: false };
-    pc.createOffer(offerOptions)
-        .then((desc) => {
-            pc.setLocalDescription(desc)
-                .then(() => {
-                    console.log("setLocalDescription terminated");
-                }).catch((error) => {
-                    console.error("setLocalDescription error", error);
-                });
-        }).catch((error) => {
-            console.error("createOffer error", error);
-        });
-};
-
-
-export { WebSocketChannel, DebugChannel, State, WebRtcEndpoint, getIceCandidates }
+export { WebSocketChannel, DebugChannel, State, WebRtcEndpoint }

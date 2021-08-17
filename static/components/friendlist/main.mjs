@@ -1,6 +1,7 @@
 "use strict";
 
 import * as Friends from '/lib/p2p-apps/friends.mjs';
+import * as Ping from '/lib/p2p-apps/ping.mjs';
 import * as P2p from '/lib/p2p.mjs';
 import { FNode, FButton } from '/lib/fdom.mjs';
 
@@ -66,13 +67,13 @@ class Component {
         Friends.app.eventTarget.addEventListener("onRemove", this.onFriendRemove);
 
         this.onPingUpdate = (event) => {
-            let userId = P2p.RemoteEndpoint.deserialize(event.connection.peerId).user;
+            let userId = P2p.RemoteEndpoint.deserialize(event.peerId).user;
             if (this.userElements.has(userId)) {
-                let text = `${event.connection.pingDelayInMs} ms`;
+                let text = `${event.delayInMs} ms`;
                 this.userElements.get(userId).querySelector(".ping").innerText = text;
             }
         };
-        P2p.webRtcEndpoint.addEventListener("onPingUpdate", this.onPingUpdate);
+        Ping.app.eventTarget.addEventListener("onPingUpdate", this.onPingUpdate);
     }
 
     onRemove() {
@@ -80,7 +81,7 @@ class Component {
         Friends.app.eventTarget.removeEventListener("onDataChange", this.onFriendUpdate);
         Friends.app.eventTarget.removeEventListener("onAdd", this.onFriendUpdate);
         Friends.app.eventTarget.removeEventListener("onRemove", this.onFriendRemove);
-        P2p.webRtcEndpoint.removeEventListener("onPingUpdate", this.onPingUpdate);
+        Ping.app.eventTarget.removeEventListener("onPingUpdate", this.onPingUpdate);
     }
 
     // internal

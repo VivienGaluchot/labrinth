@@ -1,6 +1,7 @@
 "use strict";
 
 import * as Friends from '/lib/p2p-apps/friends.mjs';
+import * as Ping from '/lib/p2p-apps/ping.mjs';
 import * as P2p from '/lib/p2p.mjs';
 import * as Storage from '/lib/storage.mjs';
 import { FNode, FButton } from '/lib/fdom.mjs';
@@ -26,6 +27,34 @@ function populateLocalStorageTbody(element) {
         element.appendChild(tr.element);
     }
 }
+
+function getIceCandidates(onicecandidate) {
+    let pc = new RTCPeerConnection(rtcPeerConnectionConfig);
+    pc.onicecandidate = (event) => {
+        if (event.candidate) {
+            if (event.candidate.candidate === '') {
+                onicecandidate(null);
+            } else {
+                console.info("ice candidate", event.candidate.candidate);
+                // TODO parse event.candidate.candidate fields
+                onicecandidate(event.candidate.candidate);
+            }
+        }
+    };
+
+    const offerOptions = { iceRestart: true, offerToReceiveAudio: true, offerToReceiveVideo: false };
+    pc.createOffer(offerOptions)
+        .then((desc) => {
+            pc.setLocalDescription(desc)
+                .then(() => {
+                    console.log("setLocalDescription terminated");
+                }).catch((error) => {
+                    console.error("setLocalDescription error", error);
+                });
+        }).catch((error) => {
+            console.error("createOffer error", error);
+        });
+};
 
 
 class Component {
@@ -153,8 +182,8 @@ class Component {
                             .child(new FNode("div").text("Signaling is ").child(getNode(signaling)))
                             .child(new FNode("div").text("ICE is ").child(getNode(ice)))
                             .child(new FNode("div").text("Global is ").child(getNode(con.state))));
-                    if (con.pingDelayInMs)
-                        tr.child(new FNode("td").text(`${con.pingDelayInMs} ms`));
+                    if (Ping.app.getDelayInMs(con.peerId))
+                        tr.child(new FNode("td").text(`${Ping.app.getDelayInMs(con.peerId)} ms`));
                     else
                         tr.child(new FNode("td").text(`- ms`));
                     tr.child(new FNode("td")
@@ -176,7 +205,7 @@ class Component {
         webRtcEndpoint.addEventListener("onRegister", updateP2pPeers);
         webRtcEndpoint.addEventListener("onUnregister", updateP2pPeers);
         webRtcEndpoint.addEventListener("onStateUpdate", updateP2pPeers);
-        webRtcEndpoint.addEventListener("onPingUpdate", updateP2pPeers);
+        Ping.app.eventTarget.addEventListener("onPingUpdate", updateP2pPeers);
         updateP2pPeers();
 
         let handleP2pConnection = (event) => {
@@ -348,7 +377,7 @@ class Component {
                 iceCandidatesEl.firstChild.remove()
             }
 
-            Channel.getIceCandidates((candidate) => {
+            getIceCandidates((candidate) => {
                 console.log("candidate", candidate);
                 if (candidate) {
                     let tr = new FNode("tr")

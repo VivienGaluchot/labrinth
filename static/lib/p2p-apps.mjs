@@ -18,7 +18,7 @@ class NetworkManager {
         // peerId -> Set(appName)
         this.requestedChannels = new Map();
 
-        // peerIs -> channel
+        // peerIs -> [channel]
         this.channels = new Map();
 
         this.webRtcEndpoint.addEventListener("onRegister", (event) => {
@@ -62,35 +62,47 @@ class NetworkManager {
     }
 
     sendMessage(app, peerId, data) {
-        this.channels.get(peerId).send({ app: app.name, data: data });
+        let minBufferedAmount = null;
+        let selectedChan = null;
+        for (let chan of this.channels.get(peerId)) {
+            let bufferedAmount = chan.getBufferedAmount();
+            if (minBufferedAmount == null || minBufferedAmount > bufferedAmount) {
+                selectedChan = chan;
+            }
+        }
+        selectedChan.send({ app: app.name, data: data });
     }
 
     // internal
 
-    handleChanMessage(chan, data) {
+    handleChanMessage(peerId, data) {
         if (data.app != undefined && data.data != undefined && this.apps.has(data.app)) {
-            this.apps.get(data.app).onMessage(chan.peerId, data.data);
+            this.apps.get(data.app).onMessage(peerId, data.data);
         } else {
             console.warn(`message dropped ${JSON.stringify(data)}`);
         }
     }
 
-    handleChanStateUpdate(chan, state) {
-        if (this.requestedChannels.has(chan.peerId)) {
-            for (let appName of this.requestedChannels.get(chan.peerId)) {
-                this.apps.get(appName).onChannelStateChange(chan.peerId, state);
+    handleChanStateUpdate(peerId, state) {
+        if (this.requestedChannels.has(peerId)) {
+            for (let appName of this.requestedChannels.get(peerId)) {
+                this.apps.get(appName).onChannelStateChange(peerId, state);
             }
         }
     }
 
     handleP2pConnection(event) {
         let connection = event.connection;
-        let chan_1 = connection.getChannel("apps-1", 1);
-        // TODO multiplex messages over multiple channels to prevent lock
-        // when a long message is emitted
-        let chan_2 = connection.getChannel("apps-2", 2);
-        let chan_3 = connection.getChannel("apps-3", 3);
         let peerId = connection.peerId;
+
+        let channels = [
+            connection.getChannel("apps-1", 1),
+            connection.getChannel("apps-2", 2),
+            connection.getChannel("apps-3", 3),
+            connection.getChannel("apps-4", 4),
+            connection.getChannel("apps-5", 5),
+            connection.getChannel("apps-6", 6)
+        ];
 
         for (let [appName, app] of this.apps) {
             if (!this.requestedChannels.has(peerId) || !this.requestedChannels.get(peerId).has(appName)) {
@@ -98,14 +110,22 @@ class NetworkManager {
             }
         }
 
-        this.channels.set(peerId, chan_1);
-        chan_1.onmessage = (data) => {
-            this.handleChanMessage(chan_1, data);
-        };
-        chan_1.onStateUpdate = (state) => {
-            this.handleChanStateUpdate(chan_1, state);
-        };
-        chan_1.connect();
+        let lastState = null;
+        this.channels.set(peerId, channels);
+        for (let chan of channels) {
+            chan.onmessage = (data) => {
+                this.handleChanMessage(peerId, data);
+            };
+            chan.onStateUpdate = (state) => {
+                if (lastState != state) {
+                    this.handleChanStateUpdate(peerId, state);
+                    lastState = state;
+                }
+            };
+        }
+        for (let chan of channels) {
+            chan.connect();
+        }
     }
 }
 

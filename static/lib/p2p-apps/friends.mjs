@@ -23,8 +23,6 @@ class FriendEvent extends Event {
 
 
 // TODO list
-// * produce event on friend connection / data update
-// * on local data update send new value to peers
 // * do not answer to peer if not in friend list
 
 /**

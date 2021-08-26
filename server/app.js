@@ -68,6 +68,9 @@ mimeMap.set(".jpeg", "image/jpeg");
 mimeMap.set(".jpg", "image/jpeg");
 mimeMap.set(".png", "image/png");
 mimeMap.set(".svg", "image/svg+xml");
+mimeMap.set(".eot", "application/vnd.ms-fontobject");
+mimeMap.set(".ttf", "application/font-sfnt");
+mimeMap.set(".woff", "application/font-woff");
 
 function sendFile(pathname, response) {
     fs.readFile(pathname, (err, data) => {

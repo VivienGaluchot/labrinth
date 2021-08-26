@@ -1,9 +1,12 @@
+@import url('node_modules/@fortawesome/fontawesome-free/css/all.css');
 * {
     box-sizing: border-box;
 }
 
 html {
     font-family: 'Roboto', sans-serif;
+    font-weight: 200;
+    font-size: 16px;
     scrollbar-color: #151515 #202020;
 }
 
@@ -82,6 +85,14 @@ p {
     max-width: 64ch;
     margin: 0;
     padding: .5rem 0;
+}
+
+b {
+    font-weight: 600;
+}
+
+small {
+    font-weight: 200;
 }
 
 /* specific page design */
@@ -198,15 +209,13 @@ button.outline {
     color: var(--pop-color);
 }
 
-button.text-icon {
+button.link {
     background-color: transparent;
     color: var(--pop-color);
     border: 1px solid transparent;
-    font-size: 1.8rem;
-    padding: 0;
 }
 
-button.text-icon:focus, button.text-icon:hover {
+button.link:focus, button.link:hover {
     text-decoration: none;
     border: 1px solid var(--pop-color);
 }

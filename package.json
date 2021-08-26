@@ -6,6 +6,7 @@
   "author": "vgaluchot",
   "license": "ISC",
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^5.15.4",
     "node": "^15.3.0",
     "websocket": "^1.0.31"
   },
@@ -15,6 +16,7 @@
   "main": "server/app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "install": "mkdir -p static/node_modules && rm -f static/node_modules/@fortawesome && cd static/node_modules/ && ln -s ../../node_modules/@fortawesome/ @fortawesome",
     "start": "node server/app.js"
   },
   "repository": {

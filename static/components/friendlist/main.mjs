@@ -3,7 +3,7 @@
 import * as Friends from '/lib/p2p-apps/friends.mjs';
 import * as Ping from '/lib/p2p-apps/ping.mjs';
 import * as P2p from '/lib/p2p.mjs';
-import { FNode, FButton } from '/lib/fdom.mjs';
+import { FNode, FButton, FIcon } from '/lib/fdom.mjs';
 
 class Component {
     constructor(element) {
@@ -130,8 +130,8 @@ class Component {
                 .onclick(() => {
                     // TODO
                 }));
-            li.child(new FButton().class("outline text-icon grey")
-                .text("🗑")
+            li.child(new FButton().class("outline link grey")
+                .child(new FIcon('fa-trash-alt'))
                 .onclick(() => {
                     this.element.querySelector("#del-confirm-modal").internal.ask().then((choice) => {
                         if (choice == "yes") {

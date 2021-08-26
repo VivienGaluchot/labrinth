@@ -1,0 +1,58 @@
+{
+    "name": "Labrinth",
+    "short_name": "Labrinth",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#303030",
+    "description": "P2P web application",
+    "icons": [
+        {
+            "src": "img/icon_x48.png",
+            "type": "image/png",
+            "sizes": "48x48",
+            "purpose": "any"
+        },
+        {
+            "src": "img/icon_x72.png",
+            "type": "image/png",
+            "sizes": "72x72",
+            "purpose": "any"
+        },
+        {
+            "src": "img/icon_x96.png",
+            "type": "image/png",
+            "sizes": "96x96",
+            "purpose": "any"
+        },
+        {
+            "src": "img/icon_x128.png",
+            "type": "image/png",
+            "sizes": "128x128",
+            "purpose": "any"
+        },
+        {
+            "src": "img/icon_x192.png",
+            "type": "image/png",
+            "sizes": "192x192",
+            "purpose": "any"
+        },
+        {
+            "src": "img/icon_x384.png",
+            "type": "image/png",
+            "sizes": "384x384",
+            "purpose": "any"
+        },
+        {
+            "src": "img/icon_x512.png",
+            "type": "image/png",
+            "sizes": "512x512",
+            "purpose": "any"
+        },
+        {
+            "src": "img/logo.svg",
+            "type": "image/svg",
+            "sizes": "48x48 72x72 96x96 128x128 144x144 256x256",
+            "purpose": "any"
+        }
+    ]
+}

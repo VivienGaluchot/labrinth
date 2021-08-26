@@ -50,5 +50,11 @@ class FButton extends FNode {
     }
 }
 
+class FIcon extends FNode {
+    constructor(iconClass) {
+        super("i");
+        this.class(`fas ${iconClass}`);
+    }
+}
 
-export { FNode, FButton }
+export { FNode, FButton, FIcon }

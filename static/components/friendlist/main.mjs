@@ -125,12 +125,12 @@ class Component {
             .child(new FNode("div").class("ping"));
 
         if (!isLocal) {
-            li.child(new FButton().class("outline grey")
+            li.child(new FButton().class("discreet grey")
                 .text("Chat")
                 .onclick(() => {
                     // TODO
                 }));
-            li.child(new FButton().class("outline link grey")
+            li.child(new FButton().class("discreet grey")
                 .child(new FIcon('fa-trash-alt'))
                 .onclick(() => {
                     this.element.querySelector("#del-confirm-modal").internal.ask().then((choice) => {
@@ -140,7 +140,7 @@ class Component {
                     });
                 }));
         } else {
-            li.child(new FButton().class("outline grey")
+            li.child(new FButton().class("discreet grey")
                 .text("Profile")
                 .onclick(() => {
                     this.showProfileForm();

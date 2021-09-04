@@ -1,8 +1,8 @@
 <template>
-    <ul>
+    <ul class="fList">
     </ul>
     <div class="tools">
-        <button id="add-friend-modal-btn" class="outline grey">Add friends</button>
+        <button id="add-friend-modal-btn" class="discreet grey">Add friends</button>
     </div>
 
     <min-component id="profile-modal" data-path="/components/ui/modal">
@@ -77,8 +77,8 @@
             </div>
         </div>
         <div slot="choices">
-            <button class="green" data-choice="apply">Ok</button>
-            <button class="blue">Cancel</button>
+            <button data-choice="apply">Ok</button>
+            <button class="discreet">Cancel</button>
         </div>
     </min-component>
 
@@ -87,7 +87,7 @@
         <div slot="content">
             <div class="form-field">
                 <div>Your id is <code id="add-friend-local-id">[todo]</code>
-                    <button class="link green"><i class="fas fa-copy"></i></button>
+                    <button><i class="fas fa-copy"></i></button>
                 </div>
                 <small>Share this id with friends to be able to communicate.<br>
                     Do not share this id publicly, private information may be leaked.
@@ -97,7 +97,7 @@
                 <label>Friend id</label>
                 <div class="input-and-button">
                     <input id="add-friend-id" placeholder="enter friend id" value="">
-                    <button id="add-friend-btn" class="outline grey">Add</button>
+                    <button id="add-friend-btn" class="discreet grey">Add</button>
                 </div>
             </div>
         </div>
@@ -109,8 +109,8 @@
             Do you really want to remove this friend ?
         </p>
         <div slot="choices">
-            <button class="green" data-choice="yes">Continue</button>
-            <button class="blue">Cancel</button>
+            <button data-choice="yes">Yes</button>
+            <button class="discreet">Cancel</button>
         </div>
     </min-component>
 </template>

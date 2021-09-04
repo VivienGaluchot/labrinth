@@ -180,9 +180,8 @@ button {
     --pop-color-sub: 255, 255, 255;
     --pop-color: rgba(var(--pop-color-sub), 0.7);
     font-size: 1rem;
-    line-height: 100%;
     padding: .4rem;
-    border-radius: .5rem;
+    border-radius: .4rem;
     user-select: none;
     border: none;
     cursor: pointer;
@@ -203,35 +202,14 @@ button:active {
     box-shadow: 0 0 0 .2rem rgba(var(--pop-color-sub), 0.4);
 }
 
-button.outline {
-    background-color: transparent;
-    border: 1px solid var(--pop-color);
+button.discreet {
     color: var(--pop-color);
+    background-color: rgba(var(--pop-color-sub), 0.1);
 }
 
-button.link {
-    background-color: transparent;
-    color: var(--pop-color);
-    border: 1px solid transparent;
-}
-
-button.link:focus, button.link:hover {
+button.discreet:focus, button.discreet:hover {
     text-decoration: none;
-    border: 1px solid var(--pop-color);
-}
-
-button.icon {
-    padding: .25rem;
-    border-radius: .5rem;
-    background-color: transparent;
-}
-
-button.icon img {
-    width: 1rem;
-    height: 1rem;
-    margin: .2rem;
-    padding: 0;
-    vertical-align: middle;
+    background-color: rgba(var(--pop-color-sub), 0.2);
 }
 
 /* form */
@@ -241,8 +219,12 @@ input {
     background-color: hsla(216, 77%, 76%, 0.1);
     border: none;
     font-size: 1rem;
-    padding: .5rem;
-    border-radius: .5rem;
+    padding: .4rem;
+    border-radius: .4rem;
+}
+
+input:focus, input:hover {
+    background-color: hsla(216, 77%, 76%, 0.2);
 }
 
 /* flavours */
@@ -392,21 +374,15 @@ header h1 {
     font-weight: 300;
 }
 
-button.icon.sidebar-toggle {
-    padding: .25rem;
-    border-radius: .5rem;
-    align-items: center;
-    justify-content: center;
+button.sidebar-toggle {
+    font-size: 1.2rem;
 }
 
-button.icon.sidebar-toggle img {
-    width: 1.2rem;
-    height: 1.2rem;
+button.sidebar-toggle i {
     transition: transform 100ms;
-    image-rendering: crisp-edges;
 }
 
-#root.sidebar-active .sidebar-toggle img {
+#root.sidebar-active .sidebar-toggle i {
     transform: rotate(45deg);
     transition: transform 100ms ease-out;
 }

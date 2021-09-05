@@ -66,11 +66,7 @@ li button {
 li .ping {
     font-size: small;
     opacity: .2;
-    align-self: start;
-}
-
-li:hover .ping {
-    display: none;
+    margin-left: .8rem;
 }
 
 /* profile pictures */

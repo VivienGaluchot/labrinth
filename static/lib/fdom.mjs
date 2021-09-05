@@ -11,7 +11,8 @@ class FNode {
     }
 
     text(innerText) {
-        this.element.innerText = innerText;
+        let text = document.createTextNode(innerText);
+        this.element.appendChild(text);
         return this;
     }
 
@@ -53,7 +54,7 @@ class FButton extends FNode {
 class FIcon extends FNode {
     constructor(iconClass) {
         super("i");
-        this.class(`fas ${iconClass}`);
+        this.class(iconClass);
     }
 }
 

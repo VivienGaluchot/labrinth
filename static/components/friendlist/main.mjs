@@ -22,25 +22,40 @@ class Component {
 
         // add friend form
         this.element.querySelector("#add-friend-modal-btn").onclick = () => {
-            this.element.querySelector("#add-friend-local-id").innerText = P2p.localEndpoint.user;
             this.element.querySelector("#add-friend-modal").internal.show();
+        };
+        this.element.querySelector("#add-friend-local-id-safe").innerText = this.maskUserId(P2p.localEndpoint.user);
+        this.element.querySelector("#add-friend-local-id-full").innerText = P2p.localEndpoint.user;
+        this.element.querySelector("#add-friend-local-id-copy").onclick = (event) => {
+            let resCls = null;
+            try {
+                navigator.clipboard.writeText(P2p.localEndpoint.user);
+                resCls = "success";
+            } catch (err) {
+                console.exception(err);
+                resCls = "error";
+            }
+            this.element.querySelector("#add-friend-local-id").classList.add(resCls);
+            setTimeout(() => {
+                this.element.querySelector("#add-friend-local-id").classList.remove(resCls);
+            }, 1000);
+        };
+        this.element.querySelector("#add-friend-local-id-show").onclick = () => {
+            this.element.querySelector("#add-friend-local-id-full").classList.toggle("js-hidden");
+            this.element.querySelector("#add-friend-local-id-safe").classList.toggle("js-hidden");
         };
         this.element.querySelector("#add-friend-btn").onclick = () => {
             let input = this.element.querySelector("#add-friend-id");
             let userId = input.value;
             try {
                 Friends.app.add(userId, null);
-                input.classList.add("success");
-                setTimeout(() => {
-                    input.classList.remove("success");
-                    input.value = "";
-                }, 1000);
+                this.element.querySelector("#add-friend-modal").internal.close();
+                input.value = "";
             } catch (err) {
                 console.exception(err);
                 input.classList.add("error");
                 setTimeout(() => {
                     input.classList.remove("error");
-                    input.value = "";
                 }, 1000);
             }
         };
@@ -86,6 +101,10 @@ class Component {
 
     // internal
 
+    maskUserId(userId) {
+        return "***" + userId.slice(12);
+    }
+
     showProfileForm() {
         let data = Friends.app.getLocalData();
         let name = data.name;
@@ -118,20 +137,25 @@ class Component {
             li.class(isConnected ? "connected" : "disconnected");
         }
 
+        let maskedId = this.maskUserId(userId);
         li.child(new FNode("div").class("profile-picture").class(picture));
+
+        let subLine = new FNode("div")
+            .child(new FNode("span").id("friends-local-id").class("id").text(maskedId))
+            .child(new FNode("span").class("ping"));
+
         li.child(new FNode("div").class("infos")
             .child(new FNode("div").id("friends-local-name").class("name").text(name))
-            .child(new FNode("div").id("friends-local-id").class("id").text(userId)))
-            .child(new FNode("div").class("ping"));
+            .child(subLine));
 
         if (!isLocal) {
             li.child(new FButton().class("discreet grey")
-                .text("Chat")
+                .child(new FIcon("far fa-comments"))
                 .onclick(() => {
                     // TODO
                 }));
             li.child(new FButton().class("discreet grey")
-                .child(new FIcon('fa-trash-alt'))
+                .child(new FIcon('far fa-trash-alt'))
                 .onclick(() => {
                     this.element.querySelector("#del-confirm-modal").internal.ask().then((choice) => {
                         if (choice == "yes") {

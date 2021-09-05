@@ -177,8 +177,7 @@ tbody>tr {
 }
 
 button {
-    --pop-color-sub: 255, 255, 255;
-    --pop-color: rgba(var(--pop-color-sub), 0.7);
+    --pop-color-rgb: 255, 255, 255;
     font-size: 1rem;
     padding: .4rem;
     border-radius: .4rem;
@@ -186,30 +185,34 @@ button {
     border: none;
     cursor: pointer;
     color: #242424;
-    background-color: var(--pop-color);
+    background-color: rgba(var(--pop-color-rgb), 0.7);
 }
 
 button:focus, button:hover {
-    --pop-color: rgba(var(--pop-color-sub), 1);
+    background-color: rgba(var(--pop-color-rgb), 1);
     text-decoration: underline;
 }
 
 button:focus {
-    box-shadow: 0 0 0 .1rem rgba(var(--pop-color-sub), 0.4);
+    box-shadow: 0 0 0 .1rem rgba(var(--pop-color-rgb), 0.4);
 }
 
 button:active {
-    box-shadow: 0 0 0 .2rem rgba(var(--pop-color-sub), 0.4);
+    box-shadow: 0 0 0 .2rem rgba(var(--pop-color-rgb), 0.4);
 }
 
 button.discreet {
-    color: var(--pop-color);
-    background-color: rgba(var(--pop-color-sub), 0.1);
+    color: rgba(var(--pop-color-rgb), 1);
+    background-color: rgba(var(--pop-color-rgb), 0.1);
+}
+
+button.discreet.transparent {
+    background-color: rgba(var(--pop-color-rgb), 0);
 }
 
 button.discreet:focus, button.discreet:hover {
     text-decoration: none;
-    background-color: rgba(var(--pop-color-sub), 0.2);
+    background-color: rgba(var(--pop-color-rgb), 0.2);
 }
 
 /* form */
@@ -228,6 +231,30 @@ input:focus, input:hover {
 }
 
 /* flavours */
+
+.grey {
+    --pop-color-rgb: 186, 186, 186;
+}
+
+.darkgrey {
+    --pop-color-rgb: 100, 100, 100;
+}
+
+.blue {
+    --pop-color-rgb: 51, 133, 255;
+}
+
+.green {
+    --pop-color-rgb: 51, 255, 95;
+}
+
+.red {
+    --pop-color-rgb: 255, 51, 85;
+}
+
+.yellow {
+    --pop-color-rgb: 255, 252, 51;
+}
 
 code.verbose, code.success, input.success {
     color: hsl(133, 77%, 76%);
@@ -254,31 +281,11 @@ code.error, code.failure, input.error {
     background-color: hsla(350, 77%, 76%, 0.1);
 }
 
-button.grey {
-    --pop-color-sub: 186, 186, 186;
-}
-
-button.blue {
-    --pop-color-sub: 51, 133, 255;
-}
-
-button.green {
-    --pop-color-sub: 51, 255, 95;
-}
-
-button.red {
-    --pop-color-sub: 255, 51, 85;
-}
-
-button.yellow {
-    --pop-color-sub: 255, 252, 51;
-}
-
 /* #root layout */
 
 #root {
     display: grid;
-    grid-template-columns: 20rem 1fr;
+    grid-template-columns: 22rem 1fr;
     grid-template-rows: min-content 1fr min-content;
 }
 

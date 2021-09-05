@@ -86,19 +86,31 @@
         <span slot="title">Add friends</span>
         <div slot="content">
             <div class="form-field">
-                <div>Your id is <code id="add-friend-local-id">[todo]</code>
-                    <button><i class="fas fa-copy"></i></button>
-                </div>
-                <small>Share this id with friends to be able to communicate.<br>
-                    Do not share this id publicly, private information may be leaked.
-                </small>
             </div>
             <div class="form-field">
-                <label>Friend id</label>
+                <div>To add a friend, send your user-id
+                </div>
+                <div>
+                    <code id="add-friend-local-id">
+                    <span id="add-friend-local-id-safe"></span>
+                    <span id="add-friend-local-id-full" class="js-hidden"></span>
+                    </code>
+                    <button id="add-friend-local-id-copy" class="discreet grey"><i class="far fa-copy"></i></button>
+                    <button id="add-friend-local-id-show" class="discreet grey">show</button>
+                </div>
+            </div>
+            <div class="form-field">
+                <label>or copy his bellow</label>
                 <div class="input-and-button">
                     <input id="add-friend-id" placeholder="enter friend id" value="">
                     <button id="add-friend-btn" class="discreet grey">Add</button>
                 </div>
+            </div>
+            <div class="form-field">
+                <small>
+                    Do not share ids publicly, private information may be leaked</br>
+                    like public IP address.
+                </small>
             </div>
         </div>
     </min-component>

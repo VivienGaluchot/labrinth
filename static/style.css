@@ -201,18 +201,23 @@ button:active {
     box-shadow: 0 0 0 .2rem rgba(var(--pop-color-rgb), 0.4);
 }
 
-button.discreet {
+button.discreet, button.transparent {
     color: rgba(var(--pop-color-rgb), 1);
     background-color: rgba(var(--pop-color-rgb), 0.1);
-}
-
-button.discreet.transparent {
-    background-color: rgba(var(--pop-color-rgb), 0);
 }
 
 button.discreet:focus, button.discreet:hover {
     text-decoration: none;
     background-color: rgba(var(--pop-color-rgb), 0.2);
+}
+
+button.transparent {
+    background-color: transparent;
+}
+
+button.transparent:focus, button.transparent:hover {
+    text-decoration: none;
+    background-color: rgba(var(--pop-color-rgb), 0.1);
 }
 
 /* form */

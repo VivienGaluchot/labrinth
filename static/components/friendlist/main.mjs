@@ -149,12 +149,12 @@ class Component {
             .child(subLine));
 
         if (!isLocal) {
-            li.child(new FButton().class("discreet grey")
+            li.child(new FButton().class("transparent grey")
                 .child(new FIcon("far fa-comments"))
                 .onclick(() => {
                     // TODO
                 }));
-            li.child(new FButton().class("discreet grey")
+            li.child(new FButton().class("transparent grey")
                 .child(new FIcon('far fa-trash-alt'))
                 .onclick(() => {
                     this.element.querySelector("#del-confirm-modal").internal.ask().then((choice) => {
@@ -164,7 +164,7 @@ class Component {
                     });
                 }));
         } else {
-            li.child(new FButton().class("discreet grey")
+            li.child(new FButton().class("transparent grey")
                 .text("Profile")
                 .onclick(() => {
                     this.showProfileForm();

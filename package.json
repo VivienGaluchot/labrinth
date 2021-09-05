@@ -16,8 +16,8 @@
   "main": "server/app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "install": "mkdir -p static/node_modules && rm -f static/node_modules/@fortawesome && cd static/node_modules/ && ln -s ../../node_modules/@fortawesome/ @fortawesome",
-    "start": "node server/app.js"
+    "build": "rm -rf static/node_modules && mkdir -p static/node_modules && cp -r node_modules/@fortawesome/fontawesome-free static/node_modules/fontawesome",
+    "start": "node -optimize_for_size --gc_interval=100 server/app.js"
   },
   "repository": {
     "type": "git",

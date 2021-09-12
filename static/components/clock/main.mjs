@@ -8,7 +8,7 @@ class Component {
 
     onRender() {
         let update = () => {
-            this.clockElement.innerText = new Date().toLocaleTimeString();
+            this.clockElement.textContent = new Date().toLocaleTimeString();
         };
         this.interval = setInterval(update, 1000);
         update();

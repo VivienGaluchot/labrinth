@@ -5,7 +5,7 @@
 
 html {
     font-family: 'Roboto', sans-serif;
-    font-weight: 200;
+    font-weight: 300;
     font-size: 16px;
     scrollbar-color: #151515 #202020;
 }
@@ -270,7 +270,9 @@ button.transparent:focus, button.transparent:hover {
 
 /* form */
 
-input {
+input, textarea {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
     --text-color: hsl(var(--pop-color-hsl));
     color: var(--text-color);
     background-color: hsla(var(--pop-color-hsl), 0.1);
@@ -280,17 +282,18 @@ input {
     border-radius: .4rem;
 }
 
-input:focus, input:hover {
+input:focus, input:hover, textarea:focus, textarea:hover {
     background-color: hsla(var(--pop-color-hsl), 0.2);
 }
 
-input:focus-visible {
+input:focus-visible, textarea:focus-visible {
     outline: .1rem solid var(--text-color);
 }
 
 /* text */
 
 code {
+    --pop-color-hsl: var(--blue-color-hsl);
     color: hsl(var(--pop-color-hsl));
     background-color: hsla(var(--pop-color-hsl), 0.1);
 }
@@ -479,6 +482,10 @@ footer {
 
 /* min-component */
 
+min-component {
+    display: block;
+}
+
 min-component.render {
     display: inline-block;
     border-left: .0rem;
@@ -497,7 +504,6 @@ min-component.render {
 }
 
 min-component.error {
-    display: block;
     border: 1px solid red;
     background-color: #FF000010;
     border-radius: .2rem;

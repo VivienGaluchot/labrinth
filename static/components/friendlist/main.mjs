@@ -24,8 +24,8 @@ class Component {
         this.element.querySelector("#add-friend-modal-btn").onclick = () => {
             this.element.querySelector("#add-friend-modal").internal.show();
         };
-        this.element.querySelector("#add-friend-local-id-safe").innerText = this.maskUserId(P2p.localEndpoint.user);
-        this.element.querySelector("#add-friend-local-id-full").innerText = P2p.localEndpoint.user;
+        this.element.querySelector("#add-friend-local-id-safe").textContent = this.maskUserId(P2p.localEndpoint.user);
+        this.element.querySelector("#add-friend-local-id-full").textContent = P2p.localEndpoint.user;
         this.element.querySelector("#add-friend-local-id-copy").onclick = (event) => {
             let resCls = null;
             try {
@@ -85,7 +85,7 @@ class Component {
             let userId = P2p.RemoteEndpoint.deserialize(event.peerId).user;
             if (this.userElements.has(userId)) {
                 let text = `${event.delayInMs} ms`;
-                this.userElements.get(userId).querySelector(".ping").innerText = text;
+                this.userElements.get(userId).querySelector(".ping").textContent = text;
             }
         };
         Ping.app.eventTarget.addEventListener("onPingUpdate", this.onPingUpdate);

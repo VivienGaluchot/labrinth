@@ -10,9 +10,10 @@ class FNode {
         this.element.classList.add()
     }
 
-    text(innerText) {
-        let text = document.createTextNode(innerText);
-        this.element.appendChild(text);
+    text(value) {
+        let span = document.createElement("span");
+        span.innerText = value;
+        this.element.appendChild(span);
         return this;
     }
 

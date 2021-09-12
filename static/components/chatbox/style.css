@@ -1,0 +1,67 @@
+@import url('/style.css');
+.box {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
+}
+
+.history {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: .4rem;
+    display: flex;
+    flex-direction: column;
+    padding: .2rem;
+    overflow: auto;
+}
+
+.msg-remote, .msg-local {
+    border-radius: .4rem;
+    padding: .4rem;
+    margin: .4rem;
+    min-width: 25%;
+    max-width: calc(90% - .4rem - .4rem);
+    word-wrap: break-word;
+    display: flex;
+    flex-wrap: wrap;
+    color: white;
+    background-color: hsla(var(--pop-color-hsl), 0.1);
+}
+
+.info {
+    font-size: .8rem;
+    opacity: .2;
+    text-align: center;
+    margin: .4rem;
+}
+
+.msg-remote {
+    background-color: hsla(var(--grey-color-hsl), 0.1);
+    align-self: flex-start;
+}
+
+.msg-local {
+    background-color: hsla(var(--blue-color-hsl), 0.1);
+    align-self: flex-end;
+}
+
+.user {
+    font-size: .8rem;
+    opacity: .4;
+}
+
+.content {
+    width: 100%;
+}
+
+.new-msg {
+    padding-top: .5rem;
+    display: flex;
+}
+
+.new-msg textarea {
+    flex-grow: 1;
+    margin-right: .5rem;
+    min-height: 3rem;
+    height: 3rem;
+    resize: none;
+}

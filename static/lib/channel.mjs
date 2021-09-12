@@ -239,6 +239,13 @@ class WebRtcConnectionEvent extends Event {
     }
 }
 
+class SignalingConnectionStateEvent extends Event {
+    constructor(type, state) {
+        super(type);
+        this.state = state;
+    }
+}
+
 /**
  *  WebRtcEndpoint allows to exchange offers through a websocket server and create
  *  WebRTC connections with other peers
@@ -252,6 +259,7 @@ class WebRtcConnectionEvent extends Event {
  *   - onConnect: WebRtcConnectionEvent
  *   - onDisconnect: WebRtcConnectionEvent
  *   - onStateUpdate: WebRtcConnectionEvent
+ *   - onSignalingConnectionStateUpdate: SignalingConnectionStateEvent
  */
 class WebRtcEndpoint extends EventTarget {
     constructor(localId) {
@@ -326,6 +334,7 @@ class WebRtcEndpoint extends EventTarget {
                             reject(`can't register local endpoint\n - ${reason}`);
                         });
                 }
+                this.dispatchEvent(new SignalingConnectionStateEvent("onSignalingConnectionStateUpdate", state));
             };
             this.socket.connect();
         });

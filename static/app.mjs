@@ -5,7 +5,8 @@ import '/lib/sw-interface.mjs';
 // web component lib, register custom element "min-component"
 import '/lib/min-component.mjs';
 
-import '/lib/channel.mjs';
+import * as Channel from '/lib/channel.mjs';
+import * as P2p from '/lib/p2p.mjs';
 
 
 // basic pages
@@ -139,3 +140,27 @@ for (const link of document.getElementsByClassName("js-local-link")) {
 
 // render the current page
 renderPage(window.location.href);
+
+// connection status
+P2p.webRtcEndpoint.addEventListener("onSignalingConnectionStateUpdate", (event) => {
+    let state = event.state;
+    let el = document.body.querySelector("footer .server-con-status");
+
+    if (state == Channel.State.CLOSED) {
+        el.classList.remove("success");
+        el.classList.remove("warning");
+        el.classList.add("error");
+        el.textContent = "disconnected";
+    } else if (state == Channel.State.CONNECTING) {
+        el.classList.remove("success");
+        el.classList.remove("error");
+        el.classList.add("warning");
+        el.textContent = "connecting...";
+    } else if (state == Channel.State.CONNECTED) {
+        el.classList.remove("warning");
+        el.classList.remove("error");
+        el.classList.add("success");
+        el.textContent = "connected";
+    }
+
+});

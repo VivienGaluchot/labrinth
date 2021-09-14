@@ -280,6 +280,8 @@ input, textarea {
     font-size: 1rem;
     padding: .4rem;
     border-radius: .4rem;
+    line-height: 1rem;
+    font-size: 1rem;
 }
 
 input:focus, input:hover, textarea:focus, textarea:hover {
@@ -287,7 +289,7 @@ input:focus, input:hover, textarea:focus, textarea:hover {
 }
 
 input:focus-visible, textarea:focus-visible {
-    outline: .1rem solid var(--text-color);
+    outline: 1px solid hsla(var(--pop-color-hsl), 0.5);
 }
 
 /* text */

@@ -61,7 +61,11 @@
 .new-msg textarea {
     flex-grow: 1;
     margin-right: .5rem;
-    min-height: 3rem;
-    height: 3rem;
+    padding: .4rem;
+    line-height: 1rem;
+    min-height: calc(1rem + .8rem);
+    height: calc(1rem + .8rem);
+    max-height: calc(5 * (1rem + .8rem));
     resize: none;
+    overflow: auto;
 }

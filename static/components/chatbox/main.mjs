@@ -14,8 +14,18 @@ class Component {
         this.history = this.element.querySelector(".history");
         this.history.scrollTop = this.history.scrollHeight - this.history.clientHeight;
 
+        let resizeSendBox = () => {
+            let wasBottom = this.history.scrollTop == this.history.scrollHeight - this.history.clientHeight;
+            this.sendMsg.style.height = "1px";
+            this.sendMsg.style.height = (this.sendMsg.scrollHeight) + "px";
+            this.sendMsg.scrollTop = this.sendMsg.scrollHeight - this.sendMsg.clientHeight;
+            if (wasBottom) {
+                this.history.scrollTop = this.history.scrollHeight - this.history.clientHeight;
+            }
+        };
         this.sendBtn.onclick = () => {
             this.sendTextareaContent();
+            resizeSendBox();
         };
         this.sendMsg.onkeypress = (event) => {
             let prevent = false;
@@ -27,8 +37,10 @@ class Component {
                 }
                 prevent = true;
             }
+            resizeSendBox();
             return !prevent;
         };
+        this.sendMsg.oninput = resizeSendBox;
     }
 
     onRemove() {

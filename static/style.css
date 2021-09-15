@@ -100,44 +100,46 @@ small {
 body {
     --white-color-hsl: 0, 0%, 100%;
     --grey-color-hsl: 0, 0%, 80%;
-    --darkgrey-color-hsl: 0, 0%, 50%;
-    --blue-color-hsl: 216, 100%, 70%;
-    --purple-color-hsl: 251, 100%, 70%;
-    --green-color-hsl: 133, 100%, 70%;
-    --red-color-hsl: 350, 100%, 70%;
-    --yellow-color-hsl: 59, 100%, 70%;
+    --blue-color-hsl: 216, 55%, 70%;
+    --purple-color-hsl: 251, 55%, 70%;
+    --green-color-hsl: 83, 55%, 52%;
+    --red-color-hsl: 350, 55%, 52%;
+    --yellow-color-hsl: 59, 80%, 60%;
 }
 
-body, .white {
-    --pop-color-hsl: var(--white-color-hsl);
-}
-
-.blue {
+body, .blue {
     --pop-color-hsl: var(--blue-color-hsl);
+    --opo-color-hsl: 216, 55%, 17%;
+}
+
+.white {
+    --pop-color-hsl: var(--white-color-hsl);
+    --opo-color-hsl: 0, 0%, 20%;
 }
 
 .grey {
     --pop-color-hsl: var(--grey-color-hsl);
-}
-
-.darkgrey {
-    --pop-color-hsl: var(--darkgrey-color-hsl);
+    --opo-color-hsl: 0, 0%, 10%;
 }
 
 .purple, .debug {
     --pop-color-hsl: var(--purple-color-hsl);
+    --opo-color-hsl: 251, 55%, 20%;
 }
 
 .green, .verbose, .success {
     --pop-color-hsl: var(--green-color-hsl);
+    --opo-color-hsl: 83, 55%, 15%;
 }
 
 .red, .error, .failure {
     --pop-color-hsl: var(--red-color-hsl);
+    --opo-color-hsl: 350, 55%, 17%;
 }
 
 .yellow, .warning {
     --pop-color-hsl: var(--yellow-color-hsl);
+    --opo-color-hsl: 59, 80%, 15%;
 }
 
 /* specific page design */
@@ -220,14 +222,24 @@ tbody>tr {
     border-top: 1px solid #b6b1b120;
 }
 
-button {
+/* common sizing */
+
+button, input, textarea {
+    font-family: 'Roboto', sans-serif;
     font-size: 1rem;
     padding: .4rem;
     border-radius: .4rem;
+    line-height: 1rem;
+}
+
+/* button */
+
+button {
+    font-weight: 500;
     user-select: none;
     border: none;
     cursor: pointer;
-    --text-color: #242424;
+    --text-color: hsl(var(--opo-color-hsl));
     color: var(--text-color);
     background-color: hsla(var(--pop-color-hsl), 1);
 }
@@ -237,11 +249,11 @@ button:focus, button:hover {
 }
 
 button:focus {
-    box-shadow: 0 0 0 .1rem hsla(var(--pop-color-hsl), 0.4);
+    box-shadow: 0 0 0 .1rem hsla(var(--pop-color-hsl), 0.6);
 }
 
 button:active {
-    box-shadow: 0 0 0 .2rem hsla(var(--pop-color-hsl), 0.4);
+    box-shadow: 0 0 0 .2rem hsla(var(--pop-color-hsl), 0.6);
 }
 
 button:focus-visible {
@@ -251,12 +263,12 @@ button:focus-visible {
 
 button.discreet, button.transparent {
     --text-color: hsla(var(--pop-color-hsl), 1);
-    background-color: hsla(var(--pop-color-hsl), 0.1);
+    background-color: hsla(var(--pop-color-hsl), 0.2);
 }
 
 button.discreet:focus, button.discreet:hover {
     text-decoration: none;
-    background-color: hsla(var(--pop-color-hsl), 0.2);
+    background-color: hsla(var(--pop-color-hsl), 0.1);
 }
 
 button.transparent {
@@ -271,17 +283,11 @@ button.transparent:focus, button.transparent:hover {
 /* form */
 
 input, textarea {
-    font-family: 'Roboto', sans-serif;
-    font-weight: 300;
+    font-weight: 400;
     --text-color: hsl(var(--pop-color-hsl));
     color: var(--text-color);
     background-color: hsla(var(--pop-color-hsl), 0.1);
     border: none;
-    font-size: 1rem;
-    padding: .4rem;
-    border-radius: .4rem;
-    line-height: 1rem;
-    font-size: 1rem;
 }
 
 input:focus, input:hover, textarea:focus, textarea:hover {
@@ -295,6 +301,7 @@ input:focus-visible, textarea:focus-visible {
 /* text */
 
 code {
+    font-weight: 400;
     --pop-color-hsl: var(--blue-color-hsl);
     color: hsl(var(--pop-color-hsl));
     background-color: hsla(var(--pop-color-hsl), 0.1);

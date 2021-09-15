@@ -43,9 +43,27 @@ class Component {
 
     // custom API
 
+    focusInside() {
+        for (let node of this.element.querySelector("#content slot").assignedNodes()) {
+            let focusable = node.querySelector("button, input, select, textarea");
+            if (focusable) {
+                focusable.focus();
+                return;
+            }
+        }
+        for (let node of this.element.querySelector("#footer slot").assignedNodes()) {
+            let focusable = node.querySelector("button, input, select, textarea");
+            if (focusable) {
+                focusable.focus();
+                return;
+            }
+        }
+    }
+
     show() {
         this.onChoice = () => { };
         this.element.querySelector("#bg").classList.remove("js-hidden");
+        this.focusInside();
     }
 
     ask() {
@@ -55,6 +73,7 @@ class Component {
                 this.close();
             }
             this.element.querySelector("#bg").classList.remove("js-hidden");
+            this.focusInside();
         });
     }
 

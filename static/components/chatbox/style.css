@@ -23,8 +23,7 @@
     word-wrap: break-word;
     display: flex;
     flex-wrap: wrap;
-    color: white;
-    background-color: hsla(var(--pop-color-hsl), 0.1);
+    font-weight: 400;
 }
 
 .info {
@@ -35,21 +34,15 @@
 }
 
 .msg-remote {
-    --pop-color-hsl: 250, 70%, 75%;
-    --opo-color-hsl: 250, 55%, 15%;
+    background-color: hsl(0, 0%, 75%);
+    color: hsl(0, 0%, 15%);
     align-self: flex-start;
 }
 
 .msg-local {
-    --pop-color-hsl: 216, 70%, 70%;
-    --opo-color-hsl: 216, 55%, 17%;
+    background-color: hsl(216, 70%, 70%);
+    color: hsl(216, 90%, 17%);
     align-self: flex-end;
-}
-
-.msg-local, .msg-remote {
-    font-weight: 400;
-    background-color: hsl(var(--pop-color-hsl));
-    color: hsl(var(--opo-color-hsl));
 }
 
 .user {

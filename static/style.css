@@ -100,16 +100,16 @@ small {
 body {
     --white-color-hsl: 0, 0%, 100%;
     --grey-color-hsl: 0, 0%, 80%;
-    --blue-color-hsl: 216, 55%, 70%;
-    --purple-color-hsl: 251, 55%, 70%;
+    --blue-color-hsl: 216, 80%, 70%;
+    --purple-color-hsl: 251, 70%, 70%;
     --green-color-hsl: 83, 55%, 52%;
     --red-color-hsl: 350, 55%, 52%;
-    --yellow-color-hsl: 59, 80%, 60%;
+    --yellow-color-hsl: 59, 70%, 60%;
 }
 
 body, .blue {
     --pop-color-hsl: var(--blue-color-hsl);
-    --opo-color-hsl: 216, 55%, 17%;
+    --opo-color-hsl: 216, 100%, 17%;
 }
 
 .white {
@@ -124,22 +124,22 @@ body, .blue {
 
 .purple, .debug {
     --pop-color-hsl: var(--purple-color-hsl);
-    --opo-color-hsl: 251, 55%, 20%;
+    --opo-color-hsl: 251, 100%, 20%;
 }
 
 .green, .verbose, .success {
     --pop-color-hsl: var(--green-color-hsl);
-    --opo-color-hsl: 83, 55%, 15%;
+    --opo-color-hsl: 83, 100%, 12%;
 }
 
 .red, .error, .failure {
     --pop-color-hsl: var(--red-color-hsl);
-    --opo-color-hsl: 350, 55%, 17%;
+    --opo-color-hsl: 350, 100%, 15%;
 }
 
 .yellow, .warning {
     --pop-color-hsl: var(--yellow-color-hsl);
-    --opo-color-hsl: 59, 80%, 15%;
+    --opo-color-hsl: 59, 100%, 12%;
 }
 
 /* specific page design */

@@ -84,6 +84,7 @@ class PingApp extends P2pApps.App {
 
 
 const app = new PingApp();
+app.register();
 
 export {
     app

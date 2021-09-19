@@ -45,14 +45,14 @@ class Component {
 
     focusInside() {
         for (let node of this.element.querySelector("#content slot").assignedNodes()) {
-            let focusable = node.querySelector("button, input, select, textarea");
+            let focusable = node.querySelector("button:not([tabindex='-1'], input:not([tabindex='-1'], select:not([tabindex='-1'], textarea:not([tabindex='-1']");
             if (focusable) {
                 focusable.focus();
                 return;
             }
         }
         for (let node of this.element.querySelector("#footer slot").assignedNodes()) {
-            let focusable = node.querySelector("button, input, select, textarea");
+            let focusable = node.querySelector("button:not([tabindex='-1'], input:not([tabindex='-1'], select:not([tabindex='-1'], textarea:not([tabindex='-1']");
             if (focusable) {
                 focusable.focus();
                 return;

@@ -1,11 +1,15 @@
 "use strict";
 
+import * as Chat from '/lib/p2p-apps/chat.mjs';
+import * as Friends from '/lib/p2p-apps/friends.mjs';
+import * as P2p from '/lib/p2p.mjs';
 import { FNode } from '/lib/fdom.mjs';
 
 class Component {
     constructor(element) {
         this.element = element;
         this.lastHistoryDate = null;
+        this.remoteUserId = null;
     }
 
     onRender() {
@@ -41,6 +45,17 @@ class Component {
             return !prevent;
         };
         this.sendMsg.oninput = resizeSendBox;
+
+        Chat.app.eventTarget.addEventListener("onChatMessage", (event) => {
+            let srcUserId = event.srcUserId;
+            let dstUserId = event.dstUserId;
+            if (dstUserId == this.remoteUserId || srcUserId == this.remoteUserId) {
+                let date = event.date;
+                let content = event.content;
+                let isLocal = srcUserId == P2p.localEndpoint.user;
+                this.showMessage(date, isLocal, srcUserId, content);
+            }
+        });
     }
 
     onRemove() {
@@ -65,17 +80,28 @@ class Component {
         node.class(isLocal ? "msg-local" : "msg-remote");
         this.history.appendChild(node.element);
 
+        this.history.querySelector(".empty-msg")?.remove();
+
         if (wasBottom) {
             this.history.scrollTop = this.history.scrollHeight - this.history.clientHeight;
         }
     }
 
     sendTextareaContent() {
+        if (this.remoteUserId == null) {
+            throw new Error("remote user id not set");
+        }
         let content = this.sendMsg.value;
         if (content.length > 0) {
-            this.showMessage(new Date(), true, "test", content);
+            Chat.app.sendChatMessage(this.remoteUserId, content);
             this.sendMsg.value = "";
         };
+    }
+
+    // API
+
+    setRemote(remoteUserId) {
+        this.remoteUserId = remoteUserId;
     }
 }
 

@@ -39,6 +39,16 @@ class FNode {
         }
         return this;
     }
+
+    attribute(key, value) {
+        this.element.setAttribute(key, value);
+        return this;
+    }
+
+    dataset(key, value) {
+        this.attribute(`data-${key}`, value);
+        return this;
+    }
 }
 
 class FButton extends FNode {
@@ -59,4 +69,11 @@ class FIcon extends FNode {
     }
 }
 
-export { FNode, FButton, FIcon }
+class FMinComponent extends FNode {
+    constructor(path) {
+        super("min-component");
+        this.dataset("path", path);
+    }
+}
+
+export { FNode, FButton, FIcon, FMinComponent }

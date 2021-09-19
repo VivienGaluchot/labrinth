@@ -71,6 +71,15 @@ class Component {
     }
 }
 
+class Deferred {
+    constructor() {
+        this.promise = new Promise((resolve, reject) => {
+            this.reject = reject
+            this.resolve = resolve
+        });
+    }
+}
+
 class Element extends HTMLElement {
     static get observedAttributes() {
         return ["data-path"];
@@ -83,8 +92,8 @@ class Element extends HTMLElement {
         this.path = null;
 
         // callback API
-        this.onRender = () => { };
-        this.onRenderError = (error) => { };
+        this.renderDeferred = new Deferred();
+        this.renderPromise = this.renderDeferred.promise;
     }
 
     // TODO remove this layer ? this could be moduleComponent ?
@@ -143,15 +152,15 @@ class Element extends HTMLElement {
                             this.moduleComponent = new module.Component(this.shadow);
                             this.moduleComponent.onRender();
                         }
-                        this.onRender();
                         this.classList.remove(renderCssClass);
+                        this.renderDeferred.resolve();
                     })
                     .catch((err) => {
                         console.error(`component ${path} load failed`);
                         console.exception(err);
-                        this.onRenderError(`component load failed: ${err}`);
                         this.classList.remove(renderCssClass);
                         this.classList.add(errorCssClass);
+                        this.renderDeferred.reject(`component load failed: ${err}`);
                     });
                 this.path = path;
             }

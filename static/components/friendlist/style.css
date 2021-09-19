@@ -69,6 +69,12 @@ li .ping {
     margin-left: .8rem;
 }
 
+.chatbox {
+    width: 40rem;
+    max-width: 100%;
+    height: 30rem;
+}
+
 /* profile pictures */
 
 .profile-picture {

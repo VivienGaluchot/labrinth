@@ -61,7 +61,6 @@ class FriendsApp extends P2pApps.App {
         this.webRtcEndpoint.getConnectedPeerIds(friendIds)
             .then((ids) => {
                 for (let id of ids) {
-                    let userId = P2p.RemoteEndpoint.deserialize(id).user;
                     if (id != this.webRtcEndpoint.localId) {
                         this.openChannel(id);
                     }
@@ -202,6 +201,7 @@ class FriendsApp extends P2pApps.App {
 
 
 const app = new FriendsApp();
+app.register();
 
 export {
     app

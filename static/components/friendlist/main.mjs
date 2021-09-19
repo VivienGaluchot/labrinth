@@ -3,7 +3,7 @@
 import * as Friends from '/lib/p2p-apps/friends.mjs';
 import * as Ping from '/lib/p2p-apps/ping.mjs';
 import * as P2p from '/lib/p2p.mjs';
-import { FNode, FButton, FIcon } from '/lib/fdom.mjs';
+import { FNode, FButton, FIcon, FMinComponent } from '/lib/fdom.mjs';
 
 class Component {
     constructor(element) {
@@ -102,7 +102,7 @@ class Component {
     // internal
 
     maskUserId(userId) {
-        return "***" + userId.slice(12);
+        return "#" + userId.slice(12);
     }
 
     showProfileForm() {
@@ -137,6 +137,16 @@ class Component {
             li.class(isConnected ? "connected" : "disconnected");
         }
 
+        // TODO don't recreate the chatbox each time from scratch to prevent event suppression on user data update
+        let chat = new FMinComponent("/components/chatbox").class("chatbox");
+        chat.element.renderPromise.then(() => {
+            chat.element.internal.setRemote(userId);
+        });
+        let chatModal = new FMinComponent("/components/ui/modal");
+        chatModal.child(new FNode("span").attribute("slot", "title").text(`Chat with ${name}`));
+        chatModal.child(new FNode("span").attribute("slot", "content").child(chat));
+        li.child(chatModal);
+
         let maskedId = this.maskUserId(userId);
         li.child(new FNode("div").class("profile-picture").class(picture));
 
@@ -152,7 +162,7 @@ class Component {
             li.child(new FButton().class("transparent grey")
                 .child(new FIcon("far fa-comments"))
                 .onclick(() => {
-                    // TODO
+                    chatModal.element.internal.show();
                 }));
             li.child(new FButton().class("transparent grey")
                 .child(new FIcon('far fa-trash-alt'))
@@ -170,6 +180,7 @@ class Component {
                     this.showProfileForm();
                 }));
         }
+
 
         let newEl = li.element;
         if (this.userElements.has(userId)) {

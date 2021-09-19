@@ -1,4 +1,8 @@
 @import url('/style.css');
+.js-hidden {
+    display: none !important;
+}
+
 #bg {
     position: absolute;
     top: 0;
@@ -19,6 +23,7 @@
     border: 1px solid #151515;
     border-radius: .2rem;
     box-shadow: 0 0 0 .4rem #00000020;
+    max-width: 100%;
 }
 
 #header {

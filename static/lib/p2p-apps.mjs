@@ -18,7 +18,7 @@ class NetworkManager {
         // peerId -> Set(appName)
         this.requestedChannels = new Map();
 
-        // peerIs -> [channel]
+        // peerId -> [channel]
         this.channels = new Map();
 
         this.webRtcEndpoint.addEventListener("onRegister", (event) => {
@@ -30,6 +30,9 @@ class NetworkManager {
         if (!this.apps.has(app.name)) {
             this.apps.set(app.name, app);
             console.debug(`app '${app.name}' registered`);
+            for (let [peerId, channels] of this.channels) {
+                app.onIncomingConnection(peerId);
+            }
         } else {
             throw new Error(`app named '${app.name}' was already registered`);
         }
@@ -139,7 +142,6 @@ class App {
         this.name = name;
         this.webRtcEndpoint = networkManager.webRtcEndpoint;
         this.localEndpoint = networkManager.localEndpoint;
-        networkManager.registerApp(this);
     }
 
     // 1- Networking
@@ -153,6 +155,10 @@ class App {
     onIncomingConnection(peerId) { };
 
     //  API
+
+    register() {
+        networkManager.registerApp(this);
+    }
 
     openChannel(peerId) {
         networkManager.openChannel(this, peerId);

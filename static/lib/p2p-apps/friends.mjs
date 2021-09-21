@@ -153,13 +153,15 @@ class FriendsApp extends P2pApps.App {
             this.eventTarget.dispatchEvent(new FriendEvent("onConnectionStatusChange", userId));
             this.sendMessage(peerId, this.getLocalData());
         } else if (state == Channel.State.CLOSED) {
-            this.connectedUserIds.get(userId).delete(peerId);
-            if (this.connectedUserIds.get(userId).size == 0) {
-                this.connectedUserIds.delete(userId);
+            if (this.connectedUserIds.has(userId)) {
+                this.connectedUserIds.get(userId).delete(peerId);
+                if (this.connectedUserIds.get(userId).size == 0) {
+                    this.connectedUserIds.delete(userId);
+                }
+                console.log(this.connectedUserIds);
+                console.log("disconnected", peerId);
+                this.eventTarget.dispatchEvent(new FriendEvent("onConnectionStatusChange", userId));
             }
-            console.log(this.connectedUserIds);
-            console.log("disconnected", peerId);
-            this.eventTarget.dispatchEvent(new FriendEvent("onConnectionStatusChange", userId));
         }
     }
 

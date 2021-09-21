@@ -352,7 +352,6 @@ class WebRtcEndpoint extends EventTarget {
     }
 
     sendIceCandidate(peerId, candidate) {
-        console.log("->", candidate);
         return this.socket.request({ id: "candidate", src: this.localId, dst: peerId, data: candidate })
             .then(() => {
                 console.debug(`[WebRtcEndpoint] send ICE candidate: ${peerId}, done`);

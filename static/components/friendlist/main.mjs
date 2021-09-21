@@ -10,6 +10,9 @@ class Component {
         this.element = element;
         this.ulElement = element.querySelector("ul");
         this.userElements = new Map();
+
+        // userId -> FNode
+        this.chatBoxes = new Map();
     }
 
     onRender() {
@@ -75,9 +78,16 @@ class Component {
 
         this.onFriendRemove = (event) => {
             let userId = event.userId;
-            let el = this.userElements.get(userId);
-            this.userElements.delete(userId);
-            el.remove();
+            if (this.userElements.has(userId)) {
+                let el = this.userElements.get(userId);
+                this.userElements.delete(userId);
+                el.remove();
+            }
+            if (this.chatBoxes.has(userId)) {
+                let el = this.chatBoxes.get(userId).element;
+                this.chatBoxes.delete(userId);
+                el.remove();
+            }
         };
         Friends.app.eventTarget.addEventListener("onRemove", this.onFriendRemove);
 
@@ -137,11 +147,15 @@ class Component {
             li.class(isConnected ? "connected" : "disconnected");
         }
 
-        // TODO don't recreate the chatbox each time from scratch to prevent event suppression on user data update
-        let chat = new FMinComponent("/components/chatbox").class("chatbox");
-        chat.element.renderPromise.then(() => {
-            chat.element.internal.setRemote(userId);
-        });
+        if (!this.chatBoxes.has(userId)) {
+            let chat = new FMinComponent("/components/chatbox").class("chatbox");
+            chat.element.renderPromise.then(() => {
+                chat.element.internal.setRemote(userId);
+            });
+            this.chatBoxes.set(userId, chat);
+        }
+        let chat = this.chatBoxes.get(userId);
+
         let chatModal = new FMinComponent("/components/ui/modal");
         chatModal.child(new FNode("span").attribute("slot", "title").text(`Chat with ${name}`));
         chatModal.child(new FNode("span").attribute("slot", "content").child(chat));
@@ -180,7 +194,6 @@ class Component {
                     this.showProfileForm();
                 }));
         }
-
 
         let newEl = li.element;
         if (this.userElements.has(userId)) {

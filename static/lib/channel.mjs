@@ -419,6 +419,8 @@ class WebRtcConnection {
         this.peerId = peerId;
         this.connector = connector;
         this.isPolite = peerId > this.connector.localId;
+        if (this.isPolite !== false && this.isPolite !== true)
+            throw new Error("can't compute polite state");
 
         this.isMakingOffer = false;
         this.isOfferIgnored = false;
@@ -449,7 +451,6 @@ class WebRtcConnection {
         };
         this.pc.onicecandidate = async (event) => {
             if (event.candidate) {
-                // Send the candidate to the remote peer
                 await this.connector.sendIceCandidate(this.peerId, event.candidate);
             }
         };
@@ -487,7 +488,7 @@ class WebRtcConnection {
                 return;
             }
             this.isSettingRemoteAnswerPending = description.type == "answer";
-            await this.pc.setRemoteDescription(description); // SRD rolls back as needed
+            await this.pc.setRemoteDescription(description);
             this.isSettingRemoteAnswerPending = false;
             if (description.type == "offer") {
                 await this.pc.setLocalDescription();
@@ -514,6 +515,14 @@ class WebRtcConnection {
     // expected to be called by the connector
     close() {
         this.pc.close();
+    }
+
+    getLocalDescription() {
+        return this.pc.localDescription;
+    }
+
+    getRemoteDescription() {
+        return this.pc.remoteDescription;
     }
 }
 

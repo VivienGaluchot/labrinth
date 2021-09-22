@@ -6,9 +6,19 @@
         <span>dev-panel</span>
     </div>
 
+    <div>
+        <a href="#ui">ui</a>
+        <a href="#service-worker">service-worker</a>
+        <a href="#websocket-server">websocket-server</a>
+        <a href="#p2p">p2p</a>
+        <a href="#local-storage">local-storage</a>
+        <a href="#webrtc">webrtc</a>
+        <a href="#tests">tests</a>
+    </div>
+
     <div class="layout">
         <div class="block">
-            <h2>UI</h2>
+            <h2 id="ui">UI</h2>
             <h3>
                 Elements
             </h3>
@@ -25,6 +35,7 @@
                 <button class="red">red <i class="fas fa-beer"></i></button>
                 <button class="yellow">yellow <i class="fas fa-beer"></i></button>
                 <button class="purple">purple <i class="fas fa-beer"></i></button>
+                <button class="purple bullet">purple <i class="fas fa-beer"></i></button>
             </p>
             <p>
                 <button class="discreet">discreet <i class="fas fa-beer"></i></button>
@@ -45,6 +56,7 @@
                 <button class="transparent red">red <i class="fas fa-beer"></i></button>
                 <button class="transparent yellow">yellow <i class="fas fa-beer"></i></button>
                 <button class="transparent purple">purple <i class="fas fa-beer"></i></button>
+                <button class="transparent bullet"><i class="fas fa-beer"></i></button>
             </p>
             <h3>
                 Input
@@ -93,6 +105,7 @@
             <p>
                 <button class="blue btn-modal-show">modal show()</button>
                 <button class="blue btn-modal-ask">modal ask()</button>
+                <button class="blue btn-modal-alertModal">modal alertModal()</button>
             </p>
             <min-component id="modal" data-path="/components/ui/modal">
                 <span slot="title">🎆 Sparking title</span>
@@ -106,15 +119,10 @@
                     <button class="discreet">Do noting ?</button>
                 </div>
             </min-component>
-            <h4>
-                Chatbox
-            </h4>
-            <min-component data-path="/components/chatbox" style="height: 400px;">
-            </min-component>
         </div>
 
         <div class="block">
-            <h2>Service worker</h2>
+            <h2 id="service-worker">Service worker</h2>
             <p>
                 Version executed <code class="sw-version">-</code>.
                 <code class="sw-error error"></code>
@@ -125,9 +133,9 @@
         </div>
 
         <div class="block">
-            <h2>Websocket server</h2>
-            <p>
-                Websocket channel is <code class="server-con-status">-</code>.
+            <h2 id="websocket-server">Websocket server</h2>
+            <p></p>
+            Websocket channel is <code class="server-con-status">-</code>.
             </p>
             <div>
                 <button class="blue btn-connect">Connect</button>
@@ -136,7 +144,7 @@
         </div>
 
         <div class="block">
-            <h2>P2P</h2>
+            <h2 id="p2p">P2P</h2>
             <h3>Peers</h3>
             <p>
                 Local peer id is <code id="p2p-local-id">-</code> <button id="p2p-local-id-copy-btn" class="discreet"><i
@@ -200,7 +208,7 @@
         </div>
 
         <div class="block">
-            <h2>Local storage</h2>
+            <h2 id="local-storage">Local storage</h2>
             <p>
                 Private data stored on your device.
             </p>
@@ -231,7 +239,7 @@
         </div>
 
         <div class="block">
-            <h2>WebRTC</h2>
+            <h2 id="webrtc">WebRTC</h2>
             <h3>ICE candidates</h3>
             <div>
                 <button class="blue btn-gen-ice-candidates">Gather candidates</button>
@@ -253,7 +261,7 @@
         </div>
 
         <div class="block">
-            <h2>Tests</h2>
+            <h2 id="tests">Tests</h2>
             <h3>Tests</h3>
             <p>
                 <button id="p2p-tests-btn" class="blue">Run</button>
@@ -271,12 +279,5 @@
                 </tbody>
             </table>
         </div>
-
-        <!-- <div class="block">
-            <h2>Components</h2>
-            <p>
-                WIP
-            </p>
-        </div> -->
     </div>
 </template>

@@ -22,8 +22,11 @@ class NetworkManager {
         this.channels = new Map();
 
         this.webRtcEndpoint.addEventListener("onRegister", (event) => {
-            this.handleP2pConnection(event);
+            this.handleP2pConnection(event.connection);
         });
+        for (let [peerId, connection] of this.webRtcEndpoint.connections) {
+            this.handleP2pConnection(connection);
+        }
     }
 
     registerApp(app) {
@@ -94,8 +97,7 @@ class NetworkManager {
         }
     }
 
-    handleP2pConnection(event) {
-        let connection = event.connection;
+    handleP2pConnection(connection) {
         let peerId = connection.peerId;
 
         let channels = [

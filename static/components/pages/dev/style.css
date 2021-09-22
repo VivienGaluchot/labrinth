@@ -27,7 +27,7 @@
 
 .layout {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(600px, auto));
+    grid-template-columns: repeat(auto-fit, minmax(500px, auto));
     grid-gap: 1.5rem;
     grid-auto-flow: row dense;
     margin-top: 1.5rem;

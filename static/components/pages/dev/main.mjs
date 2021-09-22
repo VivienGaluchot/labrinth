@@ -4,7 +4,7 @@ import * as Friends from '/lib/p2p-apps/friends.mjs';
 import * as Ping from '/lib/p2p-apps/ping.mjs';
 import * as P2p from '/lib/p2p.mjs';
 import * as Storage from '/lib/storage.mjs';
-import { FNode, FButton } from '/lib/fdom.mjs';
+import { FNode, FButton, alertModal } from '/lib/fdom.mjs';
 import * as Channel from '/lib/channel.mjs';
 import * as Sw from '/lib/sw-interface.mjs';
 
@@ -189,6 +189,22 @@ class Component {
                     tr.child(new FNode("td")
                         .child(new FButton().text("Close").onclick(() => {
                             webRtcEndpoint.close(id);
+                        }))
+                        .child(new FButton().text("RemoteEndpoint").onclick(() => {
+                            let desc = webRtcEndpoint.getConnection(id).getRemoteDescription();
+                            if (desc) {
+                                alertModal("RemoteEndpoint", `Type:\n${desc.type}\n\nSDP description:\n${desc.sdp}`);
+                            } else {
+                                alertModal("RemoteEndpoint", 'none');
+                            }
+                        }))
+                        .child(new FButton().text("LocalEndpoint").onclick(() => {
+                            let desc = webRtcEndpoint.getConnection(id).getLocalDescription();
+                            if (desc) {
+                                alertModal("LocalEndpoint", `Type:\n${desc.type}\n\nSDP description:\n${desc.sdp}`);
+                            } else {
+                                alertModal("LocalEndpoint", 'none');
+                            }
                         }))
                         .child(new FButton().text("Restart ICE").onclick(() => {
                             con.pc.restartIce();
@@ -439,6 +455,9 @@ class Component {
         };
         this.element.querySelector(".btn-modal-ask").onclick = () => {
             this.element.querySelector("#modal").internal.ask();
+        };
+        this.element.querySelector(".btn-modal-alertModal").onclick = () => {
+            alertModal("Alert", `Generated text !\nIt's ${new Date()} ...`);
         };
     }
 

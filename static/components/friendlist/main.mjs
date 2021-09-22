@@ -172,12 +172,29 @@ class Component {
             .child(new FNode("div").id("friends-local-name").class("name").text(name))
             .child(subLine));
 
-        if (!isLocal) {
+        let chatButton = new FButton().class("transparent grey")
+            .child(new FIcon("far fa-comments"))
+            .onclick(() => {
+                chatModal.element.internal.show();
+                chatButton.element.classList.remove("bullet");
+            });
+        chat.element.renderPromise.then(() => {
+            chat.element.internal.onMessageShown = () => {
+                if (!chatModal.element.internal.isActive()) {
+                    console.log("Here", chatButton.element);
+                    chatButton.element.classList.add("bullet");
+                }
+            };
+        });
+        li.child(chatButton);
+
+        if (isLocal) {
             li.child(new FButton().class("transparent grey")
-                .child(new FIcon("far fa-comments"))
+                .text("Profile")
                 .onclick(() => {
-                    chatModal.element.internal.show();
+                    this.showProfileForm();
                 }));
+        } else {
             li.child(new FButton().class("transparent grey")
                 .child(new FIcon('far fa-trash-alt'))
                 .onclick(() => {
@@ -186,12 +203,6 @@ class Component {
                             Friends.app.remove(userId);
                         }
                     });
-                }));
-        } else {
-            li.child(new FButton().class("transparent grey")
-                .text("Profile")
-                .onclick(() => {
-                    this.showProfileForm();
                 }));
         }
 

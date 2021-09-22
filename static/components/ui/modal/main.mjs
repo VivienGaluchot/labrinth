@@ -1,11 +1,14 @@
 "use strict";
 
+import * as MinComponent from '/lib/min-component.mjs';
+
 class Component {
     // called when the component is instantiated
     constructor(element) {
         this.element = element;
 
         this.onChoice = (choice) => { };
+        this.onClose = () => { };
     }
 
     // called when the component is rendered
@@ -43,16 +46,20 @@ class Component {
 
     // custom API
 
+    isActive() {
+        return !this.element.querySelector("#bg").classList.contains("js-hidden");
+    }
+
     focusInside() {
         for (let node of this.element.querySelector("#content slot").assignedNodes()) {
-            let focusable = node.querySelector("button:not([tabindex='-1'], input:not([tabindex='-1'], select:not([tabindex='-1'], textarea:not([tabindex='-1']");
+            let focusable = MinComponent.queryShadowSelector(node, "button, input, select, textarea");
             if (focusable) {
                 focusable.focus();
                 return;
             }
         }
         for (let node of this.element.querySelector("#footer slot").assignedNodes()) {
-            let focusable = node.querySelector("button:not([tabindex='-1'], input:not([tabindex='-1'], select:not([tabindex='-1'], textarea:not([tabindex='-1']");
+            let focusable = MinComponent.queryShadowSelector(node, "button, input, select, textarea");
             if (focusable) {
                 focusable.focus();
                 return;
@@ -79,6 +86,7 @@ class Component {
 
     close() {
         this.element.querySelector("#bg").classList.add("js-hidden");
+        this.onClose();
     }
 }
 

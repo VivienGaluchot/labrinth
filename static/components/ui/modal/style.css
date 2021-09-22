@@ -46,6 +46,7 @@
 
 #content {
     padding: 1rem;
+    word-wrap: break-word;
 }
 
 #footer {

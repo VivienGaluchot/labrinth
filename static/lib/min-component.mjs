@@ -124,11 +124,16 @@ class Element extends HTMLElement {
     }
 
     render() {
-        // TODO get class variable from element tags
+        // TODO get class variable from element tags ?
         const errorCssClass = "error";
         const renderCssClass = "render";
-
         this.classList.remove(errorCssClass);
+        this.renderDeferred.promise.then(() => {
+            this.classList.remove(renderCssClass);
+        }).catch(() => {
+            this.classList.remove(renderCssClass);
+            this.classList.add(errorCssClass);
+        });
 
         let path = this.dataset["path"];
         if (path) {
@@ -152,15 +157,12 @@ class Element extends HTMLElement {
                             this.moduleComponent = new module.Component(this.shadow);
                             this.moduleComponent.onRender();
                         }
-                        this.classList.remove(renderCssClass);
                         this.renderDeferred.resolve();
                     })
                     .catch((err) => {
                         console.error(`component ${path} load failed`);
                         console.exception(err);
-                        this.classList.remove(renderCssClass);
-                        this.classList.add(errorCssClass);
-                        this.renderDeferred.reject(`component load failed: ${err}`);
+                        this.renderDeferred.reject(`component ${path} load failed`);
                     });
                 this.path = path;
             }
@@ -174,6 +176,42 @@ class Element extends HTMLElement {
     }
 }
 
-customElements.define('min-component', Element);
+function register() {
+    customElements.define('min-component', Element);
+}
 
-export { storage, Element }
+function queryShadowSelector(root, itemSelector) {
+    if (!root.querySelector) {
+        return null;
+    }
+    let selected = root.querySelector(itemSelector);
+    if (selected) {
+        return selected;
+    }
+    for (let cmp of root.querySelectorAll('min-component')) {
+        for (let child of cmp.shadow.childNodes) {
+            let selected = queryShadowSelector(child, itemSelector);
+            if (selected) {
+                return selected;
+            }
+        }
+    }
+    return null;
+}
+
+function* queryShadowSelectorAll(root, itemSelector) {
+    if (root.querySelectorAll) {
+        for (let el of root.querySelectorAll(itemSelector)) {
+            yield el;
+        }
+        for (let cmp of root.querySelectorAll('min-component')) {
+            for (let child of cmp.shadow.childNodes) {
+                for (let inner of queryShadowSelectorAll(child, itemSelector)) {
+                    yield inner;
+                }
+            }
+        }
+    }
+}
+
+export { register, queryShadowSelectorAll, queryShadowSelector }

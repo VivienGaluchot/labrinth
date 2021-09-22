@@ -49,13 +49,16 @@ class Component {
         Chat.app.eventTarget.addEventListener("onChatMessage", (event) => {
             let srcUserId = event.srcUserId;
             let dstUserId = event.dstUserId;
-            if (dstUserId == this.remoteUserId || srcUserId == this.remoteUserId) {
+            if ((dstUserId == this.remoteUserId && srcUserId == P2p.localEndpoint.user) || (srcUserId == this.remoteUserId && dstUserId == P2p.localEndpoint.user)) {
                 let date = event.date;
                 let content = event.content;
                 let isLocal = srcUserId == P2p.localEndpoint.user;
                 this.showMessage(date, isLocal, srcUserId, content);
             }
         });
+
+        // API
+        this.onMessageShown = (event) => { };
     }
 
     onRemove() {
@@ -85,6 +88,8 @@ class Component {
         if (wasBottom) {
             this.history.scrollTop = this.history.scrollHeight - this.history.clientHeight;
         }
+
+        this.onMessageShown();
     }
 
     sendTextareaContent() {

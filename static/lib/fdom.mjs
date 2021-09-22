@@ -11,9 +11,15 @@ class FNode {
     }
 
     text(value) {
-        let span = document.createElement("span");
-        span.innerText = value;
-        this.element.appendChild(span);
+        let isFirst = true;
+        for (let line of value.split("\n")) {
+            if (!isFirst) {
+                this.element.appendChild(document.createElement("br"));
+            } else {
+                isFirst = false;
+            }
+            this.element.appendChild(document.createTextNode(line));
+        }
         return this;
     }
 
@@ -76,4 +82,17 @@ class FMinComponent extends FNode {
     }
 }
 
-export { FNode, FButton, FIcon, FMinComponent }
+function alertModal(titre, text) {
+    let cmp = new FMinComponent("/components/ui/modal");
+    cmp.child(new FNode("span").attribute("slot", "title").text(titre));
+    cmp.child(new FNode("span").attribute("slot", "content").child(new FNode("p").text(text)));
+    document.body.appendChild(cmp.element);
+    cmp.element.renderPromise.then(() => {
+        cmp.element.internal.onClose = () => {
+            cmp.element.remove();
+        };
+        cmp.element.internal.show();
+    });
+}
+
+export { FNode, FButton, FIcon, FMinComponent, alertModal }

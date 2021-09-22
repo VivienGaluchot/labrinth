@@ -158,7 +158,6 @@ class FriendsApp extends P2pApps.App {
                 if (this.connectedUserIds.get(userId).size == 0) {
                     this.connectedUserIds.delete(userId);
                 }
-                console.log(this.connectedUserIds);
                 console.log("disconnected", peerId);
                 this.eventTarget.dispatchEvent(new FriendEvent("onConnectionStatusChange", userId));
             }

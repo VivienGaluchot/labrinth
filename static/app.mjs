@@ -1,13 +1,17 @@
 'use strict';
 
 import '/lib/sw-interface.mjs';
-
-// web component lib, register custom element "min-component"
-import '/lib/min-component.mjs';
-
+import * as MinComponent from '/lib/min-component.mjs';
 import * as Channel from '/lib/channel.mjs';
 import * as P2p from '/lib/p2p.mjs';
 
+MinComponent.register();
+
+// TODO handle properly the paging with min component...
+// issues:
+// - anchor in loaded min-components not reached
+// - anchor update in history not fully working
+// - local link in loaded components
 
 // basic pages
 const pageHome = {
@@ -91,15 +95,19 @@ function genericRender(page) {
                 el.classList.add("js-hidden");
             }
         }
-
         let el = document.createElement("min-component");
         el.dataset["path"] = page.component;
         document.getElementById("js-main").appendChild(el);
+    }
+    // hash
+    if (location.hash) {
+        MinComponent.queryShadowSelector(document, location.hash)?.scrollIntoView();
     }
 }
 
 // render the page into the DOM
 function renderPage(href, ctx) {
+    console.log("render", href);
     let url = new URL(href);
     let page = getPage(url);
     if (!page) {
@@ -117,9 +125,9 @@ function pushPage(href, ctx) {
 }
 
 // react to user going to back page
-window.onpopstate = function (e) {
-    if (e.state) {
-        renderPage(e.state.href, e.state.ctx);
+window.onpopstate = (event) => {
+    if (event.state) {
+        renderPage(event.state.href, event.state.ctx);
     }
 };
 
@@ -127,9 +135,7 @@ window.onpopstate = function (e) {
 for (const link of document.getElementsByClassName("js-local-link")) {
     link.onclick = () => {
         try {
-            // todo: get the current page ctx
-            let ctx = null;
-            pushPage(link.href, ctx);
+            pushPage(link.href, null);
             return false;
         } catch (e) {
             console.error(e);
@@ -138,8 +144,15 @@ for (const link of document.getElementsByClassName("js-local-link")) {
     };
 }
 
+// handle hash
+window.onhashchange = (event) => {
+    if (location.hash) {
+        MinComponent.queryShadowSelector(document, location.hash)?.scrollIntoView();
+    }
+}
+
 // render the current page
-renderPage(window.location.href);
+pushPage(window.location.href, null);
 
 // connection status
 P2p.webRtcEndpoint.addEventListener("onSignalingConnectionStateUpdate", (event) => {
@@ -162,5 +175,4 @@ P2p.webRtcEndpoint.addEventListener("onSignalingConnectionStateUpdate", (event) 
         el.classList.add("success");
         el.textContent = "connected";
     }
-
 });

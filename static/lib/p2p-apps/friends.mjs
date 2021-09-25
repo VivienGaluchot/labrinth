@@ -9,6 +9,7 @@
 import * as P2pApps from '/lib/p2p-apps.mjs';
 import * as Channel from '/lib/channel.mjs';
 import * as P2p from '/lib/p2p.mjs';
+import { FTextBinder } from '/lib/fdom.mjs';
 
 
 /**
@@ -51,6 +52,12 @@ class FriendsApp extends P2pApps.App {
             this.checkConnection();
         }, 5000);
         this.checkConnection();
+
+        // Map userId -> FBinder
+        this.nameBindMap = new Map();
+        for (let [userId, data] of this.friendMap) {
+            this.nameBindMap.set(userId, new FTextBinder(this.getData(userId).name));
+        }
     }
 
     checkConnection() {
@@ -88,6 +95,7 @@ class FriendsApp extends P2pApps.App {
         }
         this.storageFriendRegister(userId, data);
         this.friendMap = this.storageFriendGetAll();
+        this.nameBindMap.set(userId, new FTextBinder(this.getData(userId).name));
         this.eventTarget.dispatchEvent(new FriendEvent("onAdd", userId));
     }
 
@@ -97,6 +105,7 @@ class FriendsApp extends P2pApps.App {
         }
         this.storageFriendRegister(userId, data);
         this.friendMap = this.storageFriendGetAll();
+        this.nameBindMap.get(userId).value = this.getData(userId).name;
         this.eventTarget.dispatchEvent(new FriendEvent("onDataChange", userId));
     }
 
@@ -106,6 +115,7 @@ class FriendsApp extends P2pApps.App {
         }
         this.storageFriendRemove(userId);
         this.friendMap = this.storageFriendGetAll();
+        this.nameBindMap.delete(userId);
         this.eventTarget.dispatchEvent(new FriendEvent("onRemove", userId));
     }
 
@@ -124,6 +134,10 @@ class FriendsApp extends P2pApps.App {
 
     isConnected(userId) {
         return this.connectedUserIds.has(userId);
+    }
+
+    getNameBind(userId) {
+        return this.nameBindMap.get(userId);
     }
 
 
@@ -203,6 +217,8 @@ class FriendsApp extends P2pApps.App {
 
 const app = new FriendsApp();
 app.register();
+
+
 
 export {
     app

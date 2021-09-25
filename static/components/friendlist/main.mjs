@@ -3,7 +3,7 @@
 import * as Friends from '/lib/p2p-apps/friends.mjs';
 import * as Ping from '/lib/p2p-apps/ping.mjs';
 import * as P2p from '/lib/p2p.mjs';
-import { FNode, FButton, FIcon, FMinComponent } from '/lib/fdom.mjs';
+import { FTag, FButton, FIcon, FMinComponent } from '/lib/fdom.mjs';
 
 class Component {
     constructor(element) {
@@ -11,7 +11,7 @@ class Component {
         this.ulElement = element.querySelector("ul");
         this.userElements = new Map();
 
-        // userId -> FNode
+        // userId -> FTag
         this.chatBoxes = new Map();
     }
 
@@ -133,13 +133,14 @@ class Component {
     }
 
     renderFriend(userId) {
+        // TODO use binding instead of rerendering all the node when the friend data is changed
         let isLocal = userId == P2p.localEndpoint.user;
 
         let data = Friends.app.getData(userId);
         let name = data?.name ? data?.name : "unknown";
         let picture = data?.picture;
 
-        let li = new FNode("li");
+        let li = new FTag("li");
         if (isLocal) {
             li.class("self");
         } else {
@@ -157,19 +158,19 @@ class Component {
         let chat = this.chatBoxes.get(userId);
 
         let chatModal = new FMinComponent("/components/ui/modal");
-        chatModal.child(new FNode("span").attribute("slot", "title").text(`Chat with ${name}`));
-        chatModal.child(new FNode("span").attribute("slot", "content").child(chat));
+        chatModal.child(new FTag("span").attribute("slot", "title").text(`Chat with ${name}`));
+        chatModal.child(new FTag("span").attribute("slot", "content").child(chat));
         li.child(chatModal);
 
         let maskedId = this.maskUserId(userId);
-        li.child(new FNode("div").class("profile-picture").class(picture));
+        li.child(new FTag("div").class("profile-picture").class(picture));
 
-        let subLine = new FNode("div")
-            .child(new FNode("span").id("friends-local-id").class("id").text(maskedId))
-            .child(new FNode("span").class("ping"));
+        let subLine = new FTag("div")
+            .child(new FTag("span").id("friends-local-id").class("id").text(maskedId))
+            .child(new FTag("span").class("ping"));
 
-        li.child(new FNode("div").class("infos")
-            .child(new FNode("div").id("friends-local-name").class("name").text(name))
+        li.child(new FTag("div").class("infos")
+            .child(new FTag("div").id("friends-local-name").class("name").text(name))
             .child(subLine));
 
         let chatButton = new FButton().class("transparent grey")

@@ -3,7 +3,7 @@
 import * as Chat from '/lib/p2p-apps/chat.mjs';
 import * as Friends from '/lib/p2p-apps/friends.mjs';
 import * as P2p from '/lib/p2p.mjs';
-import { FNode } from '/lib/fdom.mjs';
+import { FTag } from '/lib/fdom.mjs';
 
 class Component {
     constructor(element) {
@@ -71,15 +71,18 @@ class Component {
 
         let dateInfoPeriodInMs = 5 * 60 * 1000;
         if (this.lastHistoryDate == null || (date.getTime() - this.lastHistoryDate.getTime()) > dateInfoPeriodInMs) {
-            let node = new FNode("div").class("info")
+            let node = new FTag("div").class("info")
                 .text(`${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}h${date.getMinutes()}`);
             this.history.appendChild(node.element);
             this.lastHistoryDate = date;
         }
 
-        let node = new FNode("div")
-            .child(new FNode("div").class("user").text(userId))
-            .child(new FNode("div").class("content").text(content));
+        let nameNode = new FTag("div").class("user");
+        Friends.app.getNameBind(userId)?.bind(nameNode);
+
+        let node = new FTag("div")
+            .child(nameNode)
+            .child(new FTag("div").class("content").text(content));
         node.class(isLocal ? "msg-local" : "msg-remote");
         this.history.appendChild(node.element);
 

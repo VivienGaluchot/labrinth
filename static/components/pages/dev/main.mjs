@@ -4,7 +4,7 @@ import * as Friends from '/lib/p2p-apps/friends.mjs';
 import * as Ping from '/lib/p2p-apps/ping.mjs';
 import * as P2p from '/lib/p2p.mjs';
 import * as Storage from '/lib/storage.mjs';
-import { FNode, FButton, alertModal } from '/lib/fdom.mjs';
+import { FTag, FButton, alertModal, FTextBinder } from '/lib/fdom.mjs';
 import * as Channel from '/lib/channel.mjs';
 import * as Sw from '/lib/sw-interface.mjs';
 
@@ -17,13 +17,13 @@ function populateLocalStorageTbody(element) {
         element.firstChild.remove()
     }
     for (let [mod, key, value] of Storage.all()) {
-        let tr = new FNode("tr")
-            .child(new FNode("td")
-                .child(new FNode("code").text(mod)))
-            .child(new FNode("td")
-                .child(new FNode("code").text(key)))
-            .child(new FNode("td")
-                .child(new FNode("code").text(value)));
+        let tr = new FTag("tr")
+            .child(new FTag("td")
+                .child(new FTag("code").text(mod)))
+            .child(new FTag("td")
+                .child(new FTag("code").text(key)))
+            .child(new FTag("td")
+                .child(new FTag("code").text(value)));
         element.appendChild(tr.element);
     }
 }
@@ -124,20 +124,20 @@ class Component {
                 if (res.nbKo != 0) {
                     cssClass = "error";
                 }
-                let tr = new FNode("tr")
-                    .child(new FNode("td")
+                let tr = new FTag("tr")
+                    .child(new FTag("td")
                         .child(name))
-                    .child(new FNode("td")
-                        .child(new FNode("code").class(cssClass)
+                    .child(new FTag("td")
+                        .child(new FTag("code").class(cssClass)
                             .text(`${res.nbOk} / ${res.nbKo + res.nbOk}`)));
                 tbody.appendChild(tr.element);
                 total.nbKo += res.nbKo;
                 total.nbOk += res.nbOk;
             }
-            addResult(new FNode("code").text("TimestampedHistory"), P2pTest.TimestampedHistory());
-            addResult(new FNode("code").text("SharedValue"), P2pTest.SharedValue());
-            addResult(new FNode("code").text("SharedSet"), P2pTest.SharedSet());
-            addResult(new FNode("span").text("Done"), total);
+            addResult(new FTag("code").text("TimestampedHistory"), P2pTest.TimestampedHistory());
+            addResult(new FTag("code").text("SharedValue"), P2pTest.SharedValue());
+            addResult(new FTag("code").text("SharedSet"), P2pTest.SharedSet());
+            addResult(new FTag("span").text("Done"), total);
         };
 
         let updateP2pPeers = () => {
@@ -149,10 +149,10 @@ class Component {
             let p2pCount = this.element.querySelector("#p2p-peer-count");
             p2pCount.innerText = webRtcEndpoint.connections.size;
             if (webRtcEndpoint.connections.size == 0) {
-                let tr = new FNode("tr")
-                    .child(new FNode("td").text("-"))
-                    .child(new FNode("td").text("-"))
-                    .child(new FNode("td").text("-"));
+                let tr = new FTag("tr")
+                    .child(new FTag("td").text("-"))
+                    .child(new FTag("td").text("-"))
+                    .child(new FTag("td").text("-"));
                 tbody.appendChild(tr.element);
             } else {
                 let getNode = (state) => {
@@ -171,22 +171,22 @@ class Component {
                         cssClass = "warning";
                     if (state == "undefined")
                         cssClass = "warning";
-                    return new FNode("code").class(cssClass).text(state);
+                    return new FTag("code").class(cssClass).text(state);
                 }
                 for (let [id, con] of webRtcEndpoint.connections) {
                     let signaling = con.pc.signalingState;
                     let ice = con.pc.iceConnectionState;
-                    let tr = new FNode("tr")
-                        .child(new FNode("td").child(getNode(id)))
-                        .child(new FNode("td")
-                            .child(new FNode("div").text("Signaling is ").child(getNode(signaling)))
-                            .child(new FNode("div").text("ICE is ").child(getNode(ice)))
-                            .child(new FNode("div").text("Global is ").child(getNode(con.state))));
+                    let tr = new FTag("tr")
+                        .child(new FTag("td").child(getNode(id)))
+                        .child(new FTag("td")
+                            .child(new FTag("div").text("Signaling is ").child(getNode(signaling)))
+                            .child(new FTag("div").text("ICE is ").child(getNode(ice)))
+                            .child(new FTag("div").text("Global is ").child(getNode(con.state))));
                     if (Ping.app.getDelayInMs(con.peerId))
-                        tr.child(new FNode("td").text(`${Ping.app.getDelayInMs(con.peerId)} ms`));
+                        tr.child(new FTag("td").text(`${Ping.app.getDelayInMs(con.peerId)} ms`));
                     else
-                        tr.child(new FNode("td").text(`- ms`));
-                    tr.child(new FNode("td")
+                        tr.child(new FTag("td").text(`- ms`));
+                    tr.child(new FTag("td")
                         .child(new FButton().text("Close").onclick(() => {
                             webRtcEndpoint.close(id);
                         }))
@@ -291,15 +291,15 @@ class Component {
 
             let friends = Friends.app.getFriends();
             if (friends.length == 0) {
-                let tr = new FNode("ul")
-                    .child(new FNode("td").text("-"))
-                    .child(new FNode("td").text("-"));
+                let tr = new FTag("ul")
+                    .child(new FTag("td").text("-"))
+                    .child(new FTag("td").text("-"));
                 tbody.appendChild(tr.element);
             } else {
                 for (let [id, data] of friends) {
                     let name = data?.name;
 
-                    let tr = new FNode("tr");
+                    let tr = new FTag("tr");
 
                     let subIds = [];
                     let sync = () => {
@@ -311,10 +311,10 @@ class Component {
                             for (let peerId of ids) {
                                 if (peerId != webRtcEndpoint.localId) {
                                     let endpoint = RemoteEndpoint.deserialize(peerId);
-                                    let subTr = new FNode("tr")
-                                        .child(new FNode("td").text(""))
-                                        .child(new FNode("td").child(new FNode("code").class("success").text(`${endpoint.device}-${endpoint.session}`)))
-                                        .child(new FNode("td")
+                                    let subTr = new FTag("tr")
+                                        .child(new FTag("td").text(""))
+                                        .child(new FTag("td").child(new FTag("code").class("success").text(`${endpoint.device}-${endpoint.session}`)))
+                                        .child(new FTag("td")
                                             .child(new FButton().text("Connect").onclick(() => {
                                                 webRtcEndpoint.getOrCreateConnection(endpoint.serialize());
                                             }))
@@ -327,11 +327,11 @@ class Component {
                     };
 
 
-                    tr.child(new FNode("td")
-                        .child(new FNode("div").text(name == null ? "-" : name))
-                        .child(new FNode("code").text(id)))
-                        .child(new FNode("td").text(""))
-                        .child(new FNode("td")
+                    tr.child(new FTag("td")
+                        .child(new FTag("div").text(name == null ? "-" : name))
+                        .child(new FTag("code").text(id)))
+                        .child(new FTag("td").text(""))
+                        .child(new FTag("td")
                             .child(new FButton().text("Sync").onclick(sync))
                             .child(new FButton().text("Delete").onclick(() => {
                                 this.element.querySelector("#p2p-friends-confirm-modal").internal.ask().then((choice) => {
@@ -396,39 +396,39 @@ class Component {
             getIceCandidates((candidate) => {
                 console.log("candidate", candidate);
                 if (candidate) {
-                    let tr = new FNode("tr")
+                    let tr = new FTag("tr")
                         // Component
-                        .child(new FNode("td")
-                            .child(new FNode("code").text(candidate)));
+                        .child(new FTag("td")
+                            .child(new FTag("code").text(candidate)));
 
-                    // let tr = new FNode("tr")
+                    // let tr = new FTag("tr")
                     //     // Component
-                    //     .child(new FNode("td")
-                    //         .child(new FNode("code").text(candidate)))
+                    //     .child(new FTag("td")
+                    //         .child(new FTag("code").text(candidate)))
                     //     // Type
-                    //     .child(new FNode("td")
-                    //         .child(new FNode("code").text("")))
+                    //     .child(new FTag("td")
+                    //         .child(new FTag("code").text("")))
                     //     // Foundation
-                    //     .child(new FNode("td")
-                    //         .child(new FNode("code").text("")))
+                    //     .child(new FTag("td")
+                    //         .child(new FTag("code").text("")))
                     //     // Protocol
-                    //     .child(new FNode("td")
-                    //         .child(new FNode("code").text("")))
+                    //     .child(new FTag("td")
+                    //         .child(new FTag("code").text("")))
                     //     // Address
-                    //     .child(new FNode("td")
-                    //         .child(new FNode("code").text("")))
+                    //     .child(new FTag("td")
+                    //         .child(new FTag("code").text("")))
                     //     // Port
-                    //     .child(new FNode("td")
-                    //         .child(new FNode("code").text("")))
+                    //     .child(new FTag("td")
+                    //         .child(new FTag("code").text("")))
                     //     // Priority
-                    //     .child(new FNode("td")
-                    //         .child(new FNode("code").text("")));
+                    //     .child(new FTag("td")
+                    //         .child(new FTag("code").text("")));
 
                     iceCandidatesEl.appendChild(tr.element);
                 } else {
-                    let tr = new FNode("tr")
+                    let tr = new FTag("tr")
                         // Component
-                        .child(new FNode("td").text("Done"));
+                        .child(new FTag("td").text("Done"));
                     iceCandidatesEl.appendChild(tr.element);
                 }
             });
@@ -458,6 +458,23 @@ class Component {
         };
         this.element.querySelector(".btn-modal-alertModal").onclick = () => {
             alertModal("Alert", `Generated text !\nIt's ${new Date()} ...`);
+        };
+
+        // Bind
+
+        let bindA = new FTextBinder();
+        for (let el of this.element.querySelectorAll(".bind-target-a")) {
+            bindA.bind(el);
+        }
+        this.element.querySelector("#bind-src-a").oninput = (event) => {
+            bindA.value = event.target.value;
+        };
+        let bindB = new FTextBinder();
+        for (let el of this.element.querySelectorAll(".bind-target-b")) {
+            bindB.bind(el);
+        }
+        this.element.querySelector("#bind-src-b").oninput = (event) => {
+            bindB.value = event.target.value;
         };
     }
 

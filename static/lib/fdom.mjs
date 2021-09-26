@@ -11,6 +11,11 @@ class FNode {
         this.element = element;
     }
 
+    bindWith(binder) {
+        binder.bind(this);
+        return this;
+    }
+
     text(value) {
         if (value == null) {
             value = "";
@@ -115,9 +120,11 @@ class FBinder {
     };
 
     set value(newValue) {
-        this.lastValue = newValue;
-        for (let el of MinComponent.queryShadowSelectorAll(document, `[data-bid='${this.watchId}']`)) {
-            this.onChange(el, newValue);
+        if (newValue != this.lastValue) {
+            this.lastValue = newValue;
+            for (let el of MinComponent.queryShadowSelectorAll(document, `[data-bid='${this.watchId}']`)) {
+                this.onChange(el, newValue);
+            }
         }
     }
 

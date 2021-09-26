@@ -77,13 +77,13 @@ class Component {
             this.lastHistoryDate = date;
         }
 
-        let nameNode = new FTag("div").class("user");
-        Friends.app.getNameBind(userId)?.bind(nameNode);
-
         let node = new FTag("div")
-            .child(nameNode)
+            .class("msg")
+            .class(isLocal ? "msg-local" : "msg-remote")
+            .child(new FTag("div").bindWith(Friends.app.getPictureBinder(userId)))
+            .child(new FTag("div").class("user")
+                .bindWith(Friends.app.getNameBinder(userId)))
             .child(new FTag("div").class("content").text(content));
-        node.class(isLocal ? "msg-local" : "msg-remote");
         this.history.appendChild(node.element);
 
         this.history.querySelector(".empty-msg")?.remove();

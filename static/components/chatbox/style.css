@@ -20,18 +20,6 @@
     overflow: auto;
 }
 
-.msg-remote, .msg-local {
-    border-radius: .4rem;
-    padding: .4rem;
-    margin: .4rem;
-    min-width: 25%;
-    max-width: calc(90% - .4rem - .4rem);
-    word-wrap: break-word;
-    display: flex;
-    flex-wrap: wrap;
-    font-weight: 400;
-}
-
 .info {
     font-size: .8rem;
     opacity: .2;
@@ -39,25 +27,75 @@
     margin: .4rem;
 }
 
+.msg {
+    margin: .4rem;
+    min-width: 25%;
+    max-width: calc(90% - .4rem - .4rem);
+    word-wrap: break-word;
+    display: grid;
+    font-weight: 400;
+}
+
 .msg-remote {
-    background-color: hsl(0, 0%, 75%);
-    color: hsl(0, 0%, 15%);
     align-self: flex-start;
+    grid-template-columns: auto 2.4rem;
 }
 
 .msg-local {
-    background-color: hsl(216, 70%, 70%);
-    color: hsl(216, 90%, 17%);
     align-self: flex-end;
+    grid-template-columns: 2.4rem auto;
+}
+
+.profile-picture {
+    height: 2rem;
+    width: 2rem;
+    margin: .2rem;
+}
+
+.msg-local .profile-picture {
+    grid-row: 2;
+    grid-column: 1;
+}
+
+.msg-remote .profile-picture {
+    grid-row: 2;
+    grid-column: 2;
 }
 
 .user {
     font-size: .8rem;
-    opacity: .8;
+    opacity: .2;
+}
+
+.msg-local .user {
+    grid-row: 1;
+    grid-column: 2;
+}
+
+.msg-remote .user {
+    grid-row: 1;
+    grid-column: 1;
+    text-align: right;
 }
 
 .content {
     width: 100%;
+    padding: .4rem;
+    border-radius: .4rem;
+}
+
+.msg-local .content {
+    grid-row: 2;
+    grid-column: 2;
+    color: hsl(216, 90%, 17%);
+    background-color: hsl(216, 70%, 70%);
+}
+
+.msg-remote .content {
+    grid-row: 2;
+    grid-column: 1;
+    color: hsl(0, 0%, 15%);
+    background-color: hsl(0, 0%, 75%);
 }
 
 .new-msg {

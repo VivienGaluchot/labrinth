@@ -73,7 +73,7 @@ class Component {
             this.renderFriend(event.userId);
         };
         Friends.app.eventTarget.addEventListener("onConnectionStatusChange", this.onFriendUpdate);
-        Friends.app.eventTarget.addEventListener("onDataChange", this.onFriendUpdate);
+        // Friends.app.eventTarget.addEventListener("onDataChange", this.onFriendUpdate);
         Friends.app.eventTarget.addEventListener("onAdd", this.onFriendUpdate);
 
         this.onFriendRemove = (event) => {
@@ -136,9 +136,8 @@ class Component {
         // TODO use binding instead of rerendering all the node when the friend data is changed
         let isLocal = userId == P2p.localEndpoint.user;
 
-        let data = Friends.app.getData(userId);
-        let name = data?.name ? data?.name : "unknown";
-        let picture = data?.picture;
+        let nameBinder = Friends.app.getNameBinder(userId);
+        let pictureBinder = Friends.app.getPictureBinder(userId);
 
         let li = new FTag("li");
         if (isLocal) {
@@ -158,19 +157,21 @@ class Component {
         let chat = this.chatBoxes.get(userId);
 
         let chatModal = new FMinComponent("/components/ui/modal");
-        chatModal.child(new FTag("span").attribute("slot", "title").text(`Chat with ${name}`));
+        chatModal.child(new FTag("span").attribute("slot", "title")
+            .text(`Chat with `)
+            .child(new FTag("span").bindWith(nameBinder)));
         chatModal.child(new FTag("span").attribute("slot", "content").child(chat));
         li.child(chatModal);
 
         let maskedId = this.maskUserId(userId);
-        li.child(new FTag("div").class("profile-picture").class(picture));
+        li.child(new FTag("div").bindWith(pictureBinder));
 
         let subLine = new FTag("div")
             .child(new FTag("span").id("friends-local-id").class("id").text(maskedId))
             .child(new FTag("span").class("ping"));
 
         li.child(new FTag("div").class("infos")
-            .child(new FTag("div").id("friends-local-name").class("name").text(name))
+            .child(new FTag("div").class("name").bindWith(nameBinder))
             .child(subLine));
 
         let chatButton = new FButton().class("transparent grey")

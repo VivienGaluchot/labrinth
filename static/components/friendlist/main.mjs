@@ -35,7 +35,7 @@ class Component {
                 navigator.clipboard.writeText(P2p.localEndpoint.user);
                 resCls = "success";
             } catch (err) {
-                console.exception(err);
+                console.error(err, err.stack);
                 resCls = "error";
             }
             this.element.querySelector("#add-friend-local-id").classList.add(resCls);
@@ -55,7 +55,7 @@ class Component {
                 this.element.querySelector("#add-friend-modal").internal.close();
                 input.value = "";
             } catch (err) {
-                console.exception(err);
+                console.error(err, err.stack);
                 input.classList.add("error");
                 setTimeout(() => {
                     input.classList.remove("error");

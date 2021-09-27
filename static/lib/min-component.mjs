@@ -53,8 +53,7 @@ class Component {
                     if (err instanceof SyntaxError) {
                         console.error(`module ${this.path} load failed\n${err.name}: ${err.message}\nfrom ${err.fileName}:${err.lineNumber}:${err.columnNumber}`);
                     } else {
-                        console.error(`module ${this.path} load failed`);
-                        console.exception(err);
+                        console.error(`module ${this.path} load failed`, err.stack);
                     }
                 }));
 
@@ -64,7 +63,7 @@ class Component {
                         return [template, style, module];
                     })
                     .catch((err) => {
-                        console.error(`compoment ${this.path} load failed`, err);
+                        console.error(`compoment ${this.path} load failed`, err.stack);
                     });
         }
         return this.loadPromise;
@@ -161,7 +160,7 @@ class Element extends HTMLElement {
                     })
                     .catch((err) => {
                         console.error(`component ${path} load failed`);
-                        console.exception(err);
+                        console.error(err, err.stack);
                         this.renderDeferred.reject(`component ${path} load failed`);
                     });
                 this.path = path;

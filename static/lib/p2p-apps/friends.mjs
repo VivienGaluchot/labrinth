@@ -210,7 +210,11 @@ class FriendsApp extends P2pApps.App {
         let friends = new Map();
         friends.set(this.localEndpoint.user, {});
         for (let key of Object.keys(data)) {
-            friends.set(key, data[key]);
+            if (data[key] != null) {
+                friends.set(key, data[key]);
+            } else {
+                friends.set(key, {});
+            }
         }
         return friends;
     }

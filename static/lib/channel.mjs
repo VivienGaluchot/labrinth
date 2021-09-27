@@ -347,7 +347,7 @@ class WebRtcEndpoint extends EventTarget {
     sendDescription(peerId, desc) {
         return this.socket.request({ id: "desc", src: this.localId, dst: peerId, data: desc })
             .then(() => {
-                console.debug(`[WebRtcEndpoint] send desc to ${peerId}, done`);
+                console.debug(`[WebRtcEndpoint] send desc to ${peerId}, done (${desc.type})`);
             });
     }
 
@@ -379,7 +379,7 @@ class WebRtcEndpoint extends EventTarget {
             throw new Error(`unexpected data.dst, received '${data?.dst}' expected '${this.localId}'`);
         if (data?.data == undefined)
             throw new Error(`undefined data.data`);
-        console.debug(`[WebRtcEndpoint] desc received from ${data.src}`);
+        console.debug(`[WebRtcEndpoint] desc received from ${data.src} (${data.data.type})`);
         this.getOrCreateConnection(data.src).onDescriptionReceived(data.data);
     }
 

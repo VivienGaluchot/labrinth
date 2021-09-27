@@ -29,71 +29,68 @@
 
 .msg {
     margin: .4rem;
-    min-width: 25%;
-    max-width: calc(90% - .4rem - .4rem);
-    word-wrap: break-word;
+    min-width: max(25%, 4rem);
+    max-width: calc(90% - .4rem - .4rem - 2.4rem);
     display: grid;
     font-weight: 400;
 }
 
 .msg-remote {
     align-self: flex-start;
-    grid-template-columns: auto 2.4rem;
+    grid-template-columns: 2.4rem 1fr;
 }
 
 .msg-local {
     align-self: flex-end;
-    grid-template-columns: 2.4rem auto;
+    grid-template-columns: 1fr .4rem;
 }
 
 .profile-picture {
     height: 2rem;
     width: 2rem;
     margin: .2rem;
+    grid-row: 2;
 }
 
 .msg-local .profile-picture {
-    grid-row: 2;
-    grid-column: 1;
-}
-
-.msg-remote .profile-picture {
-    grid-row: 2;
+    display: none;
     grid-column: 2;
 }
 
+.msg-remote .profile-picture {
+    grid-column: 1;
+}
+
 .user {
+    grid-row: 1;
     font-size: .8rem;
     opacity: .2;
 }
 
 .msg-local .user {
-    grid-row: 1;
-    grid-column: 2;
-}
-
-.msg-remote .user {
-    grid-row: 1;
     grid-column: 1;
     text-align: right;
 }
 
+.msg-remote .user {
+    grid-column: 2;
+}
+
 .content {
-    width: 100%;
+    grid-row: 2;
     padding: .4rem;
     border-radius: .4rem;
+    word-break: break-word;
 }
 
 .msg-local .content {
-    grid-row: 2;
-    grid-column: 2;
+    grid-column: 1;
     color: hsl(216, 90%, 17%);
     background-color: hsl(216, 70%, 70%);
 }
 
 .msg-remote .content {
-    grid-row: 2;
-    grid-column: 1;
+    grid-column: 2;
     color: hsl(0, 0%, 15%);
     background-color: hsl(0, 0%, 75%);
 }

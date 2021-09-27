@@ -84,7 +84,6 @@ class ChatApp extends P2pApps.App {
     }
 }
 
-
 const app = new ChatApp();
 app.register();
 

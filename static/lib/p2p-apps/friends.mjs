@@ -69,7 +69,7 @@ class FriendsApp extends P2pApps.App {
 
         setInterval(() => {
             this.checkConnection();
-        }, 5000);
+        }, 20000);
         this.checkConnection();
     }
 
@@ -233,11 +233,8 @@ class FriendsApp extends P2pApps.App {
     }
 }
 
-
 const app = new FriendsApp();
 app.register();
-
-
 
 export {
     app

@@ -16,7 +16,7 @@ class Component {
         this.sendBtn = this.element.querySelector("#send-btn");
         this.sendMsg = this.element.querySelector("#send-msg");
         this.history = this.element.querySelector(".history");
-        this.history.scrollTop = this.history.scrollHeight - this.history.clientHeight;
+        this.scrollBottom();
 
         let resizeSendBox = () => {
             let wasBottom = this.history.scrollTop == this.history.scrollHeight - this.history.clientHeight;
@@ -24,7 +24,7 @@ class Component {
             this.sendMsg.style.height = (this.sendMsg.scrollHeight) + "px";
             this.sendMsg.scrollTop = this.sendMsg.scrollHeight - this.sendMsg.clientHeight;
             if (wasBottom) {
-                this.history.scrollTop = this.history.scrollHeight - this.history.clientHeight;
+                this.scrollBottom();
             }
         };
         this.sendBtn.onclick = () => {
@@ -57,6 +57,8 @@ class Component {
             }
         });
 
+        this.scrollBottom();
+
         // API
         this.onMessageShown = (event) => { };
     }
@@ -65,33 +67,36 @@ class Component {
 
     }
 
+    scrollBottom() {
+        this.history.scrollTop = this.history.scrollHeight - this.history.clientHeight;
+    }
+
     // TODO add message in past + add way to show exact date per message
     showMessage(date, isLocal, userId, content) {
         let wasBottom = this.history.scrollTop == this.history.scrollHeight - this.history.clientHeight;
 
         let dateInfoPeriodInMs = 5 * 60 * 1000;
         if (this.lastHistoryDate == null || (date.getTime() - this.lastHistoryDate.getTime()) > dateInfoPeriodInMs) {
-            let node = new FTag("div").class("info")
-                .text(`${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}h${date.getMinutes()}`);
+            let dateStr = `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}h${date.getMinutes()}`;
+            let node = new FTag("div").class("info").text(dateStr);
             this.history.appendChild(node.element);
             this.lastHistoryDate = date;
         }
 
         let node = new FTag("div")
             .class("msg")
-            .class(isLocal ? "msg-local" : "msg-remote")
-            .child(new FTag("div").bindWith(Friends.app.getPictureBinder(userId)))
-            .child(new FTag("div").class("user")
-                .bindWith(Friends.app.getNameBinder(userId)))
-            .child(new FTag("div").class("content").text(content));
+            .class(isLocal ? "msg-local" : "msg-remote");
+        node.child(new FTag("div").bindWith(Friends.app.getPictureBinder(userId)));
+        node.child(new FTag("div").class("user")
+            .bindWith(Friends.app.getNameBinder(userId)));
+        node.child(new FTag("div").class("content").text(content));
         this.history.appendChild(node.element);
 
         this.history.querySelector(".empty-msg")?.remove();
 
         if (wasBottom) {
-            this.history.scrollTop = this.history.scrollHeight - this.history.clientHeight;
+            this.scrollBottom();
         }
-
         this.onMessageShown();
     }
 
@@ -104,6 +109,7 @@ class Component {
             Chat.app.sendChatMessage(this.remoteUserId, content);
             this.sendMsg.value = "";
         };
+        this.scrollBottom();
     }
 
     // API

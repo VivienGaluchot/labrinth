@@ -159,7 +159,7 @@ class Component {
         let chatModal = new FMinComponent("/components/ui/modal");
         chatModal.child(new FTag("span").attribute("slot", "title")
             .text(`Chat with `)
-            .child(new FTag("span").bindWith(nameBinder)));
+            .child(new FTag("b").bindWith(nameBinder)));
         chatModal.child(new FTag("span").attribute("slot", "content").child(chat));
         li.child(chatModal);
 

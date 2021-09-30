@@ -198,6 +198,7 @@ class SocketLikeChannel extends Channel {
     close() {
         if (this.socket) {
             this.isReconnectFused = true;
+            this.setState(State.CLOSED);
             this.socket.close();
             this.socket = null;
         }
@@ -437,7 +438,6 @@ class WebRtcConnection {
             }
             this.connector.dispatchEvent(new WebRtcConnectionEvent("onStateUpdate", this));
         };
-
         this.pc.onnegotiationneeded = async (event) => {
             try {
                 this.isMakingOffer = true;
@@ -455,8 +455,8 @@ class WebRtcConnection {
             }
         };
 
-        this.pingChan = this.getChannel("ping", 0);
-        this.pingChan.onStateUpdate = (state) => {
+        let rootChannel = this.getChannel("root", 0);
+        rootChannel.onStateUpdate = (state) => {
             if (this.state != state) {
                 this.state = state;
                 if (this.state == State.CONNECTED) {
@@ -468,7 +468,7 @@ class WebRtcConnection {
                 this.connector.dispatchEvent(new WebRtcConnectionEvent("onStateUpdate", this));
             }
         };
-        this.pingChan.connect();
+        rootChannel.connect();
     }
 
     getChannel(tag, id) {

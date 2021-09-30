@@ -18,7 +18,7 @@ class NetworkManager {
         // peerId -> Set(appName)
         this.requestedChannels = new Map();
 
-        // peerId -> [channel]
+        // peerId -> channel
         this.channels = new Map();
 
         this.webRtcEndpoint.addEventListener("onRegister", (event) => {
@@ -49,7 +49,7 @@ class NetworkManager {
             this.requestedChannels.get(peerId).add(app.name);
 
             if (this.channels.has(peerId)) {
-                app.onChannelStateChange(peerId, Channel.State.CONNECTED);
+                app.onChannelStateChange(peerId, this.channels.get(peerId).state);
             } else {
                 this.webRtcEndpoint.getOrCreateConnection(peerId);
             }
@@ -68,15 +68,7 @@ class NetworkManager {
     }
 
     sendMessage(app, peerId, data) {
-        let minBufferedAmount = null;
-        let selectedChan = null;
-        for (let chan of this.channels.get(peerId)) {
-            let bufferedAmount = chan.getBufferedAmount();
-            if (minBufferedAmount == null || minBufferedAmount > bufferedAmount) {
-                selectedChan = chan;
-            }
-        }
-        selectedChan.send({ app: app.name, data: data });
+        this.channels.get(peerId).send({ app: app.name, data: data });
     }
 
     // internal
@@ -99,37 +91,19 @@ class NetworkManager {
 
     handleP2pConnection(connection) {
         let peerId = connection.peerId;
-
-        let channels = [
-            connection.getChannel("apps-1", 1),
-            connection.getChannel("apps-2", 2),
-            connection.getChannel("apps-3", 3),
-            connection.getChannel("apps-4", 4),
-            connection.getChannel("apps-5", 5),
-            connection.getChannel("apps-6", 6)
-        ];
-
+        let chan = connection.getChannel("apps", 1);
+        this.channels.set(peerId, chan);
+        chan.onmessage = (data) => {
+            this.handleChanMessage(peerId, data);
+        };
+        chan.onStateUpdate = (state) => {
+            this.handleChanStateUpdate(peerId, state);
+        };
+        chan.connect();
         for (let [appName, app] of this.apps) {
             if (!this.requestedChannels.has(peerId) || !this.requestedChannels.get(peerId).has(appName)) {
                 app.onIncomingConnection(peerId);
             }
-        }
-
-        let lastState = null;
-        this.channels.set(peerId, channels);
-        for (let chan of channels) {
-            chan.onmessage = (data) => {
-                this.handleChanMessage(peerId, data);
-            };
-            chan.onStateUpdate = (state) => {
-                if (lastState != state) {
-                    this.handleChanStateUpdate(peerId, state);
-                    lastState = state;
-                }
-            };
-        }
-        for (let chan of channels) {
-            chan.connect();
         }
     }
 }

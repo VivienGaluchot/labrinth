@@ -1,9 +1,9 @@
 "use strict";
 
 import * as Friends from '/lib/p2p-apps/friends.mjs';
-import * as Ping from '/lib/p2p-apps/ping.mjs';
 import * as P2p from '/lib/p2p.mjs';
-import { FTag, FButton, FIcon, FMinComponent } from '/lib/fdom.mjs';
+import { FNode, FTag, FButton, FIcon, FMinComponent } from '/lib/fdom.mjs';
+
 
 class Component {
     constructor(element) {
@@ -72,8 +72,6 @@ class Component {
         this.onFriendUpdate = (event) => {
             this.renderFriend(event.userId);
         };
-        Friends.app.eventTarget.addEventListener("onConnectionStatusChange", this.onFriendUpdate);
-        // Friends.app.eventTarget.addEventListener("onDataChange", this.onFriendUpdate);
         Friends.app.eventTarget.addEventListener("onAdd", this.onFriendUpdate);
 
         this.onFriendRemove = (event) => {
@@ -90,23 +88,11 @@ class Component {
             }
         };
         Friends.app.eventTarget.addEventListener("onRemove", this.onFriendRemove);
-
-        this.onPingUpdate = (event) => {
-            let userId = P2p.RemoteEndpoint.deserialize(event.peerId).user;
-            if (this.userElements.has(userId)) {
-                let text = `${event.delayInMs} ms`;
-                this.userElements.get(userId).querySelector(".ping").textContent = text;
-            }
-        };
-        Ping.app.eventTarget.addEventListener("onPingUpdate", this.onPingUpdate);
     }
 
     onRemove() {
-        Friends.app.eventTarget.removeEventListener("onConnectionStatusChange", this.onFriendUpdate);
-        Friends.app.eventTarget.removeEventListener("onDataChange", this.onFriendUpdate);
         Friends.app.eventTarget.removeEventListener("onAdd", this.onFriendUpdate);
         Friends.app.eventTarget.removeEventListener("onRemove", this.onFriendRemove);
-        Ping.app.eventTarget.removeEventListener("onPingUpdate", this.onPingUpdate);
     }
 
     // internal
@@ -132,20 +118,43 @@ class Component {
         });
     }
 
+    static renderName(element, value) {
+        new FNode(element).clear().text(value);
+    }
+
+    static renderPicture(element, value) {
+        element.setAttribute("class", "profile-picture");
+        element.classList.add(value);
+    }
+
+    static renderPing(element, delayInMs) {
+        let text = delayInMs ? `${delayInMs} ms` : '';
+        element.textContent = text;
+    }
+
+    static renderConnected(element, isConnected) {
+        if (isConnected) {
+            element.classList.add("connected");
+            element.classList.remove("disconnected");
+        } else {
+            element.classList.add("disconnected");
+            element.classList.remove("connected");
+        }
+    }
+
     renderFriend(userId) {
-        // TODO use binding instead of rerendering all the node when the friend data is changed
         let isLocal = userId == P2p.localEndpoint.user;
 
-        let nameBinder = Friends.app.getNameBinder(userId);
-        let pictureBinder = Friends.app.getPictureBinder(userId);
+        let nameBinder = Friends.app.getDataBinder(userId).getProp("name");
+        let pictureBinder = Friends.app.getDataBinder(userId).getProp("picture");
+        let isConnectedBinder = Friends.app.getDataBinder(userId).getProp("isConnected");
+        let pingBinder = Friends.app.getDataBinder(userId).getProp("pingInMs");
 
-        let li = new FTag("li");
+        let li = new FTag("li")
         if (isLocal) {
             li.class("self");
-        } else {
-            let isConnected = Friends.app.isConnected(userId);
-            li.class(isConnected ? "connected" : "disconnected");
         }
+        li.bindWith(isConnectedBinder, Component.renderConnected);
 
         if (!this.chatBoxes.has(userId)) {
             let chat = new FMinComponent("/components/chatbox").class("chatbox");
@@ -159,19 +168,19 @@ class Component {
         let chatModal = new FMinComponent("/components/ui/modal");
         chatModal.child(new FTag("span").attribute("slot", "title")
             .text(`Chat with `)
-            .child(new FTag("b").bindWith(nameBinder)));
+            .child(new FTag("b").bindWith(nameBinder, Component.renderName)));
         chatModal.child(new FTag("span").attribute("slot", "content").child(chat));
         li.child(chatModal);
 
         let maskedId = this.maskUserId(userId);
-        li.child(new FTag("div").bindWith(pictureBinder));
+        li.child(new FTag("div").bindWith(pictureBinder, Component.renderPicture));
 
         let subLine = new FTag("div")
             .child(new FTag("span").id("friends-local-id").class("id").text(maskedId))
-            .child(new FTag("span").class("ping"));
+            .child(new FTag("span").class("ping").bindWith(pingBinder, Component.renderPing));
 
         li.child(new FTag("div").class("infos")
-            .child(new FTag("div").class("name").bindWith(nameBinder))
+            .child(new FTag("div").class("name").bindWith(nameBinder, Component.renderName))
             .child(subLine));
 
         let chatButton = new FButton().class("transparent grey")

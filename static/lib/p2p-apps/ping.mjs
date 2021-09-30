@@ -68,6 +68,7 @@ class PingApp extends P2pApps.App {
             this.sendMessage(peerId, { src: this.webRtcEndpoint.localId, timestamp: Date.now() });
         } else if (state == Channel.State.CLOSED) {
             this.pingDelays.delete(peerId);
+            this.eventTarget.dispatchEvent(new PingEvent("onPingUpdate", peerId, null));
         }
     }
 

@@ -7,20 +7,10 @@
 "use strict";
 
 import * as P2pApps from '/lib/p2p-apps.mjs';
+import * as Ping from '/lib/p2p-apps/ping.mjs';
 import * as Channel from '/lib/channel.mjs';
 import * as P2p from '/lib/p2p.mjs';
-import { FBinder, FTextBinder } from '/lib/fdom.mjs';
-
-
-/**
- * Binder specified into updated profile picture elements
- */
-class FPictureBinder extends FBinder {
-    onChange(element, value) {
-        element.setAttribute("class", "profile-picture");
-        element.classList.add(value);
-    };
-}
+import * as FBind from '/lib/fbind.mjs';
 
 
 /**
@@ -44,7 +34,6 @@ class FriendEvent extends Event {
  *   - onAdd: FriendEvent
  *   - onDataChange: FriendEvent
  *   - onRemove: FriendEvent
- *   - onConnectionStatusChange: FriendEvent
  */
 class FriendsApp extends P2pApps.App {
     constructor() {
@@ -59,13 +48,23 @@ class FriendsApp extends P2pApps.App {
         this.friendMap = this.storageFriendGetAll();
         console.debug(`[Friends] restored ${this.friendMap.size} friends from local storage`);
 
-        // Map userId -> FTextBinder
-        this.nameBinderMap = new Map();
-        this.pictureBinderMap = new Map();
+        // Map userId -> FBind.FBinderObject
+        this.dataBinders = new Map();
         for (let [userId, data] of this.getFriends()) {
-            this.nameBinderMap.set(userId, new FTextBinder(data.name));
-            this.pictureBinderMap.set(userId, new FPictureBinder(data.picture));
+            this.dataBinders.set(userId, new FBind.FBinderObject({
+                name: data.name,
+                picture: data.picture,
+                isConnected: false,
+                pingInMs: null
+            }));
         }
+
+        Ping.app.eventTarget.addEventListener("onPingUpdate", (event) => {
+            let userId = P2p.RemoteEndpoint.deserialize(event.peerId).user;
+            if (this.dataBinders.has(userId)) {
+                this.dataBinders.get(userId).set({ pingInMs: event.delayInMs });
+            }
+        });
 
         setInterval(() => {
             this.checkConnection();
@@ -107,8 +106,12 @@ class FriendsApp extends P2pApps.App {
         }
         this.storageFriendRegister(userId, data);
         this.friendMap = this.storageFriendGetAll();
-        this.nameBinderMap.set(userId, new FTextBinder(this.getData(userId).name));
-        this.pictureBinderMap.set(userId, new FPictureBinder(this.getData(userId).picture));
+        this.dataBinders.set(userId, new FBind.FBinderObject({
+            name: data?.name,
+            picture: data?.picture,
+            isConnected: this.isConnected(userId),
+            pingInMs: null
+        }));
         this.eventTarget.dispatchEvent(new FriendEvent("onAdd", userId));
     }
 
@@ -118,8 +121,10 @@ class FriendsApp extends P2pApps.App {
         }
         this.storageFriendRegister(userId, data);
         this.friendMap = this.storageFriendGetAll();
-        this.nameBinderMap.get(userId).value = this.getData(userId).name;
-        this.pictureBinderMap.get(userId).value = this.getData(userId).picture;
+        this.dataBinders.get(userId).set({
+            name: data.name,
+            picture: data.picture
+        });
         this.eventTarget.dispatchEvent(new FriendEvent("onDataChange", userId));
     }
 
@@ -129,14 +134,13 @@ class FriendsApp extends P2pApps.App {
         }
         this.storageFriendRemove(userId);
         this.friendMap = this.storageFriendGetAll();
-        this.nameBinderMap.delete(userId);
-        this.pictureBinderMap.delete(userId);
+        this.dataBinders.delete(userId);
         this.eventTarget.dispatchEvent(new FriendEvent("onRemove", userId));
     }
 
     setLocalData(data) {
         this.set(this.localEndpoint.user, data);
-        for (let [userI, peerIds] of this.connectedUserIds) {
+        for (let [userId, peerIds] of this.connectedUserIds) {
             for (let peerId of peerIds) {
                 this.sendMessage(peerId, data);
             }
@@ -151,12 +155,8 @@ class FriendsApp extends P2pApps.App {
         return this.connectedUserIds.has(userId);
     }
 
-    getNameBinder(userId) {
-        return this.nameBinderMap.get(userId);
-    }
-
-    getPictureBinder(userId) {
-        return this.pictureBinderMap.get(userId);
+    getDataBinder(userId) {
+        return this.dataBinders.get(userId);
     }
 
 
@@ -183,7 +183,6 @@ class FriendsApp extends P2pApps.App {
             }
             this.connectedUserIds.get(userId).add(peerId);
             console.log("connected", peerId);
-            this.eventTarget.dispatchEvent(new FriendEvent("onConnectionStatusChange", userId));
             this.sendMessage(peerId, this.getLocalData());
         } else if (state == Channel.State.CLOSED) {
             if (this.connectedUserIds.has(userId)) {
@@ -192,9 +191,9 @@ class FriendsApp extends P2pApps.App {
                     this.connectedUserIds.delete(userId);
                 }
                 console.log("disconnected", peerId);
-                this.eventTarget.dispatchEvent(new FriendEvent("onConnectionStatusChange", userId));
             }
         }
+        this.dataBinders.get(userId).set({ isConnected: this.isConnected(userId) });
     }
 
     onMessage(peerId, data) {

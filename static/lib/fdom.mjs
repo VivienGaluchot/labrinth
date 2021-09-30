@@ -11,8 +11,8 @@ class FNode {
         this.element = element;
     }
 
-    bindWith(binder) {
-        binder.bind(this);
+    bindWith(binder, render) {
+        binder.bind(this, render);
         return this;
     }
 
@@ -104,45 +104,6 @@ class FMinComponent extends FTag {
     }
 }
 
-// Binding
-
-let bindCounter = 0;
-
-class FBinder {
-    constructor(init) {
-        this.watchId = `b${bindCounter}`;
-        bindCounter += 1;
-        this.lastValue = init;
-    }
-
-    // API 
-    onChange(element, value) {
-    };
-
-    set value(newValue) {
-        if (newValue != this.lastValue) {
-            this.lastValue = newValue;
-            for (let el of MinComponent.queryShadowSelectorAll(document, `[data-bid='${this.watchId}']`)) {
-                this.onChange(el, newValue);
-            }
-        }
-    }
-
-    bind(element) {
-        if (element instanceof FNode) {
-            element = element.element;
-        }
-        element.dataset["bid"] = this.watchId;
-        this.onChange(element, this.lastValue);
-    }
-}
-
-class FTextBinder extends FBinder {
-    onChange(element, value) {
-        let node = new FNode(element);
-        node.clear().text(value);
-    };
-}
 
 // Tools
 
@@ -159,4 +120,4 @@ function alertModal(title, text) {
     });
 }
 
-export { FTag, FButton, FIcon, FMinComponent, FBinder, FTextBinder, alertModal }
+export { FNode, FTag, FButton, FIcon, FMinComponent, alertModal }

@@ -3,7 +3,8 @@
 import * as Chat from '/lib/p2p-apps/chat.mjs';
 import * as Friends from '/lib/p2p-apps/friends.mjs';
 import * as P2p from '/lib/p2p.mjs';
-import { FTag } from '/lib/fdom.mjs';
+import { FNode, FTag } from '/lib/fdom.mjs';
+
 
 class Component {
     constructor(element) {
@@ -71,6 +72,16 @@ class Component {
         this.history.scrollTop = this.history.scrollHeight - this.history.clientHeight;
     }
 
+
+    static renderName(element, value) {
+        new FNode(element).clear().text(value);
+    }
+
+    static renderPicture(element, value) {
+        element.setAttribute("class", "profile-picture");
+        element.classList.add(value);
+    }
+
     // TODO add message in past + add way to show exact date per message
     showMessage(date, isLocal, userId, content) {
         let wasBottom = this.history.scrollTop == this.history.scrollHeight - this.history.clientHeight;
@@ -86,9 +97,8 @@ class Component {
         let node = new FTag("div")
             .class("msg")
             .class(isLocal ? "msg-local" : "msg-remote");
-        node.child(new FTag("div").bindWith(Friends.app.getPictureBinder(userId)));
-        node.child(new FTag("div").class("user")
-            .bindWith(Friends.app.getNameBinder(userId)));
+        node.child(new FTag("div").bindWith(Friends.app.getDataBinder(userId).getProp("picture"), Component.renderPicture));
+        node.child(new FTag("div").class("user").bindWith(Friends.app.getDataBinder(userId).getProp("name"), Component.renderName));
         node.child(new FTag("div").class("content").text(content));
         this.history.appendChild(node.element);
 

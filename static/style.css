@@ -556,7 +556,7 @@ min-component.error {
     background-position: center;
 }
 
-.disconnected .profile-picture, .disconnected .name {
+.disconnected:not(.self) .profile-picture, .disconnected:not(.self) .name {
     opacity: .5;
 }
 

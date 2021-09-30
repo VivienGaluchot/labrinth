@@ -7,6 +7,7 @@
     </div>
 
     <div>
+        <a href="#info">info</a>
         <a href="#ui">ui</a>
         <a href="#service-worker">service-worker</a>
         <a href="#websocket-server">websocket-server</a>
@@ -17,6 +18,11 @@
     </div>
 
     <div class="layout">
+        <div class="block">
+            <h2 id="info">Info</h2>
+            <p>On firefox, enable <code>media.peerconnection.ice.no_host</code> on <code>about:config</code> seems to
+                solve dev connection issues.</p>
+        </div>
         <div class="block">
             <h2 id="ui">UI</h2>
             <h3>
@@ -117,19 +123,28 @@
                 </div>
             </min-component>
             <h3>
-                Bind
+                Bind atomic
             </h3>
             <p>
                 A <input id="bind-src-a" value=""><br>
-                B <input id="bind-src-b" value="">
+                B <input id="bind-src-b" value=""><br>
+                Obj <input id="bindobj-src" value='{"a": "a", "b": "b"}'>
             </p>
             <p>
-                First bind target A <code><span class="bind-target-a">unset</span></code>.<br>
-                Second bind target A <code><span class="bind-target-a">unset</span></code>.
+                First bind atomic target A <code><span class="bind-target-a">unset</span></code>.<br>
+                Second bind atomic target A <code><span class="bind-target-a">unset</span></code>.
             </p>
             <p>
-                First bind target B <code><span class="bind-target-b">unset</span></code>.<br>
-                Second bind target B <code><span class="bind-target-b">unset</span></code>.
+                First bind atomic target B <code><span class="bind-target-b">unset</span></code>.<br>
+                Second bind atomic target B <code><span class="bind-target-b">unset</span></code>.
+            </p>
+            <p>
+                First bind object target A <code><span class="bindobj-target-a">unset</span></code>.<br>
+                Second bind object target A <code><span class="bindobj-target-a">unset</span></code>.
+            </p>
+            <p>
+                First bind object target B <code><span class="bindobj-target-b">unset</span></code>.<br>
+                Second bind object target B <code><span class="bindobj-target-b">unset</span></code>.
             </p>
         </div>
 

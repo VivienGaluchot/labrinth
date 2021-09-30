@@ -4,7 +4,8 @@ import * as Friends from '/lib/p2p-apps/friends.mjs';
 import * as Ping from '/lib/p2p-apps/ping.mjs';
 import * as P2p from '/lib/p2p.mjs';
 import * as Storage from '/lib/storage.mjs';
-import { FTag, FButton, alertModal, FTextBinder } from '/lib/fdom.mjs';
+import { FTag, FButton, alertModal } from '/lib/fdom.mjs';
+import * as FBind from '/lib/fbind.mjs';
 import * as Channel from '/lib/channel.mjs';
 import * as Sw from '/lib/sw-interface.mjs';
 
@@ -462,20 +463,39 @@ class Component {
 
         // Bind
 
-        let bindA = new FTextBinder();
-        for (let el of this.element.querySelectorAll(".bind-target-a")) {
-            bindA.bind(el);
-        }
+        let bindA = new FBind.FBinderAtomic("initial A");
+        let bindB = new FBind.FBinderAtomic("initial B");
+        let bindO = new FBind.FBinderObject({ "a": "initial A", "b": "initial A" });
+
         this.element.querySelector("#bind-src-a").oninput = (event) => {
-            bindA.value = event.target.value;
+            bindO.getProp("a").set(event.target.value);
+            bindA.set(event.target.value);
         };
-        let bindB = new FTextBinder();
-        for (let el of this.element.querySelectorAll(".bind-target-b")) {
-            bindB.bind(el);
-        }
         this.element.querySelector("#bind-src-b").oninput = (event) => {
-            bindB.value = event.target.value;
+            bindO.getProp("b").set(event.target.value);
+            bindB.set(event.target.value);
         };
+        this.element.querySelector("#bindobj-src").oninput = (event) => {
+            console.log(event.target.value);
+            let obj = JSON.parse(event.target.value);
+            bindO.set(obj);
+        };
+
+        let renderTextContent = (el, value) => {
+            el.textContent = value;
+        };
+        for (let el of this.element.querySelectorAll(".bind-target-a")) {
+            bindA.bind(el, renderTextContent);
+        }
+        for (let el of this.element.querySelectorAll(".bind-target-b")) {
+            bindB.bind(el, renderTextContent);
+        }
+        for (let el of this.element.querySelectorAll(".bindobj-target-a")) {
+            bindO.getProp("a").bind(el, renderTextContent);
+        }
+        for (let el of this.element.querySelectorAll(".bindobj-target-b")) {
+            bindO.getProp("b").bind(el, renderTextContent);
+        }
     }
 
     onRemove() {

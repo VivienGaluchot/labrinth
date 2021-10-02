@@ -192,7 +192,6 @@ class Component {
         chat.element.renderPromise.then(() => {
             chat.element.internal.onMessageShown = () => {
                 if (!chatModal.element.internal.isActive()) {
-                    console.log("Here", chatButton.element);
                     chatButton.element.classList.add("bullet");
                 }
             };

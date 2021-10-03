@@ -4,7 +4,7 @@ import * as Friends from '/lib/p2p-apps/friends.mjs';
 import * as Ping from '/lib/p2p-apps/ping.mjs';
 import * as P2p from '/lib/p2p.mjs';
 import * as Storage from '/lib/storage.mjs';
-import { FTag, FButton, alertModal } from '/lib/fdom.mjs';
+import { FTag, FButton, alertModal, chooseModal } from '/lib/fdom.mjs';
 import * as FBind from '/lib/fbind.mjs';
 import * as Channel from '/lib/channel.mjs';
 import * as Sw from '/lib/sw-interface.mjs';
@@ -459,6 +459,19 @@ class Component {
         };
         this.element.querySelector(".btn-modal-alertModal").onclick = () => {
             alertModal("Alert", `Generated text !\nIt's ${new Date()} ...`);
+        };
+        this.element.querySelector(".btn-modal-chooseModal").onclick = () => {
+            chooseModal("Alert", `Generated text !\nIt's ${new Date()} ...`,
+                [{
+                    "value": "a",
+                    "text": "A"
+                },
+                {
+                    "value": "b",
+                    "text": "B"
+                }]).then((choice) => {
+                    alertModal("Result", `Selected value was ${choice}`);
+                });
         };
 
         // Bind

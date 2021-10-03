@@ -101,7 +101,7 @@ class Component {
     // internal
 
     maskUserId(userId) {
-        return "#" + userId.slice(12);
+        return "#" + userId.slice(userId.length - 4);
     }
 
     showProfileForm() {
@@ -122,7 +122,11 @@ class Component {
     }
 
     static renderName(element, value) {
-        new FNode(element).clear().text(value);
+        if (value != null) {
+            new FNode(element).clear().text(value);
+        } else {
+            new FNode(element).clear().child(new FTag("i").text("Unknown"));
+        }
     }
 
     static renderPicture(element, value) {

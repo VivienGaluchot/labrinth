@@ -120,4 +120,25 @@ function alertModal(title, text) {
     });
 }
 
-export { FNode, FTag, FButton, FIcon, FMinComponent, alertModal }
+// choices : [{value: "xxx", text: "Text"}, ...]
+function chooseModal(title, text, choices) {
+    let cmp = new FMinComponent("/components/ui/modal");
+    cmp.child(new FTag("span").attribute("slot", "title").text(title));
+    cmp.child(new FTag("span").attribute("slot", "content").child(new FTag("p").text(text)));
+    let chSlot = new FTag("div").attribute("slot", "choices");
+    for (let choice of choices) {
+        chSlot.child(new FTag("button").dataset("choice", choice["value"]).text(choice["text"]));
+        chSlot.text(" ");
+    }
+    chSlot.child(new FTag("button").class("discreet").text("Cancel"));
+    cmp.child(chSlot);
+    document.body.appendChild(cmp.element);
+    return cmp.element.renderPromise.then(() => {
+        cmp.element.internal.onClose = () => {
+            cmp.element.remove();
+        };
+        return cmp.element.internal.ask();
+    });
+}
+
+export { FNode, FTag, FButton, FIcon, FMinComponent, alertModal, chooseModal }

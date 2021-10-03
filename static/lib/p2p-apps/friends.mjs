@@ -42,7 +42,7 @@ class FriendsApp extends P2pApps.App {
         this.eventTarget = new EventTarget();
 
         // userId -> Set(peerId)
-        this.connectedUserIds = new Map();
+        this.p2pConnectedUserIds = new Map();
 
         // Map userId -> data
         this.friendMap = this.storageFriendGetAll();
@@ -73,14 +73,14 @@ class FriendsApp extends P2pApps.App {
     }
 
     checkConnection() {
-        let friendIds = [];
-        for (let [id, data] of this.friendMap) {
-            friendIds.push(id);
+        let userIds = [];
+        for (let [userId, data] of this.friendMap) {
+            userIds.push(userId);
         }
-        this.webRtcEndpoint.getConnectedPeerIds(friendIds).then((ids) => {
-            for (let id of ids) {
-                if (id != this.webRtcEndpoint.localId) {
-                    this.openChannel(id);
+        this.webRtcEndpoint.getConnectedPeerIds(userIds).then((ids) => {
+            for (let peerId of ids) {
+                if (peerId != this.webRtcEndpoint.localId) {
+                    this.openChannel(peerId);
                 }
             }
         });
@@ -140,7 +140,7 @@ class FriendsApp extends P2pApps.App {
 
     setLocalData(data) {
         this.set(this.localEndpoint.user, data);
-        for (let [userId, peerIds] of this.connectedUserIds) {
+        for (let [userId, peerIds] of this.p2pConnectedUserIds) {
             for (let peerId of peerIds) {
                 this.sendMessage(peerId, data);
             }
@@ -152,7 +152,7 @@ class FriendsApp extends P2pApps.App {
     }
 
     isConnected(userId) {
-        return this.connectedUserIds.has(userId);
+        return this.p2pConnectedUserIds.has(userId);
     }
 
     getDataBinder(userId) {
@@ -178,17 +178,17 @@ class FriendsApp extends P2pApps.App {
         let userId = P2p.RemoteEndpoint.deserialize(peerId).user;
         console.log("[Friends] onChannelStateChange", peerId, state);
         if (state == Channel.State.CONNECTED) {
-            if (!this.connectedUserIds.has(userId)) {
-                this.connectedUserIds.set(userId, new Set());
+            if (!this.p2pConnectedUserIds.has(userId)) {
+                this.p2pConnectedUserIds.set(userId, new Set());
             }
-            this.connectedUserIds.get(userId).add(peerId);
+            this.p2pConnectedUserIds.get(userId).add(peerId);
             console.log("connected", peerId);
             this.sendMessage(peerId, this.getLocalData());
         } else if (state == Channel.State.CLOSED) {
-            if (this.connectedUserIds.has(userId)) {
-                this.connectedUserIds.get(userId).delete(peerId);
-                if (this.connectedUserIds.get(userId).size == 0) {
-                    this.connectedUserIds.delete(userId);
+            if (this.p2pConnectedUserIds.has(userId)) {
+                this.p2pConnectedUserIds.get(userId).delete(peerId);
+                if (this.p2pConnectedUserIds.get(userId).size == 0) {
+                    this.p2pConnectedUserIds.delete(userId);
                 }
                 console.log("disconnected", peerId);
             }

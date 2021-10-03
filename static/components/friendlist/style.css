@@ -75,6 +75,11 @@ li .ping {
     height: 30rem;
 }
 
+.profile-picture {
+    height: 3rem;
+    width: 3rem;
+}
+
 /* profile picture radio select */
 
 .radio-picts {

@@ -21,3 +21,37 @@
 h2 {
     margin-top: 0;
 }
+
+.entries {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+}
+
+.entry {
+    background-color: rgba(1, 1, 1, 0.1);
+    border: 1px solid rgba(1, 1, 1, 0.1);
+    border-radius: 1rem;
+    overflow: hidden;
+    word-wrap: break-word;
+}
+
+.entry .title {
+    background-color: rgba(1, 1, 1, 0.1);
+    padding: .8rem;
+    display: flex;
+    align-items: center;
+}
+
+.entry .content {
+    padding: .8rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+.profile-picture {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin-right: .5rem;
+}

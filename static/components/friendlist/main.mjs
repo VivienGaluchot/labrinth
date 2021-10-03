@@ -65,14 +65,17 @@ class Component {
 
         // friend list
         for (let [userId, data] of Friends.app.getFriends()) {
-            this.renderFriend(userId);
-            this.ulElement.appendChild(this.userElements.get(userId));
+            let el = this.renderFriend(userId);
+            this.ulElement.appendChild(el);
+            this.userElements.set(userId, el);
         }
 
-        this.onFriendUpdate = (event) => {
-            this.renderFriend(event.userId);
+        this.onFriendAdd = (event) => {
+            let el = this.renderFriend(event.userId);
+            this.ulElement.appendChild(el);
+            this.userElements.set(event.userId, el);
         };
-        Friends.app.eventTarget.addEventListener("onAdd", this.onFriendUpdate);
+        Friends.app.eventTarget.addEventListener("onAdd", this.onFriendAdd);
 
         this.onFriendRemove = (event) => {
             let userId = event.userId;
@@ -91,7 +94,7 @@ class Component {
     }
 
     onRemove() {
-        Friends.app.eventTarget.removeEventListener("onAdd", this.onFriendUpdate);
+        Friends.app.eventTarget.removeEventListener("onAdd", this.onFriendAdd);
         Friends.app.eventTarget.removeEventListener("onRemove", this.onFriendRemove);
     }
 
@@ -156,14 +159,11 @@ class Component {
         }
         li.bindWith(isConnectedBinder, Component.renderConnected);
 
-        if (!this.chatBoxes.has(userId)) {
-            let chat = new FMinComponent("/components/chatbox").class("chatbox");
-            chat.element.renderPromise.then(() => {
-                chat.element.internal.setRemote(userId);
-            });
-            this.chatBoxes.set(userId, chat);
-        }
-        let chat = this.chatBoxes.get(userId);
+        let chat = new FMinComponent("/components/chatbox").class("chatbox");
+        chat.element.renderPromise.then(() => {
+            chat.element.internal.setRemote(userId);
+        });
+        this.chatBoxes.set(userId, chat);
 
         let chatModal = new FMinComponent("/components/ui/modal");
         chatModal.child(new FTag("span").attribute("slot", "title")
@@ -216,13 +216,7 @@ class Component {
                 }));
         }
 
-        let newEl = li.element;
-        if (this.userElements.has(userId)) {
-            this.userElements.get(userId).replaceWith(newEl);
-        } else {
-            this.ulElement.appendChild(newEl);
-        }
-        this.userElements.set(userId, newEl);
+        return li.element;
     }
 }
 

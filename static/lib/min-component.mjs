@@ -70,6 +70,30 @@ class Component {
     }
 }
 
+
+// ---------------------------------
+// Events
+// ---------------------------------
+
+class MinComponentEvent extends Event {
+    constructor(type, element) {
+        super(type);
+        this.element = element;
+    }
+}
+
+/**
+*  API services
+*  Events
+*   - onRender: MinComponentEvent
+*/
+const eventTarget = new EventTarget();
+
+
+// ---------------------------------
+// Custom HTML element
+// ---------------------------------
+
 class Deferred {
     constructor() {
         this.promise = new Promise((resolve, reject) => {
@@ -79,7 +103,7 @@ class Deferred {
     }
 }
 
-class Element extends HTMLElement {
+class MinComponentElement extends HTMLElement {
     static get observedAttributes() {
         return ["data-path"];
     }
@@ -127,12 +151,6 @@ class Element extends HTMLElement {
         const errorCssClass = "error";
         const renderCssClass = "render";
         this.classList.remove(errorCssClass);
-        this.renderDeferred.promise.then(() => {
-            this.classList.remove(renderCssClass);
-        }).catch(() => {
-            this.classList.remove(renderCssClass);
-            this.classList.add(errorCssClass);
-        });
 
         let path = this.dataset["path"];
         if (path) {
@@ -140,6 +158,8 @@ class Element extends HTMLElement {
                 this.classList.add(renderCssClass);
                 storage.get(path).load()
                     .then(([template, style, module]) => {
+                        this.classList.remove(renderCssClass);
+
                         let clone = template.content.cloneNode(true);
                         let styleNode = document.createElement('style');
                         styleNode.textContent = style;
@@ -157,8 +177,12 @@ class Element extends HTMLElement {
                             this.moduleComponent.onRender();
                         }
                         this.renderDeferred.resolve();
+                        eventTarget.dispatchEvent(new MinComponentEvent("onRender", this));
                     })
                     .catch((err) => {
+                        this.classList.remove(renderCssClass);
+                        this.classList.add(errorCssClass);
+
                         console.error(`component ${path} load failed`);
                         console.error(err, err.stack);
                         this.renderDeferred.reject(`component ${path} load failed`);
@@ -176,23 +200,32 @@ class Element extends HTMLElement {
 }
 
 function register() {
-    customElements.define('min-component', Element);
+    customElements.define('min-component', MinComponentElement);
 }
 
 function queryShadowSelector(root, itemSelector) {
     if (!root.querySelector) {
         return null;
     }
+    // direct selection
     let selected = root.querySelector(itemSelector);
     if (selected) {
         return selected;
     }
-    for (let cmp of root.querySelectorAll('min-component')) {
-        for (let child of cmp.shadow.childNodes) {
+    // direct shadow selection
+    if (root instanceof MinComponentElement) {
+        for (let child of root.shadow.childNodes) {
             let selected = queryShadowSelector(child, itemSelector);
             if (selected) {
                 return selected;
             }
+        }
+    }
+    // descendent min component shadow selection
+    for (let cmp of root.querySelectorAll('min-component')) {
+        let selected = queryShadowSelector(cmp, itemSelector);
+        if (selected) {
+            return selected;
         }
     }
     return null;
@@ -200,9 +233,19 @@ function queryShadowSelector(root, itemSelector) {
 
 function* queryShadowSelectorAll(root, itemSelector) {
     if (root.querySelectorAll) {
+        // direct selection
         for (let el of root.querySelectorAll(itemSelector)) {
             yield el;
         }
+        // direct shadow selection
+        if (root instanceof MinComponentElement) {
+            for (let child of root.shadow.childNodes) {
+                for (let inner of queryShadowSelectorAll(child, itemSelector)) {
+                    yield inner;
+                }
+            }
+        }
+        // descendent min component shadow selection
         for (let cmp of root.querySelectorAll('min-component')) {
             for (let child of cmp.shadow.childNodes) {
                 for (let inner of queryShadowSelectorAll(child, itemSelector)) {
@@ -213,4 +256,4 @@ function* queryShadowSelectorAll(root, itemSelector) {
     }
 }
 
-export { register, queryShadowSelectorAll, queryShadowSelector }
+export { register, queryShadowSelectorAll, queryShadowSelector, eventTarget }

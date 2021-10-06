@@ -209,15 +209,12 @@ class Component {
                     this.showProfileForm();
                 }));
         } else {
-            li.child(new FButton().class("transparent grey")
-                .child(new FIcon('far fa-trash-alt'))
-                .onclick(() => {
-                    this.element.querySelector("#del-confirm-modal").internal.ask().then((choice) => {
-                        if (choice == "yes") {
-                            Friends.app.remove(userId);
-                        }
-                    });
-                }));
+            // TODO anchor on the right target element
+            // maybe with visual highlight
+            li.child(new FTag("a").class("button transparent grey")
+                .class("js-local-link")
+                .attribute("href", "/peers")
+                .child(new FIcon('fas fa-ellipsis-v')))
         }
 
         return li.element;

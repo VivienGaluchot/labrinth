@@ -13,7 +13,11 @@ MinComponent.register();
 // - anchor update in history not fully working
 // - local link in loaded components
 
+
+// ---------------------------
 // basic pages
+// ---------------------------
+
 const pageHome = {
     "title": "Home | Labrinth",
     "component": "/components/pages/main",
@@ -42,7 +46,10 @@ function getPage(url) {
     return router.get(url.pathname);
 }
 
+
+// ---------------------------
 // index page management
+// ---------------------------
 
 function showPlaceholder(activeClass) {
     for (let el of document.getElementById("js-main").children) {
@@ -107,11 +114,11 @@ function genericRender(page) {
 
 // render the page into the DOM
 function renderPage(href, ctx) {
-    console.log("render", href);
+    console.log("[Paging] loading page", href);
     let url = new URL(href);
     let page = getPage(url);
     if (!page) {
-        console.warn("page not found", { url });
+        console.warn("[Paging] page not found", { url });
         page = pageNotFound;
     }
     document.title = page.title;
@@ -124,6 +131,24 @@ function pushPage(href, ctx) {
     window.history.pushState({ "href": href, "ctx": ctx }, "", href);
 }
 
+
+// ---------------------------
+// events
+// ---------------------------
+
+function onDOMLoad(callback) {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', (event) => {
+            callback(document);
+        });
+    } else {
+        callback(document);
+    }
+    MinComponent.eventTarget.addEventListener("onRender", (event) => {
+        callback(event.element);
+    });
+};
+
 // react to user going to back page
 window.onpopstate = (event) => {
     if (event.state) {
@@ -132,33 +157,41 @@ window.onpopstate = (event) => {
 };
 
 // change link to call js redirection
-for (const link of document.getElementsByClassName("js-local-link")) {
-    link.onclick = () => {
-        try {
-            pushPage(link.href, null);
-            return false;
-        } catch (e) {
-            console.error(e);
-            return false;
-        }
-    };
-}
-
-// handle hash
-window.onhashchange = (event) => {
-    if (location.hash) {
-        MinComponent.queryShadowSelector(document, location.hash)?.scrollIntoView();
+function updateLinks(element) {
+    for (const link of MinComponent.queryShadowSelectorAll(element, "a.js-local-link")) {
+        link.onclick = () => {
+            try {
+                pushPage(link.href, null);
+                return false;
+            } catch (e) {
+                console.error(e);
+                return false;
+            }
+        };
     }
 }
+onDOMLoad(updateLinks);
 
-// render the current page
-pushPage(window.location.href, null);
+// handle hash
+function scrollToHash(element) {
+    if (location.hash) {
+        let selected = MinComponent.queryShadowSelector(element, location.hash);
+        if (selected) {
+            selected.scrollIntoView();
+        }
+    }
+}
+window.onhashchange = (event) => {
+    if (location.hash) {
+        scrollToHash(document);
+    }
+};
+onDOMLoad(scrollToHash);
 
-// connection status
+// update connection status
 P2p.webRtcEndpoint.addEventListener("onSignalingConnectionStateUpdate", (event) => {
     let state = event.state;
     let el = document.body.querySelector("footer .server-con-status");
-
     if (state == Channel.State.CLOSED) {
         el.classList.remove("success");
         el.classList.remove("warning");
@@ -175,4 +208,13 @@ P2p.webRtcEndpoint.addEventListener("onSignalingConnectionStateUpdate", (event) 
         el.classList.add("success");
         el.textContent = "connected";
     }
+});
+
+
+// ---------------------------
+// render the current page
+// ---------------------------
+
+document.addEventListener("DOMContentLoaded", (event) => {
+    pushPage(window.location.href, null);
 });

@@ -225,7 +225,7 @@ tbody>tr {
 
 /* common sizing */
 
-button, input, textarea {
+button, a.button, input, textarea {
     font-family: 'Roboto', sans-serif;
     font-size: 1rem;
     padding: .4rem;
@@ -235,7 +235,9 @@ button, input, textarea {
 
 /* button */
 
-button {
+button, a.button {
+    min-width: 1.8rem;
+    text-align: center;
     font-weight: 500;
     user-select: none;
     border: none;
@@ -246,7 +248,7 @@ button {
     position: relative;
 }
 
-button.bullet::after {
+button.bullet::after, a.button.bullet::after {
     background-color: hsl(var(--red-color-hsl));
     border-radius: .5rem;
     position: absolute;
@@ -258,38 +260,38 @@ button.bullet::after {
     right: -.1rem;
 }
 
-button:focus, button:hover {
+button:focus, button:hover, a.button:focus, a.button:hover {
     background-color: hsla(var(--pop-color-hsl), .8);
 }
 
-button:focus {
+button:focus, a.button:focus {
     box-shadow: 0 0 0 .1rem hsla(var(--pop-color-hsl), 0.6);
 }
 
-button:active {
+button:active, a.button:active {
     box-shadow: 0 0 0 .2rem hsla(var(--pop-color-hsl), 0.6);
 }
 
-button:focus-visible {
+button:focus-visible, a.button:focus-visible {
     outline: .1rem solid var(--text-color);
     outline-offset: -.2rem;
 }
 
-button.discreet, button.transparent {
+button.discreet, button.transparent, a.button.discreet, a.button.transparent {
     --text-color: hsla(var(--pop-color-hsl), 1);
     background-color: hsla(var(--pop-color-hsl), 0.2);
 }
 
-button.discreet:focus, button.discreet:hover {
+button.discreet:focus, button.discreet:hover, a.button.discreet:focus, a.button.discreet:hover {
     text-decoration: none;
     background-color: hsla(var(--pop-color-hsl), 0.1);
 }
 
-button.transparent {
+button.transparent, a.button.transparent {
     background-color: transparent;
 }
 
-button.transparent:focus, button.transparent:hover {
+button.transparent:focus, button.transparent:hover, a.button.transparent:focus, a.button.transparent:hover {
     text-decoration: none;
     background-color: hsla(var(--pop-color-hsl), 0.1);
 }

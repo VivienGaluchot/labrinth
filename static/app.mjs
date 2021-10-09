@@ -177,7 +177,11 @@ function scrollToHash(element) {
     if (location.hash) {
         let selected = MinComponent.queryShadowSelector(element, location.hash);
         if (selected) {
+            for (let el of MinComponent.queryShadowSelectorAll(document, ".anchor-target")) {
+                el.classList.remove("anchor-target");
+            }
             selected.scrollIntoView();
+            selected.classList.add("anchor-target");
         }
     }
 }

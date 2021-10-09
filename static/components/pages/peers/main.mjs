@@ -56,11 +56,11 @@ class Component {
 
     static renderConnected(element, isConnected) {
         if (isConnected) {
-            element.classList.add("connected");
-            element.classList.remove("disconnected");
+            element.textContent = "yes";
+            element.classList.add("success");
         } else {
-            element.classList.add("disconnected");
-            element.classList.remove("connected");
+            element.textContent = "no";
+            element.classList.remove("success");
         }
     }
 
@@ -68,21 +68,21 @@ class Component {
         let isLocal = userId == P2p.localEndpoint.user;
         let nameBinder = Friends.app.getDataBinder(userId).getProp("name");
         let pictureBinder = Friends.app.getDataBinder(userId).getProp("picture");
+        let isConnectedBinder = Friends.app.getDataBinder(userId).getProp("isConnected");
 
-        let node = new FTag("div").class("entry").dataset("userId", userId);
+        let node = new FTag("div").id(`uid-${userId}`).class("entry").dataset("userId", userId);
 
         let title = new FTag("div").class("title");
         node.child(title);
         title.child(new FTag("span").bindWith(pictureBinder, Component.renderPicture));
-        title.child(new FTag("span").bindWith(nameBinder, Component.renderName));
+        title.child(new FTag("span").class("name").bindWith(nameBinder, Component.renderName));
+        title.child(new FTag("span").class("user-id").text(`#${userId}`));
 
         let content = new FTag("div").class("content");
         node.child(content);
-        content.child(new FTag("div")
-            .child(new FTag("span").class("label").text("Full user id "))
-            .child(new FTag("code").class("data").text(userId))
-        );
-        if (!isLocal) {
+        if (isLocal) {
+            content.child(new FTag("div").text("You"));
+        } else {
             content.child(new FTag("div")
                 .child(new FButton().text("Delete").onclick(() => {
                     chooseModal("Confirm",
@@ -96,6 +96,11 @@ class Component {
                 }))
             );
         }
+        content.child(new FTag("hr"));
+        content.child(new FTag("div")
+            .child(new FTag("span").class("label").text("Connected "))
+            .child(new FTag("code").class("data").bindWith(isConnectedBinder, Component.renderConnected))
+        );
 
         // TODO add for each connection
         // - device id

@@ -1,7 +1,6 @@
 @import url('/style.css');
 :host {
     width: 100%;
-    height: 100%;
     padding: 2rem;
     display: block;
 }
@@ -43,6 +42,15 @@ h2 {
     align-items: center;
 }
 
+.entry .title .name {
+    flex-grow: 1;
+}
+
+.entry .title .user-id {
+    font-size: small;
+    opacity: .2;
+}
+
 .entry .content {
     padding: .8rem;
     display: grid;
@@ -50,8 +58,29 @@ h2 {
     gap: 1rem;
 }
 
+.entry .content hr {
+    padding: 0;
+    margin: 0;
+    opacity: .1;
+}
+
 .profile-picture {
     width: 1.5rem;
     height: 1.5rem;
     margin-right: .5rem;
+}
+
+.anchor-target {
+    animation-duration: .5s;
+    animation-name: pop-out;
+    outline: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+@keyframes pop-out {
+    from {
+        outline: 5px solid rgba(255, 255, 255, 0.3);
+    }
+    to {
+        outline: 1px solid rgba(255, 255, 255, 0.3);
+    }
 }

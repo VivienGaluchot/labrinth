@@ -236,7 +236,6 @@ button, a.button, input, textarea {
 /* button */
 
 button, a.button {
-    min-width: 1.8rem;
     text-align: center;
     font-weight: 500;
     user-select: none;

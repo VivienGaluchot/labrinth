@@ -213,7 +213,7 @@ class Component {
             // maybe with visual highlight
             li.child(new FTag("a").class("button transparent grey")
                 .class("js-local-link")
-                .attribute("href", "/peers")
+                .attribute("href", `/peers#uid-${userId}`)
                 .child(new FIcon('fas fa-ellipsis-v')))
         }
 

@@ -1,7 +1,7 @@
 
 "use strict";
 
-import * as P2p from '/lib/p2p.mjs';
+import * as P2pId from '/lib/p2p-id.mjs';
 import * as Storage from '/lib/storage.mjs';
 import * as Channel from '/lib/channel.mjs';
 
@@ -15,16 +15,16 @@ class NetworkManager {
         this.apps = new Map();
 
         // channels requested
-        // peerId -> Set(appName)
+        // P2pId.Endpoint -> Set(appName)
         this.requestedChannels = new Map();
 
-        // peerId -> channel
+        // P2pId.Endpoint -> channel
         this.channels = new Map();
 
         this.webRtcEndpoint.addEventListener("onRegister", (event) => {
             this.handleP2pConnection(event.connection);
         });
-        for (let [peerId, connection] of this.webRtcEndpoint.connections) {
+        for (let [endpoint, connection] of this.webRtcEndpoint.connections) {
             this.handleP2pConnection(connection);
         }
     }
@@ -33,83 +33,83 @@ class NetworkManager {
         if (!this.apps.has(app.name)) {
             this.apps.set(app.name, app);
             console.debug(`app '${app.name}' registered`);
-            for (let [peerId, channels] of this.channels) {
-                app.onIncomingConnection(peerId);
+            for (let [endpoint, channels] of this.channels) {
+                app.onIncomingConnection(endpoint);
             }
         } else {
             throw new Error(`app named '${app.name}' was already registered`);
         }
     }
 
-    openChannel(app, peerId) {
-        if (!this.requestedChannels.has(peerId)) {
-            this.requestedChannels.set(peerId, new Set());
+    openChannel(app, endpoint) {
+        if (!this.requestedChannels.has(endpoint)) {
+            this.requestedChannels.set(endpoint, new Set());
         }
-        if (!this.requestedChannels.get(peerId).has(app.name)) {
-            this.requestedChannels.get(peerId).add(app.name);
+        if (!this.requestedChannels.get(endpoint).has(app.name)) {
+            this.requestedChannels.get(endpoint).add(app.name);
 
-            if (this.channels.has(peerId)) {
-                app.onChannelStateChange(peerId, this.channels.get(peerId).state);
+            if (this.channels.has(endpoint)) {
+                app.onChannelStateChange(endpoint, this.channels.get(endpoint).state);
             } else {
-                this.webRtcEndpoint.getOrCreateConnection(peerId);
+                this.webRtcEndpoint.getOrCreateConnection(endpoint);
             }
         }
     }
 
-    closeChannel(app, peerId) {
-        if (this.requestedChannels.has(peerId)) {
-            this.requestedChannels.get(peerId).delete(app.name);
-            if (this.requestedChannels.get(peerId).size == 0) {
-                this.requestedChannels.delete(peerId);
-                this.webRtcEndpoint.close(peerId);
+    closeChannel(app, endpoint) {
+        if (this.requestedChannels.has(endpoint)) {
+            this.requestedChannels.get(endpoint).delete(app.name);
+            if (this.requestedChannels.get(endpoint).size == 0) {
+                this.requestedChannels.delete(endpoint);
+                this.webRtcEndpoint.close(endpoint);
             }
-            app.onChannelStateChange(peerId, Channel.State.CLOSED);
+            app.onChannelStateChange(endpoint, Channel.State.CLOSED);
         }
     }
 
-    sendMessage(app, peerId, data) {
-        this.channels.get(peerId).send({ app: app.name, data: data });
+    sendMessage(app, endpoint, data) {
+        this.channels.get(endpoint).send({ app: app.name, data: data });
     }
 
     // internal
 
-    handleChanMessage(peerId, data) {
+    handleChanMessage(endpoint, data) {
         if (data.app != undefined && data.data != undefined && this.apps.has(data.app)) {
-            this.apps.get(data.app).onMessage(peerId, data.data);
+            this.apps.get(data.app).onMessage(endpoint, data.data);
         } else {
             console.warn(`message dropped ${JSON.stringify(data)}`);
         }
     }
 
-    handleChanStateUpdate(peerId, state) {
-        if (this.requestedChannels.has(peerId)) {
-            for (let appName of this.requestedChannels.get(peerId)) {
-                this.apps.get(appName).onChannelStateChange(peerId, state);
+    handleChanStateUpdate(endpoint, state) {
+        if (this.requestedChannels.has(endpoint)) {
+            for (let appName of this.requestedChannels.get(endpoint)) {
+                this.apps.get(appName).onChannelStateChange(endpoint, state);
             }
         }
     }
 
     handleP2pConnection(connection) {
-        let peerId = connection.peerId;
+        let endpoint = connection.endpoint;
         let chan = connection.getChannel("apps", 1);
-        this.channels.set(peerId, chan);
+        this.channels.set(endpoint, chan);
         chan.onmessage = (data) => {
-            this.handleChanMessage(peerId, data);
+            this.handleChanMessage(endpoint, data);
         };
         chan.onStateUpdate = (state) => {
-            this.handleChanStateUpdate(peerId, state);
+            this.handleChanStateUpdate(endpoint, state);
         };
         chan.connect();
         for (let [appName, app] of this.apps) {
-            if (!this.requestedChannels.has(peerId) || !this.requestedChannels.get(peerId).has(appName)) {
-                app.onIncomingConnection(peerId);
+            if (!this.requestedChannels.has(endpoint) || !this.requestedChannels.get(endpoint).has(appName)) {
+                app.onIncomingConnection(endpoint);
             }
         }
     }
 }
 
 
-const networkManager = new NetworkManager(P2p.webRtcEndpoint, P2p.localEndpoint);
+const networkManager = new NetworkManager(Channel.webRtcEndpoint, P2pId.localEndpoint);
 const storage = new Storage.ModularStorage("apps");
 
 
@@ -124,11 +124,11 @@ class App {
 
     // event handler to override
 
-    onChannelStateChange(peerId, state) { }
+    onChannelStateChange(endpoint, state) { }
 
-    onMessage(peerId, data) { }
+    onMessage(endpoint, data) { }
 
-    onIncomingConnection(peerId) { };
+    onIncomingConnection(endpoint) { };
 
     //  API
 
@@ -136,16 +136,16 @@ class App {
         networkManager.registerApp(this);
     }
 
-    openChannel(peerId) {
-        networkManager.openChannel(this, peerId);
+    openChannel(endpoint) {
+        networkManager.openChannel(this, endpoint);
     }
 
-    closeChannel(peerId) {
-        networkManager.closeChannel(this, peerId);
+    closeChannel(endpoint) {
+        networkManager.closeChannel(this, endpoint);
     }
 
-    sendMessage(peerId, data) {
-        networkManager.sendMessage(this, peerId, data);
+    sendMessage(endpoint, data) {
+        networkManager.sendMessage(this, endpoint, data);
     }
 
     // 2 - Local storage

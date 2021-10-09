@@ -5,8 +5,8 @@
 "use strict";
 
 import * as P2pApps from '/lib/p2p-apps.mjs';
-import * as P2p from '/lib/p2p.mjs';
 import * as Channel from '/lib/channel.mjs';
+import * as P2pId from '/lib/p2p-id.mjs';
 
 
 /**
@@ -33,7 +33,7 @@ class ChatApp extends P2pApps.App {
     constructor() {
         super("chat");
 
-        this.peers = new Set();
+        this.endpoints = new Set();
         this.eventTarget = new EventTarget();
     }
 
@@ -42,7 +42,7 @@ class ChatApp extends P2pApps.App {
 
     sendChatMessage(userId, content) {
         let date = new Date();
-        let srcUserId = P2p.localEndpoint.user;
+        let srcUserId = P2pId.localEndpoint.user;
         let dstUserId = userId;
         let data = {
             srcUserId: srcUserId,
@@ -50,10 +50,9 @@ class ChatApp extends P2pApps.App {
             date: date,
             content: content
         };
-        for (let peerId of this.peers) {
-            if (P2p.RemoteEndpoint.deserialize(peerId).user == srcUserId ||
-                P2p.RemoteEndpoint.deserialize(peerId).user == dstUserId) {
-                this.sendMessage(peerId, data);
+        for (let endpoint of this.endpoints) {
+            if (endpoint.user == srcUserId || endpoint.user == dstUserId) {
+                this.sendMessage(endpoint, data);
             }
         }
         this.eventTarget.dispatchEvent(new ChatEvent("onChatMessage", srcUserId, userId, date, content));
@@ -62,20 +61,20 @@ class ChatApp extends P2pApps.App {
 
     // Network
 
-    onIncomingConnection(peerId) {
-        console.log("[Chat] onIncomingConnection", peerId);
-        this.openChannel(peerId);
+    onIncomingConnection(endpoint) {
+        console.log("[Chat] onIncomingConnection", endpoint.serialize());
+        this.openChannel(endpoint);
     }
 
-    onChannelStateChange(peerId, state) {
+    onChannelStateChange(endpoint, state) {
         if (state == Channel.State.CONNECTED) {
-            this.peers.add(peerId);
+            this.endpoints.add(endpoint);
         } else if (state == Channel.State.CLOSED) {
-            this.peers.delete(peerId);
+            this.endpoints.delete(endpoint);
         }
     }
 
-    onMessage(peerId, data) {
+    onMessage(endpoint, data) {
         let srcUserId = data.srcUserId;
         let dstUserId = data.dstUserId;
         let content = data.content;

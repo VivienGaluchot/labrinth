@@ -24,7 +24,7 @@ h2 {
 .entries {
     display: grid;
     gap: 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
 }
 
 .entry {
@@ -73,14 +73,16 @@ h2 {
 .anchor-target {
     animation-duration: .5s;
     animation-name: pop-out;
-    outline: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 @keyframes pop-out {
-    from {
+    0% {
+        outline: 5px solid rgba(255, 255, 255, 0);
+    }
+    10% {
         outline: 5px solid rgba(255, 255, 255, 0.3);
     }
-    to {
-        outline: 1px solid rgba(255, 255, 255, 0.3);
+    100% {
+        outline: 5px solid rgba(255, 255, 255, 0);
     }
 }

@@ -52,6 +52,12 @@ if (isDev) {
 
 const httpLogger = new Logger("http");
 
+let host = process.env.HOST;
+if (!host) {
+    host = "0.0.0.0";
+    httpLogger.info(`defaulting to host ${host}`);
+}
+
 let port = process.env.PORT;
 if (!port) {
     port = "8080";
@@ -152,8 +158,8 @@ const server = http.createServer(function (request, response) {
         router.handle(request, response);
     }
 });
-server.listen(port, function () {
-    httpLogger.info(`server listening on port ${port}`);
+server.listen(port, host, function () {
+    httpLogger.info(`listening on ${host}:${port}`);
 });
 
 

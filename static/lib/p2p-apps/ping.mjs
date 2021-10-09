@@ -12,9 +12,9 @@ import * as Channel from '/lib/channel.mjs';
  *  Event related to a ping
  */
 class PingEvent extends Event {
-    constructor(type, peerId, delayInMs) {
+    constructor(type, endpoint, delayInMs) {
         super(type);
-        this.peerId = peerId;
+        this.endpoint = endpoint;
         this.delayInMs = delayInMs;
     }
 }
@@ -32,7 +32,7 @@ class PingApp extends P2pApps.App {
 
         this.eventTarget = new EventTarget();
 
-        // peerId -> Set(delayInMs)
+        // Endpoint -> Set(delayInMs)
         this.pingDelays = new Map();
 
         setInterval(() => {
@@ -42,43 +42,43 @@ class PingApp extends P2pApps.App {
     }
 
     sendPings() {
-        for (let [peerId, delayInMs] of this.pingDelays) {
-            this.sendMessage(peerId, { src: this.webRtcEndpoint.localId, timestamp: Date.now() });
+        for (let [endpoint, delayInMs] of this.pingDelays) {
+            this.sendMessage(endpoint, { src: this.webRtcEndpoint.localEndpoint.serialize(), timestamp: Date.now() });
         }
     }
 
 
     // API
 
-    getDelayInMs(peerId) {
-        return this.pingDelays.get(peerId);
+    getDelayInMs(endpoint) {
+        return this.pingDelays.get(endpoint);
     }
 
 
     // Network
 
-    onIncomingConnection(peerId) {
-        console.log("[Ping] onIncomingConnection", peerId);
-        this.openChannel(peerId);
+    onIncomingConnection(endpoint) {
+        console.log("[Ping] onIncomingConnection", endpoint.serialize());
+        this.openChannel(endpoint);
     }
 
-    onChannelStateChange(peerId, state) {
+    onChannelStateChange(endpoint, state) {
         if (state == Channel.State.CONNECTED) {
-            this.pingDelays.set(peerId, null);
-            this.sendMessage(peerId, { src: this.webRtcEndpoint.localId, timestamp: Date.now() });
+            this.pingDelays.set(endpoint, null);
+            this.sendMessage(endpoint, { src: this.webRtcEndpoint.localEndpoint.serialize(), timestamp: Date.now() });
         } else if (state == Channel.State.CLOSED) {
-            this.pingDelays.delete(peerId);
-            this.eventTarget.dispatchEvent(new PingEvent("onPingUpdate", peerId, null));
+            this.pingDelays.delete(endpoint);
+            this.eventTarget.dispatchEvent(new PingEvent("onPingUpdate", endpoint, null));
         }
     }
 
-    onMessage(peerId, data) {
-        if (data.src == this.webRtcEndpoint.localId) {
+    onMessage(endpoint, data) {
+        if (data.src == this.webRtcEndpoint.localEndpoint.serialize()) {
             let delayInMs = Date.now() - data.timestamp;
-            this.pingDelays.set(peerId, delayInMs);
-            this.eventTarget.dispatchEvent(new PingEvent("onPingUpdate", peerId, delayInMs));
+            this.pingDelays.set(endpoint, delayInMs);
+            this.eventTarget.dispatchEvent(new PingEvent("onPingUpdate", endpoint, delayInMs));
         } else {
-            this.sendMessage(peerId, data);
+            this.sendMessage(endpoint, data);
         }
     }
 }

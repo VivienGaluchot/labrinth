@@ -3,7 +3,6 @@
 import '/lib/sw-interface.mjs';
 import * as MinComponent from '/lib/min-component.mjs';
 import * as Channel from '/lib/channel.mjs';
-import * as P2p from '/lib/p2p.mjs';
 
 MinComponent.register();
 
@@ -193,7 +192,7 @@ window.onhashchange = (event) => {
 onDOMLoad(scrollToHash);
 
 // update connection status
-P2p.webRtcEndpoint.addEventListener("onSignalingConnectionStateUpdate", (event) => {
+Channel.webRtcEndpoint.addEventListener("onSignalingConnectionStateUpdate", (event) => {
     let state = event.state;
     let el = document.body.querySelector("footer .server-con-status");
     if (state == Channel.State.CLOSED) {

@@ -17,6 +17,16 @@
     }
 }
 
+.bullets {
+    display: flex;
+    flex-wrap: wrap;
+    margin: .2rem -.2rem;
+}
+
+.bullets a {
+    margin: .2rem;
+}
+
 .top-bar {
     border-bottom: 1px solid #FFFFFF44;
     font-size: small;

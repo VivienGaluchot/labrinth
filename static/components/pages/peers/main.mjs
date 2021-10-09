@@ -84,7 +84,7 @@ class Component {
             content.child(new FTag("div").text("You"));
         } else {
             content.child(new FTag("div")
-                .child(new FButton().text("Delete").onclick(() => {
+                .child(new FButton().text("Remove friend").onclick(() => {
                     chooseModal("Confirm",
                         `Do you really want to remove this friend ?`,
                         [{ "value": "yes", "text": "Yes" }])

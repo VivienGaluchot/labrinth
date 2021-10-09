@@ -1,8 +1,8 @@
 "use strict";
 
+import * as P2pId from '/lib/p2p-id.mjs';
 import * as Friends from '/lib/p2p-apps/friends.mjs';
 import * as Ping from '/lib/p2p-apps/ping.mjs';
-import * as P2p from '/lib/p2p.mjs';
 import * as Storage from '/lib/storage.mjs';
 import { FTag, FButton, alertModal, chooseModal } from '/lib/fdom.mjs';
 import * as FBind from '/lib/fbind.mjs';
@@ -10,7 +10,6 @@ import * as Channel from '/lib/channel.mjs';
 import * as Sw from '/lib/sw-interface.mjs';
 
 import * as P2pTest from '/lib/p2p-test.mjs';
-import { RemoteEndpoint } from '../../../lib/p2p.mjs';
 
 
 function populateLocalStorageTbody(element) {
@@ -101,11 +100,10 @@ class Component {
         this.ws.connect();
 
         // P2P
-        let webRtcEndpoint = P2p.webRtcEndpoint;
 
         let localId = this.element.querySelector("#p2p-local-id");
         let localIdCopy = this.element.querySelector("#p2p-local-id-copy-btn");
-        localId.innerText = P2p.localEndpoint.serialize();
+        localId.innerText = P2pId.localEndpoint.serialize();
         localIdCopy.onclick = () => {
             navigator.clipboard.writeText(localId.innerText)
                 .then(() => {
@@ -148,8 +146,8 @@ class Component {
             }
 
             let p2pCount = this.element.querySelector("#p2p-peer-count");
-            p2pCount.innerText = webRtcEndpoint.connections.size;
-            if (webRtcEndpoint.connections.size == 0) {
+            p2pCount.innerText = Channel.webRtcEndpoint.connections.size;
+            if (Channel.webRtcEndpoint.connections.size == 0) {
                 let tr = new FTag("tr")
                     .child(new FTag("td").text("-"))
                     .child(new FTag("td").text("-"))
@@ -174,25 +172,25 @@ class Component {
                         cssClass = "warning";
                     return new FTag("code").class(cssClass).text(state);
                 }
-                for (let [id, con] of webRtcEndpoint.connections) {
+                for (let [endpoint, con] of Channel.webRtcEndpoint.connections) {
                     let signaling = con.pc.signalingState;
                     let ice = con.pc.iceConnectionState;
                     let tr = new FTag("tr")
-                        .child(new FTag("td").child(getNode(id)))
+                        .child(new FTag("td").child(getNode(endpoint.serialize())))
                         .child(new FTag("td")
                             .child(new FTag("div").text("Signaling is ").child(getNode(signaling)))
                             .child(new FTag("div").text("ICE is ").child(getNode(ice)))
                             .child(new FTag("div").text("Global is ").child(getNode(con.state))));
-                    if (Ping.app.getDelayInMs(con.peerId))
-                        tr.child(new FTag("td").text(`${Ping.app.getDelayInMs(con.peerId)} ms`));
+                    if (Ping.app.getDelayInMs(con.endpoint))
+                        tr.child(new FTag("td").text(`${Ping.app.getDelayInMs(con.endpoint)} ms`));
                     else
                         tr.child(new FTag("td").text(`- ms`));
                     tr.child(new FTag("td")
                         .child(new FButton().text("Close").onclick(() => {
-                            webRtcEndpoint.close(id);
+                            Channel.webRtcEndpoint.close(endpoint);
                         }))
                         .child(new FButton().text("RemoteEndpoint").onclick(() => {
-                            let desc = webRtcEndpoint.getConnection(id).getRemoteDescription();
+                            let desc = Channel.webRtcEndpoint.getConnection(endpoint).getRemoteDescription();
                             if (desc) {
                                 alertModal("RemoteEndpoint", `Type:\n${desc.type}\n\nSDP description:\n${desc.sdp}`);
                             } else {
@@ -200,7 +198,7 @@ class Component {
                             }
                         }))
                         .child(new FButton().text("LocalEndpoint").onclick(() => {
-                            let desc = webRtcEndpoint.getConnection(id).getLocalDescription();
+                            let desc = Channel.webRtcEndpoint.getConnection(endpoint).getLocalDescription();
                             if (desc) {
                                 alertModal("LocalEndpoint", `Type:\n${desc.type}\n\nSDP description:\n${desc.sdp}`);
                             } else {
@@ -211,7 +209,7 @@ class Component {
                             con.pc.restartIce();
                         }))
                         .child(new FButton().text("Add friend").onclick(() => {
-                            Friends.app.add(P2p.RemoteEndpoint.deserialize(id).user, null);
+                            Friends.app.add(P2pId.getEndpoint(endpoint).user, null);
                             updateP2pFriends();
                         }))
                     );
@@ -219,9 +217,9 @@ class Component {
                 }
             }
         };
-        webRtcEndpoint.addEventListener("onRegister", updateP2pPeers);
-        webRtcEndpoint.addEventListener("onUnregister", updateP2pPeers);
-        webRtcEndpoint.addEventListener("onStateUpdate", updateP2pPeers);
+        Channel.webRtcEndpoint.addEventListener("onRegister", updateP2pPeers);
+        Channel.webRtcEndpoint.addEventListener("onUnregister", updateP2pPeers);
+        Channel.webRtcEndpoint.addEventListener("onStateUpdate", updateP2pPeers);
         Ping.app.eventTarget.addEventListener("onPingUpdate", updateP2pPeers);
         updateP2pPeers();
 
@@ -229,26 +227,26 @@ class Component {
             let connection = event.connection;
             let chan = connection.getChannel("main", 100);
             chan.onmessage = (data) => {
-                console.log(`message received from ${chan.peerId} '${data}'`);
+                console.log(`message received from ${chan.endpoint.serialize()} '${data}'`);
             };
             chan.onStateUpdate = (state) => {
-                console.log("state of chan", chan.peerId, state);
+                console.log("state of chan", chan.endpoint.serialize(), state);
                 if (state == Channel.State.CONNECTED) {
                     peerConnectId.value = "";
-                    chan.send(`hi, i'm ${connection.connector.localId} !`);
+                    chan.send(`hi, i'm ${connection.connector.localEndpoint.serialize()} !`);
                 }
             };
             chan.connect();
         }
-        webRtcEndpoint.addEventListener("onRegister", handleP2pConnection);
+        Channel.webRtcEndpoint.addEventListener("onRegister", handleP2pConnection);
 
         let peerConnectId = this.element.querySelector("#p2p-peer-connect-id");
         let peerConnectBtn = this.element.querySelector("#p2p-peer-connect-btn");
         let peerConnectTimeout = null;
         peerConnectBtn.onclick = () => {
             try {
-                let endpoint = P2p.RemoteEndpoint.deserialize(peerConnectId.value);
-                webRtcEndpoint.getOrCreateConnection(endpoint.serialize());
+                let endpoint = P2pId.getEndpoint(peerConnectId.value);
+                Channel.webRtcEndpoint.getOrCreateConnection(endpoint);
                 peerConnectId.classList.add("success");
                 clearTimeout(peerConnectTimeout);
                 peerConnectTimeout = setTimeout(() => {
@@ -304,20 +302,19 @@ class Component {
 
                     let subIds = [];
                     let sync = () => {
-                        webRtcEndpoint.getConnectedPeerIds([id]).then((ids) => {
+                        Channel.webRtcEndpoint.getConnectedEndpoints([id]).then((endpoints) => {
                             for (let el of subIds) {
                                 el.remove();
                             }
                             subIds = [];
-                            for (let peerId of ids) {
-                                if (peerId != webRtcEndpoint.localId) {
-                                    let endpoint = RemoteEndpoint.deserialize(peerId);
+                            for (let endpoint of endpoints) {
+                                if (!endpoint.isLocal) {
                                     let subTr = new FTag("tr")
                                         .child(new FTag("td").text(""))
                                         .child(new FTag("td").child(new FTag("code").class("success").text(`${endpoint.device}-${endpoint.session}`)))
                                         .child(new FTag("td")
                                             .child(new FButton().text("Connect").onclick(() => {
-                                                webRtcEndpoint.getOrCreateConnection(endpoint.serialize());
+                                                Channel.webRtcEndpoint.getOrCreateConnection(endpoint);
                                             }))
                                         );
                                     subIds.push(subTr.element);

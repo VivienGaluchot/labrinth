@@ -4,6 +4,8 @@
 
 "use strict";
 
+import * as P2pId from './p2p-id.mjs';
+
 
 const State = {
     CLOSED: 'closed',
@@ -263,7 +265,7 @@ class SignalingConnectionStateEvent extends Event {
  *   - onSignalingConnectionStateUpdate: SignalingConnectionStateEvent
  */
 class WebRtcEndpoint extends EventTarget {
-    constructor(localId) {
+    constructor(localEndpoint) {
         super();
 
         let serverUrl = new URL(window.location.href);
@@ -274,49 +276,54 @@ class WebRtcEndpoint extends EventTarget {
             protocol = "wss:";
         }
         this.serverUrl = new URL(`${protocol}//${serverUrl.host}/connector`);
-        this.localId = localId;
+        this.localEndpoint = localEndpoint;
 
+        // P2pId.Endpoint : WebRtcConnection
         this.connections = new Map();
 
         // socket used to publish id to server and wait for incoming offers
         this.socket = new WebSocketChannel(this.serverUrl, "rtc-on-socket-connector", true);
     }
 
-    getOrCreateConnection(peerId) {
+    getOrCreateConnection(endpoint) {
         if (this.socket.state != State.CONNECTED) {
             throw new Error("websocket not connected to server");
         }
-        if (peerId == this.localId) {
-            throw new Error("can't connect to localId");
+        if (endpoint == this.localEndpoint) {
+            throw new Error("can't connect to localEndpoint");
         }
-        if (!this.connections.has(peerId)) {
-            console.debug(`[WebRtcEndpoint] new connection to '${peerId}'`);
-            let connection = new WebRtcConnection(this, peerId);
-            this.connections.set(peerId, connection);
+        if (!this.connections.has(endpoint)) {
+            console.debug(`[WebRtcEndpoint] new connection to '${endpoint.serialize()}'`);
+            let connection = new WebRtcConnection(this, endpoint);
+            this.connections.set(endpoint, connection);
             this.dispatchEvent(new WebRtcConnectionEvent("onRegister", connection));
         }
-        return this.connections.get(peerId);
+        return this.connections.get(endpoint);
     }
 
-    getConnection(peerId) {
-        if (!this.connections.has(peerId)) {
-            throw new Error(`peerId not ${peerId} registered`);
+    getConnection(endpoint) {
+        if (!this.connections.has(endpoint)) {
+            throw new Error(`peerId ${endpoint.serialize()} not registered`);
         }
-        if (peerId == this.localId) {
-            throw new Error("can't connect to localId");
+        if (endpoint == this.localEndpoint) {
+            throw new Error("can't connect to localEndpoint");
         }
-        return this.connections.get(peerId);
+        return this.connections.get(endpoint);
     }
 
-    close(peerId) {
-        let connection = this.getConnection(peerId);
+    hasConnection(endpoint) {
+        return this.connections.has(endpoint);
+    }
+
+    close(endpoint) {
+        let connection = this.getConnection(endpoint);
         connection.close();
-        this.connections.delete(peerId);
+        this.connections.delete(endpoint);
         this.dispatchEvent(new WebRtcConnectionEvent("onUnregister", connection));
     }
 
     start() {
-        console.debug(`[WebRtcEndpoint] start endpoint with local id '${this.localId}'`);
+        console.debug(`[WebRtcEndpoint] start endpoint with local id '${this.localEndpoint.serialize()}'`);
         this.socket.onmessage = (data) => {
             if (data?.id == "desc") {
                 this.onDescriptionReceived(data);
@@ -327,7 +334,7 @@ class WebRtcEndpoint extends EventTarget {
         return new Promise((resolve, reject) => {
             this.socket.onStateUpdate = (state) => {
                 if (state == State.CONNECTED) {
-                    this.socket.request({ id: "hi", src: this.localId })
+                    this.socket.request({ id: "hi", src: this.localEndpoint.serialize() })
                         .then(() => {
                             console.log(`[WebRtcEndpoint] endpoint registered on server`);
                             resolve();
@@ -345,27 +352,31 @@ class WebRtcEndpoint extends EventTarget {
         this.socket.close();
     }
 
-    sendDescription(peerId, desc) {
-        return this.socket.request({ id: "desc", src: this.localId, dst: peerId, data: desc })
+    sendDescription(endpoint, desc) {
+        return this.socket.request({ id: "desc", src: this.localEndpoint.serialize(), dst: endpoint.serialize(), data: desc })
             .then(() => {
-                console.debug(`[WebRtcEndpoint] send desc to ${peerId}, done (${desc.type})`);
+                console.debug(`[WebRtcEndpoint] send desc to ${endpoint.serialize()}, done (${desc.type})`);
             });
     }
 
-    sendIceCandidate(peerId, candidate) {
-        return this.socket.request({ id: "candidate", src: this.localId, dst: peerId, data: candidate })
+    sendIceCandidate(endpoint, candidate) {
+        return this.socket.request({ id: "candidate", src: this.localEndpoint.serialize(), dst: endpoint.serialize(), data: candidate })
             .then(() => {
-                console.debug(`[WebRtcEndpoint] send ICE candidate: ${peerId}, done`);
+                console.debug(`[WebRtcEndpoint] send ICE candidate: ${endpoint.serialize()}, done`);
             });
     }
 
-    getConnectedPeerIds(userIds) {
+    getConnectedEndpoints(userIds) {
         if (!Array.isArray(userIds)) {
             throw new Error("unexpected argument");
         }
         return this.socket.request({ id: "find-peers", ids: userIds })
             .then((response) => {
-                return response.ids;
+                let endpoints = [];
+                for (let peerId of response.ids) {
+                    endpoints.push(P2pId.getEndpoint(peerId));
+                }
+                return endpoints;
             });
     }
 
@@ -376,12 +387,15 @@ class WebRtcEndpoint extends EventTarget {
             throw new Error(`unexpected data.id, received '${data?.id}' expected 'desc'`);
         if (data?.src == undefined)
             throw new Error(`undefined data.src`);
-        if (data?.dst != this.localId)
-            throw new Error(`unexpected data.dst, received '${data?.dst}' expected '${this.localId}'`);
+        if (data?.dst == undefined)
+            throw new Error(`undefined data.dst`);
         if (data?.data == undefined)
             throw new Error(`undefined data.data`);
+        if (!P2pId.getEndpoint(data.dst).isLocal)
+            throw new Error(`unexpected data.dst, received '${data.dst}'`);
+        let srcEndpoint = P2pId.getEndpoint(data.src);
         console.debug(`[WebRtcEndpoint] desc received from ${data.src} (${data.data.type})`);
-        this.getOrCreateConnection(data.src).onDescriptionReceived(data.data);
+        this.getOrCreateConnection(srcEndpoint).onDescriptionReceived(data.data);
     }
 
     onIceCandidateReceived(data) {
@@ -389,14 +403,15 @@ class WebRtcEndpoint extends EventTarget {
             throw new Error(`unexpected data.id, received '${data?.id}' expected 'candidate'`);
         if (data?.src == undefined)
             throw new Error(`undefined data.src`);
-        if (data?.dst != this.localId)
-            throw new Error(`unexpected data.dst, received '${data?.dst}' expected '${this.localId}'`);
+        if (data?.dst == undefined)
+            throw new Error(`undefined data.dst`);
         if (data?.data == undefined)
             throw new Error(`undefined data.data`);
+        if (!P2pId.getEndpoint(data.dst).isLocal)
+            throw new Error(`unexpected data.dst, received '${data.dst}'`);
+        let srcEndpoint = P2pId.getEndpoint(data.src);
         console.debug(`[WebRtcEndpoint] ICE candidate received: ${data.src}`);
-        if (!this.connections.has(data?.src))
-            throw new Error(`peer from data.src not registered`);
-        this.connections.get(data.src).onIceCandidateReceived(data.data);
+        this.getConnection(srcEndpoint).onIceCandidateReceived(data.data);
     }
 }
 
@@ -416,12 +431,16 @@ const rtcPeerConnectionConfig = {
  *  It allows to create multiple communications channels
  */
 class WebRtcConnection {
-    constructor(connector, peerId) {
-        this.peerId = peerId;
+    constructor(connector, endpoint) {
+        if (endpoint.isLocal) {
+            throw new Error("invalid local endpoint");
+        }
+        this.endpoint = endpoint;
         this.connector = connector;
-        this.isPolite = peerId > this.connector.localId;
-        if (this.isPolite !== false && this.isPolite !== true)
+        this.isPolite = endpoint.serialize() > this.connector.localEndpoint.serialize();
+        if (this.isPolite !== false && this.isPolite !== true) {
             throw new Error("can't compute polite state");
+        }
 
         this.isMakingOffer = false;
         this.isOfferIgnored = false;
@@ -442,7 +461,7 @@ class WebRtcConnection {
             try {
                 this.isMakingOffer = true;
                 await this.pc.setLocalDescription();
-                await this.connector.sendDescription(this.peerId, this.pc.localDescription);
+                await this.connector.sendDescription(this.endpoint, this.pc.localDescription);
             } catch (err) {
                 console.error(err);
             } finally {
@@ -451,7 +470,7 @@ class WebRtcConnection {
         };
         this.pc.onicecandidate = async (event) => {
             if (event.candidate) {
-                await this.connector.sendIceCandidate(this.peerId, event.candidate);
+                await this.connector.sendIceCandidate(this.endpoint, event.candidate);
             }
         };
 
@@ -463,6 +482,9 @@ class WebRtcConnection {
                     this.connector.dispatchEvent(new WebRtcConnectionEvent("onConnect", this));
                 }
                 if (this.state == State.CLOSED) {
+                    if (this.connector.hasConnection(this.endpoint)) {
+                        this.connector.close(this.endpoint);
+                    }
                     this.connector.dispatchEvent(new WebRtcConnectionEvent("onDisconnect", this));
                 }
                 this.connector.dispatchEvent(new WebRtcConnectionEvent("onStateUpdate", this));
@@ -472,7 +494,7 @@ class WebRtcConnection {
     }
 
     getChannel(tag, id) {
-        return new WebRtcDataChannel(this.peerId, this.pc, tag, id);
+        return new WebRtcDataChannel(this.endpoint, this.pc, tag, id);
     }
 
     // expected to be called by the connector
@@ -492,7 +514,7 @@ class WebRtcConnection {
             this.isSettingRemoteAnswerPending = false;
             if (description.type == "offer") {
                 await this.pc.setLocalDescription();
-                await this.connector.sendDescription(this.peerId, this.pc.localDescription);
+                await this.connector.sendDescription(this.endpoint, this.pc.localDescription);
             }
         } catch (err) {
             console.error(err);
@@ -530,10 +552,10 @@ class WebRtcConnection {
  *  WebRTC channel
  */
 class WebRtcDataChannel extends SocketLikeChannel {
-    constructor(peerId, pc, tag, id) {
-        super(`${peerId} - ${tag}`, false);
+    constructor(endpoint, pc, tag, id) {
+        super(`${endpoint.serialize()} - ${tag}`, false);
 
-        this.peerId = peerId;
+        this.endpoint = endpoint;
         this.pc = pc;
         this.tag = tag;
         this.id = id;
@@ -554,4 +576,12 @@ class WebRtcDataChannel extends SocketLikeChannel {
 }
 
 
-export { WebSocketChannel, DebugChannel, State, WebRtcEndpoint }
+/**
+ *  WebRTC Endpoint Instance
+ */
+
+const webRtcEndpoint = new WebRtcEndpoint(P2pId.localEndpoint);
+webRtcEndpoint.start();
+
+
+export { WebSocketChannel, DebugChannel, State, webRtcEndpoint }

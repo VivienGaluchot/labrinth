@@ -2,7 +2,7 @@
 
 import * as Chat from '/lib/p2p-apps/chat.mjs';
 import * as Friends from '/lib/p2p-apps/friends.mjs';
-import * as P2p from '/lib/p2p.mjs';
+import * as P2pId from '/lib/p2p-id.mjs';
 import { FNode, FTag } from '/lib/fdom.mjs';
 
 
@@ -50,10 +50,10 @@ class Component {
         Chat.app.eventTarget.addEventListener("onChatMessage", (event) => {
             let srcUserId = event.srcUserId;
             let dstUserId = event.dstUserId;
-            if ((dstUserId == this.remoteUserId && srcUserId == P2p.localEndpoint.user) || (srcUserId == this.remoteUserId && dstUserId == P2p.localEndpoint.user)) {
+            if ((dstUserId == this.remoteUserId && srcUserId == P2pId.localEndpoint.user) || (srcUserId == this.remoteUserId && dstUserId == P2pId.localEndpoint.user)) {
                 let date = event.date;
                 let content = event.content;
-                let isLocal = srcUserId == P2p.localEndpoint.user;
+                let isLocal = srcUserId == P2pId.localEndpoint.user;
                 this.showMessage(date, isLocal, srcUserId, content);
             }
         });

@@ -1,7 +1,7 @@
 "use strict";
 
 import * as Friends from '/lib/p2p-apps/friends.mjs';
-import * as P2p from '/lib/p2p.mjs';
+import * as P2pId from '/lib/p2p-id.mjs';
 import { FNode, FTag, FButton, FIcon, FMinComponent } from '/lib/fdom.mjs';
 
 
@@ -27,12 +27,12 @@ class Component {
         this.element.querySelector("#add-friend-modal-btn").onclick = () => {
             this.element.querySelector("#add-friend-modal").internal.show();
         };
-        this.element.querySelector("#add-friend-local-id-safe").textContent = this.maskUserId(P2p.localEndpoint.user);
-        this.element.querySelector("#add-friend-local-id-full").textContent = P2p.localEndpoint.user;
+        this.element.querySelector("#add-friend-local-id-safe").textContent = this.maskUserId(P2pId.localEndpoint.user);
+        this.element.querySelector("#add-friend-local-id-full").textContent = P2pId.localEndpoint.user;
         this.element.querySelector("#add-friend-local-id-copy").onclick = (event) => {
             let resCls = null;
             try {
-                navigator.clipboard.writeText(P2p.localEndpoint.user);
+                navigator.clipboard.writeText(P2pId.localEndpoint.user);
                 resCls = "success";
             } catch (err) {
                 console.error(err, err.stack);
@@ -150,7 +150,7 @@ class Component {
     }
 
     renderFriend(userId) {
-        let isLocal = userId == P2p.localEndpoint.user;
+        let isLocal = userId == P2pId.localEndpoint.user;
 
         let nameBinder = Friends.app.getDataBinder(userId).getProp("name");
         let pictureBinder = Friends.app.getDataBinder(userId).getProp("picture");

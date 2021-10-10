@@ -24,19 +24,19 @@ h2 {
 .entries {
     display: grid;
     gap: 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
 }
 
 .entry {
-    background-color: rgba(1, 1, 1, 0.1);
-    border: 1px solid rgba(1, 1, 1, 0.1);
+    background-color: rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.1);
     border-radius: 1rem;
     overflow: hidden;
     word-wrap: break-word;
 }
 
 .entry .title {
-    background-color: rgba(1, 1, 1, 0.1);
+    background-color: rgba(0, 0, 0, 0.1);
     padding: .8rem;
     display: flex;
     align-items: center;
@@ -56,6 +56,7 @@ h2 {
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
+    overflow: auto;
 }
 
 .entry .content hr {
@@ -68,6 +69,19 @@ h2 {
     width: 1.5rem;
     height: 1.5rem;
     margin-right: .5rem;
+}
+
+.entry .content .con-info {
+    margin-bottom: 1rem;
+    padding-left: .5rem;
+    border-left: 1px solid rgba(0, 0, 0, 0.2);
+    font-size: small;
+}
+
+.entry .content .label {
+    min-width: 4rem;
+    display: inline-block;
+    margin-right: 1rem;
 }
 
 .anchor-target {

@@ -192,7 +192,7 @@ window.onhashchange = (event) => {
 onDOMLoad(scrollToHash);
 
 // update connection status
-Channel.webRtcEndpoint.addEventListener("onSignalingConnectionStateUpdate", (event) => {
+Channel.webRtcEndpoint.addEventListener("onSignalingServerStateUpdate", (event) => {
     let state = event.state;
     let el = document.body.querySelector("footer .server-con-status");
     if (state == Channel.State.CLOSED) {

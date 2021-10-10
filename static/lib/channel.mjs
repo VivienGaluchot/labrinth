@@ -239,6 +239,7 @@ class WebRtcConnectionEvent extends Event {
     constructor(type, connection) {
         super(type);
         this.connection = connection;
+        this.endpoint = connection.endpoint;
     }
 }
 
@@ -262,7 +263,7 @@ class SignalingConnectionStateEvent extends Event {
  *   - onConnect: WebRtcConnectionEvent
  *   - onDisconnect: WebRtcConnectionEvent
  *   - onStateUpdate: WebRtcConnectionEvent
- *   - onSignalingConnectionStateUpdate: SignalingConnectionStateEvent
+ *   - onSignalingServerStateUpdate: SignalingConnectionStateEvent
  */
 class WebRtcEndpoint extends EventTarget {
     constructor(localEndpoint) {
@@ -342,7 +343,7 @@ class WebRtcEndpoint extends EventTarget {
                             reject(`can't register local endpoint\n - ${reason}`);
                         });
                 }
-                this.dispatchEvent(new SignalingConnectionStateEvent("onSignalingConnectionStateUpdate", state));
+                this.dispatchEvent(new SignalingConnectionStateEvent("onSignalingServerStateUpdate", state));
             };
             this.socket.connect();
         });

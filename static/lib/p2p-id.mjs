@@ -29,8 +29,12 @@ class Endpoint {
         this.isLocal = isLocal;
     }
 
-    serialize() {
-        return this.peerId;
+    static partialUserId(user) {
+        return "#" + user.slice(user.length - 4);
+    }
+
+    partialUserId() {
+        return Endpoint.partialUserId(this.user);
     }
 }
 
@@ -69,17 +73,60 @@ class LocalEndpoint extends Endpoint {
     }
 }
 
-const localEndpoint = LocalEndpoint.generate();
+const localEndpoint = Object.freeze(LocalEndpoint.generate());
 
-// TODO fix memory leak
-const remoteEndpoints = new Map();
+
+// ---------------------------------
+// Endpoint objects mapping
+// ---------------------------------
+
+class WeakValueMap {
+    constructor() {
+        this.scrubPeriod = 10;
+        this.scrubCount = 0;
+        this.weakRefs = new Map();
+    }
+
+    garbageCollect() {
+        for (let [key, value] of this.weakRefs) {
+            if (value.deref() == undefined) {
+                this.weakRefs.delete(key);
+            }
+        }
+    }
+
+    set(key, value) {
+        if (this.scrubCount >= this.scrubPeriod) {
+            this.garbageCollect();
+            this.scrubCount = 0;
+        }
+        this.scrubCount++;
+
+        this.weakRefs.set(key, new WeakRef(value));
+    }
+
+    get(key) {
+        return this.weakRefs.get(key)?.deref();
+    }
+}
+
+const remoteEndpoints = new WeakValueMap();
+
+/**
+ * Get a unique object for each peerId currently used usable as Map key.
+ * Prevents memory leak using WeakValueMap.
+ *
+ * @param peerId   endpoint peerId to get
+ *
+ * @returns the unique Endpoint with the given peerId
+ */
 function getEndpoint(peerId) {
-    if (peerId == localEndpoint.serialize()) {
+    if (peerId == localEndpoint.peerId) {
         return localEndpoint;
     }
-    let existing = remoteEndpoints.get(peerId);
-    if (existing) {
-        return existing;
+    let found = remoteEndpoints.get(peerId);
+    if (found) {
+        return found;
     } else {
         let created = RemoteEndpoint.deserialize(peerId);
         remoteEndpoints.set(peerId, created);
@@ -88,4 +135,4 @@ function getEndpoint(peerId) {
 }
 
 
-export { localEndpoint, getEndpoint }
+export { Endpoint, localEndpoint, getEndpoint }

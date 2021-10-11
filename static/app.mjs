@@ -54,9 +54,9 @@ function showPlaceholder(activeClass) {
     for (let el of document.getElementById("js-main").children) {
         if (el.classList.contains("placeholder")) {
             if (el.classList.contains(activeClass)) {
-                el.classList.remove("js-hidden");
+                el.hidden = false;
             } else {
-                el.classList.add("js-hidden");
+                el.hidden = true;
             }
         }
     }
@@ -98,7 +98,7 @@ function genericRender(page) {
         resetContent();
         for (let el of document.getElementById("js-main").children) {
             if (el.classList.contains("placeholder")) {
-                el.classList.add("js-hidden");
+                el.hidden = true;
             }
         }
         let el = document.createElement("min-component");
@@ -179,8 +179,8 @@ function scrollToHash(element) {
             for (let el of MinComponent.queryShadowSelectorAll(document, ".anchor-target")) {
                 el.classList.remove("anchor-target");
             }
-            selected.scrollIntoView();
             selected.classList.add("anchor-target");
+            selected.scrollIntoView();
         }
     }
 }

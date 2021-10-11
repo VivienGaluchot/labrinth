@@ -62,7 +62,7 @@ class ChatApp extends P2pApps.App {
     // Network
 
     onIncomingConnection(endpoint) {
-        console.log("[Chat] onIncomingConnection", endpoint.serialize());
+        console.log("[Chat] onIncomingConnection", endpoint.peerId);
         this.openChannel(endpoint);
     }
 

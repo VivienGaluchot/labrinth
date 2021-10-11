@@ -100,7 +100,7 @@ class Component {
         node.child(title);
         title.child(new FTag("span").bindWith(pictureBinder, Component.renderPicture));
         title.child(new FTag("span").class("name").bindWith(nameBinder, Component.renderName));
-        title.child(new FTag("span").class("user-id").text(`#${userId}`));
+        title.child(new FTag("span").class("user-id").text(P2pId.Endpoint.partialUserId(userId)));
 
         let content = new FTag("div").class("content");
         node.child(content);
@@ -153,12 +153,15 @@ class Component {
                     .child(new FTag("code").class("data").class(stateClass).text(state))
                 );
                 let pingInMs = Ping.app.getDelayInMs(endpoint);
+                let pingText = null;
                 if (pingInMs == null) {
-                    pingInMs = "undefined";
+                    pingText = "-";
+                } else {
+                    pingText = `${pingInMs} ms`;
                 }
                 part.child(new FTag("div")
                     .child(new FTag("span").class("label").text("Ping "))
-                    .child(new FTag("span").class("data").text(`${pingInMs} ms`))
+                    .child(new FTag("span").class("data").text(pingText))
                 );
 
                 node.child(part);

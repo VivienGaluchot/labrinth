@@ -103,7 +103,7 @@ class Component {
 
         let localId = this.element.querySelector("#p2p-local-id");
         let localIdCopy = this.element.querySelector("#p2p-local-id-copy-btn");
-        localId.innerText = P2pId.localEndpoint.serialize();
+        localId.innerText = P2pId.localEndpoint.peerId;
         localIdCopy.onclick = () => {
             navigator.clipboard.writeText(localId.innerText)
                 .then(() => {
@@ -176,7 +176,7 @@ class Component {
                     let signaling = con.pc.signalingState;
                     let ice = con.pc.iceConnectionState;
                     let tr = new FTag("tr")
-                        .child(new FTag("td").child(getNode(endpoint.serialize())))
+                        .child(new FTag("td").child(getNode(endpoint.peerId)))
                         .child(new FTag("td")
                             .child(new FTag("div").text("Signaling is ").child(getNode(signaling)))
                             .child(new FTag("div").text("ICE is ").child(getNode(ice)))
@@ -227,13 +227,13 @@ class Component {
             let connection = event.connection;
             let chan = connection.getChannel("main", 100);
             chan.onmessage = (data) => {
-                console.log(`message received from ${chan.endpoint.serialize()} '${data}'`);
+                console.log(`message received from ${chan.endpoint.peerId} '${data}'`);
             };
             chan.onStateUpdate = (state) => {
-                console.log("state of chan", chan.endpoint.serialize(), state);
+                console.log("state of chan", chan.endpoint.peerId, state);
                 if (state == Channel.State.CONNECTED) {
                     peerConnectId.value = "";
-                    chan.send(`hi, i'm ${connection.connector.localEndpoint.serialize()} !`);
+                    chan.send(`hi, i'm ${connection.connector.localEndpoint.peerId} !`);
                 }
             };
             chan.connect();

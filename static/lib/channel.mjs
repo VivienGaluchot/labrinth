@@ -294,7 +294,7 @@ class WebRtcEndpoint extends EventTarget {
             throw new Error("can't connect to localEndpoint");
         }
         if (!this.connections.has(endpoint)) {
-            console.debug(`[WebRtcEndpoint] new connection to '${endpoint.serialize()}'`);
+            console.debug(`[WebRtcEndpoint] new connection to '${endpoint.peerId}'`);
             let connection = new WebRtcConnection(this, endpoint);
             this.connections.set(endpoint, connection);
             this.dispatchEvent(new WebRtcConnectionEvent("onRegister", connection));
@@ -304,7 +304,7 @@ class WebRtcEndpoint extends EventTarget {
 
     getConnection(endpoint) {
         if (!this.connections.has(endpoint)) {
-            throw new Error(`peerId ${endpoint.serialize()} not registered`);
+            throw new Error(`peerId ${endpoint.peerId} not registered`);
         }
         if (endpoint == this.localEndpoint) {
             throw new Error("can't connect to localEndpoint");
@@ -324,7 +324,7 @@ class WebRtcEndpoint extends EventTarget {
     }
 
     start() {
-        console.debug(`[WebRtcEndpoint] start endpoint with local id '${this.localEndpoint.serialize()}'`);
+        console.debug(`[WebRtcEndpoint] start endpoint with local id '${this.localEndpoint.peerId}'`);
         this.socket.onmessage = (data) => {
             if (data?.id == "desc") {
                 this.onDescriptionReceived(data);
@@ -335,7 +335,7 @@ class WebRtcEndpoint extends EventTarget {
         return new Promise((resolve, reject) => {
             this.socket.onStateUpdate = (state) => {
                 if (state == State.CONNECTED) {
-                    this.socket.request({ id: "hi", src: this.localEndpoint.serialize() })
+                    this.socket.request({ id: "hi", src: this.localEndpoint.peerId })
                         .then(() => {
                             console.log(`[WebRtcEndpoint] endpoint registered on server`);
                             resolve();
@@ -354,16 +354,16 @@ class WebRtcEndpoint extends EventTarget {
     }
 
     sendDescription(endpoint, desc) {
-        return this.socket.request({ id: "desc", src: this.localEndpoint.serialize(), dst: endpoint.serialize(), data: desc })
+        return this.socket.request({ id: "desc", src: this.localEndpoint.peerId, dst: endpoint.peerId, data: desc })
             .then(() => {
-                console.debug(`[WebRtcEndpoint] send desc to ${endpoint.serialize()}, done (${desc.type})`);
+                console.debug(`[WebRtcEndpoint] send desc to ${endpoint.peerId}, done (${desc.type})`);
             });
     }
 
     sendIceCandidate(endpoint, candidate) {
-        return this.socket.request({ id: "candidate", src: this.localEndpoint.serialize(), dst: endpoint.serialize(), data: candidate })
+        return this.socket.request({ id: "candidate", src: this.localEndpoint.peerId, dst: endpoint.peerId, data: candidate })
             .then(() => {
-                console.debug(`[WebRtcEndpoint] send ICE candidate: ${endpoint.serialize()}, done`);
+                console.debug(`[WebRtcEndpoint] send ICE candidate: ${endpoint.peerId}, done`);
             });
     }
 
@@ -438,7 +438,7 @@ class WebRtcConnection {
         }
         this.endpoint = endpoint;
         this.connector = connector;
-        this.isPolite = endpoint.serialize() > this.connector.localEndpoint.serialize();
+        this.isPolite = endpoint.peerId > this.connector.localEndpoint.peerId;
         if (this.isPolite !== false && this.isPolite !== true) {
             throw new Error("can't compute polite state");
         }
@@ -554,7 +554,7 @@ class WebRtcConnection {
  */
 class WebRtcDataChannel extends SocketLikeChannel {
     constructor(endpoint, pc, tag, id) {
-        super(`${endpoint.serialize()} - ${tag}`, false);
+        super(`${endpoint.peerId} - ${tag}`, false);
 
         this.endpoint = endpoint;
         this.pc = pc;

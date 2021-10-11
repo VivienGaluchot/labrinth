@@ -163,7 +163,7 @@ class FriendsApp extends P2pApps.App {
     // Network
 
     onIncomingConnection(endpoint) {
-        console.log("[Friends] onIncomingConnection", endpoint.serialize());
+        console.log("[Friends] onIncomingConnection", endpoint.peerId);
 
         let userId = endpoint.user;
         if (!this.friendMap.has(userId)) {
@@ -176,13 +176,13 @@ class FriendsApp extends P2pApps.App {
 
     onChannelStateChange(endpoint, state) {
         let userId = endpoint.user;
-        console.log("[Friends] onChannelStateChange", endpoint.serialize(), state);
+        console.log("[Friends] onChannelStateChange", endpoint.peerId, state);
         if (state == Channel.State.CONNECTED) {
             if (!this.p2pConnectedUserIds.has(userId)) {
                 this.p2pConnectedUserIds.set(userId, new Set());
             }
             this.p2pConnectedUserIds.get(userId).add(endpoint);
-            console.log("connected", endpoint.serialize());
+            console.log("connected", endpoint.peerId);
             this.sendMessage(endpoint, this.getLocalData());
         } else if (state == Channel.State.CLOSED) {
             if (this.p2pConnectedUserIds.has(userId)) {
@@ -190,7 +190,7 @@ class FriendsApp extends P2pApps.App {
                 if (this.p2pConnectedUserIds.get(userId).size == 0) {
                     this.p2pConnectedUserIds.delete(userId);
                 }
-                console.log("disconnected", endpoint.serialize());
+                console.log("disconnected", endpoint.peerId);
             }
         }
         this.dataBinders.get(userId).set({ isConnected: this.isConnected(userId) });

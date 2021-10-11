@@ -27,7 +27,7 @@ class Component {
         this.element.querySelector("#add-friend-modal-btn").onclick = () => {
             this.element.querySelector("#add-friend-modal").internal.show();
         };
-        this.element.querySelector("#add-friend-local-id-safe").textContent = this.maskUserId(P2pId.localEndpoint.user);
+        this.element.querySelector("#add-friend-local-id-safe").textContent = P2pId.localEndpoint.partialUserId();
         this.element.querySelector("#add-friend-local-id-full").textContent = P2pId.localEndpoint.user;
         this.element.querySelector("#add-friend-local-id-copy").onclick = (event) => {
             let resCls = null;
@@ -44,8 +44,10 @@ class Component {
             }, 1000);
         };
         this.element.querySelector("#add-friend-local-id-show").onclick = () => {
-            this.element.querySelector("#add-friend-local-id-full").classList.toggle("js-hidden");
-            this.element.querySelector("#add-friend-local-id-safe").classList.toggle("js-hidden");
+            let full = this.element.querySelector("#add-friend-local-id-full");
+            full.hidden = !full.hidden;
+            let safe = this.element.querySelector("#add-friend-local-id-safe");
+            safe.hidden = !safe.hidden;
         };
         this.element.querySelector("#add-friend-btn").onclick = () => {
             let input = this.element.querySelector("#add-friend-id");
@@ -99,10 +101,6 @@ class Component {
     }
 
     // internal
-
-    maskUserId(userId) {
-        return "#" + userId.slice(userId.length - 4);
-    }
 
     showProfileForm() {
         let data = Friends.app.getLocalData();
@@ -176,7 +174,7 @@ class Component {
         chatModal.child(new FTag("span").attribute("slot", "content").child(chat));
         li.child(chatModal);
 
-        let maskedId = this.maskUserId(userId);
+        let maskedId = P2pId.Endpoint.partialUserId(userId);
         li.child(new FTag("div").bindWith(pictureBinder, Component.renderPicture));
 
         let subLine = new FTag("div")

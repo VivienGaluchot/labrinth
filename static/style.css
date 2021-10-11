@@ -495,10 +495,6 @@ footer {
 
 /* js */
 
-.js-hidden {
-    display: none !important;
-}
-
 .test {
     padding: 2rem;
     font-size: small;
@@ -508,6 +504,10 @@ footer {
 
 min-component {
     display: block;
+}
+
+min-component[hidden] {
+    display: none;
 }
 
 min-component.render {

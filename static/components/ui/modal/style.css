@@ -1,8 +1,4 @@
 @import url('/style.css');
-.js-hidden {
-    display: none !important;
-}
-
 #bg {
     position: absolute;
     top: 0;
@@ -16,6 +12,10 @@
     justify-content: center;
     background-color: #00000080;
     padding: 1rem;
+}
+
+#bg[hidden] {
+    display: none;
 }
 
 #fg {

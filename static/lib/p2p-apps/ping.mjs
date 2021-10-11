@@ -43,7 +43,7 @@ class PingApp extends P2pApps.App {
 
     sendPings() {
         for (let [endpoint, delayInMs] of this.pingDelays) {
-            this.sendMessage(endpoint, { src: this.webRtcEndpoint.localEndpoint.serialize(), timestamp: Date.now() });
+            this.sendMessage(endpoint, { src: this.webRtcEndpoint.localEndpoint.peerId, timestamp: Date.now() });
         }
     }
 
@@ -58,14 +58,14 @@ class PingApp extends P2pApps.App {
     // Network
 
     onIncomingConnection(endpoint) {
-        console.log("[Ping] onIncomingConnection", endpoint.serialize());
+        console.log("[Ping] onIncomingConnection", endpoint.peerId);
         this.openChannel(endpoint);
     }
 
     onChannelStateChange(endpoint, state) {
         if (state == Channel.State.CONNECTED) {
             this.pingDelays.set(endpoint, null);
-            this.sendMessage(endpoint, { src: this.webRtcEndpoint.localEndpoint.serialize(), timestamp: Date.now() });
+            this.sendMessage(endpoint, { src: this.webRtcEndpoint.localEndpoint.peerId, timestamp: Date.now() });
         } else if (state == Channel.State.CLOSED) {
             this.pingDelays.delete(endpoint);
             this.eventTarget.dispatchEvent(new PingEvent("onPingUpdate", endpoint, null));
@@ -73,7 +73,7 @@ class PingApp extends P2pApps.App {
     }
 
     onMessage(endpoint, data) {
-        if (data.src == this.webRtcEndpoint.localEndpoint.serialize()) {
+        if (data.src == this.webRtcEndpoint.localEndpoint.peerId) {
             let delayInMs = Date.now() - data.timestamp;
             this.pingDelays.set(endpoint, delayInMs);
             this.eventTarget.dispatchEvent(new PingEvent("onPingUpdate", endpoint, delayInMs));

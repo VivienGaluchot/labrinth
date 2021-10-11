@@ -47,7 +47,7 @@ class Component {
     // custom API
 
     isActive() {
-        return !this.element.querySelector("#bg").classList.contains("js-hidden");
+        return !this.element.querySelector("#bg").hidden;
     }
 
     focusInside() {
@@ -69,7 +69,7 @@ class Component {
 
     show() {
         this.onChoice = () => { };
-        this.element.querySelector("#bg").classList.remove("js-hidden");
+        this.element.querySelector("#bg").hidden = false;
         this.focusInside();
     }
 
@@ -79,13 +79,13 @@ class Component {
                 resolve(choice);
                 this.close();
             }
-            this.element.querySelector("#bg").classList.remove("js-hidden");
+            this.element.querySelector("#bg").hidden = false;
             this.focusInside();
         });
     }
 
     close() {
-        this.element.querySelector("#bg").classList.add("js-hidden");
+        this.element.querySelector("#bg").hidden = true;
         this.onClose();
     }
 }

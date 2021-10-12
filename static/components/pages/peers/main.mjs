@@ -6,11 +6,22 @@ import * as P2pId from '/lib/p2p-id.mjs';
 import * as Channel from '/lib/channel.mjs';
 import { FNode, FTag, FButton, chooseModal } from '/lib/fdom.mjs';
 
+function union(setA, setB) {
+    let _union = new Set(setA)
+    for (let elem of setB) {
+        _union.add(elem)
+    }
+    return _union
+}
+
 class Component {
     // called when the component is instantiated
     constructor(element) {
         this.element = element;
         this.entries = element.querySelector(".entries");
+
+        // Endpoints connected to the signaling server
+        this.signalingConnected = new Set();
     }
 
     // called when the component is rendered
@@ -46,10 +57,38 @@ class Component {
         Channel.webRtcEndpoint.addEventListener("onDisconnect", this.conUpdate);
         Channel.webRtcEndpoint.addEventListener("onStateUpdate", this.conUpdate);
         Ping.app.eventTarget.addEventListener("onPingUpdate", this.conUpdate);
+
+        this.checkConnection();
+        this.checkConnectionInterval = setInterval(() => {
+            this.checkConnection();
+        }, 1000);
+    }
+
+    checkConnection() {
+        this.signalingConnected.clear();
+        let userIds = [];
+        for (let [userId, data] of Friends.app.getFriends()) {
+            userIds.push(userId);
+        }
+        Channel.webRtcEndpoint.getConnectedEndpoints(userIds).then((endpoints) => {
+            for (let endpoint of endpoints) {
+                this.signalingConnected.add(endpoint);
+            }
+            // TODO render only on change, use data binding
+            for (let userId of userIds) {
+                let el = this.element.querySelector(`#con-status-uid-${userId}`);
+                if (el) {
+                    this.renderConnections(el, userId);
+                } else {
+                    console.warn("element not found", userId);
+                }
+            }
+        });
     }
 
     // called when the component is removed
     onRemove() {
+        clearInterval(this.checkConnectionInterval);
         Friends.app.eventTarget.removeEventListener("onAdd", this.onFriendAdd);
         Friends.app.eventTarget.removeEventListener("onRemove", this.onFriendRemove);
         Channel.webRtcEndpoint.removeEventListener("onRegister", this.conUpdate);
@@ -134,35 +173,57 @@ class Component {
     renderConnections(element, userId) {
         let node = new FNode(element);
         node.clear();
-        for (let [endpoint, connection] of Channel.webRtcEndpoint.connections) {
+
+        let endpoints = union(Channel.webRtcEndpoint.connections.keys(), this.signalingConnected);
+        for (let endpoint of endpoints) {
             if (endpoint.user == userId) {
                 let part = new FTag("div").class("con-info");
                 part.child(new FTag("div")
                     .child(new FTag("span").class("label").text("Id "))
                     .child(new FTag("code").text(`${endpoint.device}-${endpoint.session}`))
                 );
-                let state = connection.state;
-                let stateClass = "";
-                if (connection.state == "connected") {
-                    stateClass = "success";
-                } else if (connection.state == "connecting") {
-                    stateClass = "warning";
-                }
+
+                let isSignalingConnected = this.signalingConnected.has(endpoint);
                 part.child(new FTag("div")
-                    .child(new FTag("span").class("label").text("Status "))
-                    .child(new FTag("code").class("data").class(stateClass).text(state))
+                    .child(new FTag("span").class("label").text("Signaling "))
+                    .child(new FTag("code").class("data")
+                        .class(isSignalingConnected ? "success" : "warning")
+                        .text(isSignalingConnected ? "yes" : "no"))
                 );
+
+                if (endpoint == P2pId.localEndpoint) {
+                    part.child(new FTag("div")
+                        .child(new FTag("span").class("label").text("Local"))
+                    );
+                }
+
+                let connection = Channel.webRtcEndpoint.connections.get(endpoint);
+                if (connection != undefined) {
+                    let state = connection.state;
+                    let stateClass = "";
+                    if (connection.state == "connected") {
+                        stateClass = "success";
+                    } else if (connection.state == "connecting") {
+                        stateClass = "warning";
+                    }
+                    part.child(new FTag("div")
+                        .child(new FTag("span").class("label").text("Status "))
+                        .child(new FTag("code").class("data").class(stateClass).text(state))
+                    );
+                } else if (endpoint != P2pId.localEndpoint) {
+                    part.child(new FTag("div")
+                        .child(new FTag("span").class("label").text("Status "))
+                        .child(new FTag("code").class("data").class("warning").text("closed"))
+                    );
+                }
+
                 let pingInMs = Ping.app.getDelayInMs(endpoint);
-                let pingText = null;
-                if (pingInMs == null) {
-                    pingText = "-";
-                } else {
-                    pingText = `${pingInMs} ms`;
+                if (pingInMs != null) {
+                    part.child(new FTag("div")
+                        .child(new FTag("span").class("label").text("Ping "))
+                        .child(new FTag("span").class("data").text(`${pingInMs} ms`))
+                    );
                 }
-                part.child(new FTag("div")
-                    .child(new FTag("span").class("label").text("Ping "))
-                    .child(new FTag("span").class("data").text(pingText))
-                );
 
                 node.child(part);
             }

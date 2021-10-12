@@ -37,8 +37,8 @@ code {
     background-color: rgb(149, 200, 241, 0.1);
     padding: .2rem 0;
     border-radius: .2rem;
-    line-height: .95rem;
-    font-size: .95rem;
+    line-height: .95;
+    font-size: .95;
 }
 
 pre code {

@@ -453,12 +453,16 @@ class WebRtcConnection {
             this.connector.dispatchEvent(new WebRtcConnectionEvent("onStateUpdate", this));
         };
         this.pc.oniceconnectionstatechange = (event) => {
-            if (this.pc.iceConnectionState === "failed" && this.pc.signalingState !== "closed") {
-                this.pc.restartIce();
+            console.debug("[WebRtcEndpoint] oniceconnectionstatechange", event);
+            if (this.pc.signalingState != "closed") {
+                if (this.pc.iceConnectionState == "failed") {
+                    this.pc.restartIce();
+                }
             }
             this.connector.dispatchEvent(new WebRtcConnectionEvent("onStateUpdate", this));
         };
         this.pc.onnegotiationneeded = async (event) => {
+            console.debug("[WebRtcEndpoint] onnegotiationneeded", event);
             try {
                 this.isMakingOffer = true;
                 await this.pc.setLocalDescription();
@@ -474,6 +478,18 @@ class WebRtcConnection {
                 await this.connector.sendIceCandidate(this.endpoint, event.candidate);
             }
         };
+        this.pc.onicecandidateerror = (event) => {
+            if (event.errorCode >= 300 && event.errorCode <= 699) {
+                // STUN errors are in the range 300-699. See RFC 5389, section 15.6
+                // for a list of codes. TURN adds a few more error codes; see
+                // RFC 5766, section 15 for details.
+                console.warn("ICE candidate error, STUN error", event);
+            } else if (event.errorCode >= 700 && event.errorCode <= 799) {
+                // Server could not be reached; a specific error number is
+                // provided but these are not yet specified.
+                console.warn("ICE candidate error, server could not be reached", event);
+            }
+        }
 
         let rootChannel = this.getChannel("root", 0);
         rootChannel.onStateUpdate = (state) => {

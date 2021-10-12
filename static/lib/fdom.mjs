@@ -33,7 +33,7 @@ class FNode {
     }
 
     class(cssClass) {
-        if (cssClass != undefined) {
+        if (cssClass != undefined && cssClass != "") {
             for (let cl of cssClass.split(' ')) {
                 this.element.classList.add(cl);
             }

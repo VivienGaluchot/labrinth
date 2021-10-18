@@ -174,13 +174,24 @@ class Component {
         let node = new FNode(element);
         node.clear();
 
+        let deviceNodes = new Map();
+
         let endpoints = union(Channel.webRtcEndpoint.connections.keys(), this.signalingConnected);
         for (let endpoint of endpoints) {
             if (endpoint.user == userId) {
+                if (!deviceNodes.has(endpoint.device)) {
+                    let deviceNode = new FTag("div").class("dev-info")
+                        .child(new FTag("span").class("label").text("Device "))
+                        .child(new FTag("code").text(`${endpoint.device}`));
+                    deviceNodes.set(endpoint.device, deviceNode);
+                    node.child(deviceNode);
+                }
+                let deviceNode = deviceNodes.get(endpoint.device);
+
                 let part = new FTag("div").class("con-info");
                 part.child(new FTag("div")
-                    .child(new FTag("span").class("label").text("Id "))
-                    .child(new FTag("code").text(`${endpoint.device}-${endpoint.session}`))
+                    .child(new FTag("span").class("label").text("Tab "))
+                    .child(new FTag("code").text(`${endpoint.session}`))
                 );
 
                 let isSignalingConnected = this.signalingConnected.has(endpoint);
@@ -225,7 +236,7 @@ class Component {
                     );
                 }
 
-                node.child(part);
+                deviceNode.child(part);
             }
         }
     }
